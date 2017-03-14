@@ -1,0 +1,9 @@
+# -*- python -*-
+
+Import('env')
+
+env.Header('ots', env.Glob('include/*.h'))
+objs = env.SharedObject(env.Glob('*.cc') + env.Glob('*.cpp'))
+libots = env.StaticLibrary('ots_static', objs)
+env.Install('$LIB_DIR', libots)
+env.libDeps('ots_static', ['protobuf', 'curl'])

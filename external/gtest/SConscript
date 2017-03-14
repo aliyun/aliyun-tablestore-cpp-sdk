@@ -1,0 +1,9 @@
+# -*- python -*-
+
+Import('env')
+
+env.Header('gtest', env.Dir('gtest'))
+
+liba = env.StaticLibrary('gtest_static', env.SharedObject(env.Glob('*.cc')))
+env.Install('$LIB_DIR', liba)
+

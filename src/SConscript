@@ -1,0 +1,7 @@
+# -*- python -*-
+
+Import('env')
+
+env.subDir('ots')
+env.subDir('ots_static_index')
+

@@ -1,0 +1,22 @@
+# -*- python -*-
+import os.path as op
+from datetime import datetime
+Import('env')
+
+env.Header('ots_static_index', env.Glob('include/*.h'))
+
+cpps = env.Glob('*.cpp')
+cpps.remove(env.File('create_table_helper.cpp'))
+libosi = env.StaticLibrary('ots_static_index_static', env.SharedObject(cpps))
+env.Install('$LIB_DIR', libosi)
+env.libDeps('ots_static_index_static', ['ots_static'])
+
+ct = env.Program('create_table', env.SharedObject('create_table_helper.cpp'),
+    LIBS=['ots_static_index_static', 'ots_static', 'jsoncpp',
+          'protobuf', 'curl', 'ssl', 'crypto', 'z'])
+env.Depends(ct, [
+    '$LIB_DIR/libots_static_index_static.a',
+    '$LIB_DIR/libots_static.a'])
+env.Default(ct)
+
+

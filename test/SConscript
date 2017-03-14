@@ -1,0 +1,14 @@
+# -*- python -*-
+Import('env')
+
+env.Install('.', ['#schema.json', '#config.json'])
+
+si_ut = env.Program('si_unittest', env.SharedObject(env.Glob('static_index_*.cpp')),
+    LIBS=['ots_static_index_static', 'ots_static', 'gmock_static', 'gtest_static', 'jsoncpp'])
+env.Depends(si_ut, [
+    '$LIB_DIR/libgmock_static.a',
+    '$LIB_DIR/libgtest_static.a',
+    '$LIB_DIR/libots_static_index_static.a',
+    '$LIB_DIR/libots_static.a'])
+env.Default(si_ut)
+

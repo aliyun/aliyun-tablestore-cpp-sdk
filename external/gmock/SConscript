@@ -1,0 +1,8 @@
+# -*- python -*-
+
+Import('env')
+
+env.Header('gmock', env.Dir('gmock'))
+
+liba = env.StaticLibrary('gmock_static', env.SharedObject(env.Glob('*.cc')))
+env.Install('$LIB_DIR', liba)
