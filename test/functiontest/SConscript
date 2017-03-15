@@ -1,0 +1,8 @@
+# -*- python -*-
+Import('env')
+
+ft = env.program('core_functiontest', env.Object(env.Glob('*.cpp')),
+    LIBS=['tablestore_core_static', 'testa_static'])
+env.Install('$BIN_DIR', 'config.toml')
+env.Depends(ft, '$BIN_DIR/config.toml')
+

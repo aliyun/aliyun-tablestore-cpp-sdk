@@ -1,0 +1,9 @@
+# -*- python -*-
+Import('env')
+
+env.header('testa', [env.File('testa.hpp'), env.File('testa.ipp')])
+
+lib = env.StaticLibrary('testa_static', env.Object(env.Glob('*.cpp')))
+env.Install('$LIB_DIR', lib)
+env.libDeps('testa_static', ['tablestore_util_static'])
+

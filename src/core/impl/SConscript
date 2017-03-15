@@ -1,0 +1,5 @@
+# -*- python -*-
+Import('env')
+
+objs = env.Object(env.Glob('*.cpp'))
+Return('objs')
