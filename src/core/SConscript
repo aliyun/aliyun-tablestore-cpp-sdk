@@ -1,0 +1,10 @@
+# -*- python -*-
+Import('env')
+
+public_objs = env.subDir('public')
+
+env.Install('$LIB_DIR', [
+    env.StaticLibrary('tablestore_core_static', public_objs),
+    env.SharedLibrary('tablestore_core', public_objs)])
+env.libDeps('tablestore_core_static', ['tablestore_util_static'])
+

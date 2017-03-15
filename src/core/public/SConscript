@@ -1,0 +1,7 @@
+# -*- python -*-
+Import('env')
+
+env.header('core', [env.Glob('*.hpp'), env.Glob('*.ipp')])
+
+objs = env.Object(env.Glob('*.cpp'))
+Return('objs')
