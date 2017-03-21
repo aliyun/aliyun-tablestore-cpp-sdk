@@ -1,0 +1,22 @@
+# -*- python -*-
+Import('env')
+
+env.subDir('util')
+env.subDir('core')
+
+env.header('ots', env.Dir('include'))
+
+objs = env.subDir('protocol')
+
+objs += env.Object([
+    env.Glob('coreimpl/*.cpp'),
+    env.Glob('http/*.cpp'),
+    env.Glob('plainbuffer/*.cpp'),
+    env.Glob('utility/*.cpp')])
+
+env.SharedLibrary('otsclient', objs)
+libs = [env.StaticLibrary('otsclient', objs)]
+env.Install('$LIB_DIR', libs)
+env.libDeps('otsclient',
+            ['crypto', 'protobuf', 'protobuf-lite', 'ssl', 'uuid'])
+

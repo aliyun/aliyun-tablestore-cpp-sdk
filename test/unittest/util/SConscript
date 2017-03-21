@@ -1,0 +1,5 @@
+# -*- python -*-
+Import('env')
+
+env.program('util_unittest', env.Object(env.Glob('*.cpp')),
+    LIBS=['tablestore_util_static', 'testa_static'])
