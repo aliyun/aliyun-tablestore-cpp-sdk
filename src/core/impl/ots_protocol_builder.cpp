@@ -307,7 +307,7 @@ string ToSingleCondition(const SingleColumnCondition* cc)
     pbRelationFilter.set_comparator(ToComparatorType(cc->relation()));
     string valueBuffer = PlainBufferBuilder::SerializeColumnValue(cc->columnValue());
     pbRelationFilter.set_column_value(valueBuffer);
-    pbRelationFilter.set_filter_if_missing(cc->passIfMissing());
+    pbRelationFilter.set_filter_if_missing(!cc->passIfMissing());
     pbRelationFilter.set_latest_version_only(cc->latestVersionOnly());
     string relationFilterStr;
     if (!pbRelationFilter.SerializeToString(&relationFilterStr)) {
