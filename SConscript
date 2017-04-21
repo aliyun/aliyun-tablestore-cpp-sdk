@@ -21,8 +21,8 @@ ver = {'major': cfg.get('DEFAULT', 'major'),
 tarball_name = 'aliyun-tablestore-%(language)s-sdk-%(major)s.%(minor)s.%(revision)s-%(platform)s-%(architecture)s.tar.gz' % ver
 xs = [
     ('', '#version.ini'),
-    ('lib/', ['$LIB_DIR/libotsclient.a',
-              '$BUILD_DIR/src/libotsclient.so',
+    ('lib/', ['$LIB_DIR/libtablestore_core.so',
+              '$LIB_DIR/libtablestore_core_static.a',
               '$LIB_DIR/libtablestore_util.so',
               '$LIB_DIR/libtablestore_util_static.a']),
     ('include/ots', [x for x in env.Glob('#src/include/*.h')])]
