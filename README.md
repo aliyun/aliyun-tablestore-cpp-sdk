@@ -1,4 +1,4 @@
-# C++ SDK for TableStore
+# TableStore SDK for C++ SDK
 
 Copyright (C) Alibaba Cloud Computing
 All rights reserved.
@@ -11,6 +11,7 @@ On runtime, we depends on
 * curl-7.15.5
 * openssl
 * protobuf-2.5
+* boost
 
 On compilation, we depends on
 
