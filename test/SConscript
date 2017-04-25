@@ -1,0 +1,7 @@
+# -*- python -*-
+Import('env')
+
+env.subDir('testa')
+env.subDir('unittest')
+env.subDir('functiontest')
+
