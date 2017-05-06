@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,22 +30,46 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
-
+#include <tr1/memory>
+#include <memory>
 #include <string>
 
 namespace aliyun {
 namespace tablestore {
 namespace util {
 
+class Record
+{
+public:
+    virtual ~Record() {}
+};
+
+class Sinker
+{
+public:
+    virtual ~Sinker() {}
+    /**
+     * Sinks a record, and transfers the ownership of this record as well.
+     * It is thread-safe.
+     */
+    virtual void sink(Record*) =0;
+
+    /**
+     * Flushs a sinker.
+     * When this function returns, the flushing must be finished.
+     * It is thread-safe.
+     */
+    virtual void flush() =0;
+};
+
 class Logger
 {
 public:
     enum LogLevel
     {
-        DEBUG,
-        INFO,
-        ERROR,
+        kDebug,
+        kInfo,
+        kError,
     };
     
     virtual ~Logger() {}
@@ -57,15 +82,48 @@ public:
     virtual void record(LogLevel, const std::string&) =0;
 
     /**
-     * Flush logs into disk
-     */
-    virtual void flush() =0;
-
-    /**
      * Spawn a Logger, which is owned by its root.
      */
     virtual Logger* spawn(const std::string& key) =0;
+
+    /**
+     * Spawn a Logger with specified logging level, which is owned by the user.
+     * This operation is generally thread-unsafe.
+     */
+    virtual Logger* spawn(const std::string& key, LogLevel) =0;
 };
+
+class SinkerCenter
+{
+public:
+    virtual ~SinkerCenter() {}
+
+    /**
+     * Fetchs the singleton of SinkerCenter.
+     */
+    static std::tr1::shared_ptr<SinkerCenter> singleton();
+
+    /**
+     * Registers a sinker into this sinker center, thread-safely.
+     * After this call, the ownership of the sinker is transfered.
+     *
+     * If there is already a sinker associated with the key, it will be returned
+     * without transferring the ownership; otherwise, returns NULL.
+     */
+    virtual Sinker* registerSinker(const std::string& key, Sinker*) =0;
+
+    /**
+     * Flushs all registered sinkers, thread-safely.
+     */
+    virtual void flushAll() =0;
+};
+
+/**
+ * Creates a logger backboned by a thread which periodically dumps records to 
+ * stderr.
+ * It is discouraged to use this logger in production.
+ */
+Logger* createLogger(const std::string& loggerKey, Logger::LogLevel);
 
 } // namespace util
 } // namespace tablestore

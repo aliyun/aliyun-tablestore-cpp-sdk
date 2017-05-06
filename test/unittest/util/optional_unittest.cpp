@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/optional.hpp"
 #include "testa/testa.hpp"
-#include "screen_logger.hpp"
 #include <tr1/functional>
 #include <deque>
 #include <string>
@@ -53,7 +52,8 @@ void Optional_transfer(const string&)
         (*opCopy)
         .issue();
 
-    util::Optional<deque<int> > opMove(util::move(xs));
+    util::Optional<deque<int> > opMove;
+    opMove.reset(util::move(xs));
     TESTA_ASSERT(pp::prettyPrint(xs) == "[]" && pp::prettyPrint(*opMove) == "[1]")
         (xs)
         (*opMove)

@@ -52,12 +52,28 @@ namespace {
 
 struct State
 {
-    explicit State(Endpoint* ep, Credential* cr)
-      : mEndpoint(ep),
-        mCredential(cr)
+    explicit State(Endpoint& ep, Credential& cr)
+      : mEndpoint(&ep),
+        mCredential(&cr)
     {
     }
 
+    Endpoint& endpoint() const
+    {
+        return *mEndpoint;
+    }
+
+    Credential& credential() const
+    {
+        return *mCredential;
+    }
+
+    function<State(const State&, const string& line)>& fn()
+    {
+        return mFn;
+    }
+
+private:
     mutable Endpoint* mEndpoint;
     mutable Credential* mCredential;
     function<State(const State&, const string& line)> mFn;
@@ -92,7 +108,7 @@ MemPiece extractTable(const MemPiece& line)
     }
 }
 
-void extractKeyValue(MemPiece* key, MemPiece* val, const MemPiece& in)
+void extractKeyValue(MemPiece& key, MemPiece& val, const MemPiece& in)
 {
     const uint8_t* b = in.data();
     const uint8_t* e = b + in.length();
@@ -100,7 +116,7 @@ void extractKeyValue(MemPiece* key, MemPiece* val, const MemPiece& in)
     const uint8_t* i = b;
     for(; i < e && !isWhitespace((char) *i) && *i != '='; ++i) {
     }
-    *key = MemPiece(b, i - b);
+    key = MemPiece(b, i - b);
     for(; i < e && isWhitespace(*i); ++i) {
     }
     OTS_ASSERT(i < e)((uintptr_t) i)((uintptr_t) e);
@@ -108,7 +124,7 @@ void extractKeyValue(MemPiece* key, MemPiece* val, const MemPiece& in)
     ++i;
     for(; i < e && isWhitespace(*i); ++i) {
     }
-    *val = MemPiece(i, e - i);
+    val = MemPiece(i, e - i);
 }
 
 State expectTable(const State& state, const string& line);
@@ -125,23 +141,23 @@ State fillEndpoint(const State& state, const string& line)
     if (table.length() > 0) {
         State nxtState = state;
         if (table == MemPiece::from("credential")) {
-            nxtState.mFn = bind(fillCredential, _1, _2);
+            nxtState.fn() = bind(fillCredential, _1, _2);
         } else {
-            nxtState.mFn = bind(expectTable, _1, _2);
+            nxtState.fn() = bind(expectTable, _1, _2);
         }
         return nxtState;
     } else {
         MemPiece key;
         MemPiece val;
-        extractKeyValue(&key, &val, MemPiece::from(trimmed));
+        extractKeyValue(key, val, MemPiece::from(trimmed));
         if (key == MemPiece::from("endpoint")) {
-            *state.mEndpoint->mutableEndpoint() =
-                val.subpiece(1, val.length() - 2).toStr();
+            state.endpoint().mutableEndpoint() =
+                val.subpiece(1, val.length() - 2).to<string>();
         } else if (key == MemPiece::from("instance")) {
-            *state.mEndpoint->mutableInstanceName() =
-                val.subpiece(1, val.length() - 2).toStr();
+            state.endpoint().mutableInstanceName() =
+                val.subpiece(1, val.length() - 2).to<string>();
         } else {
-            OTS_ASSERT(false)(key.toStr())(val.toStr());
+            OTS_ASSERT(false)(key.to<string>())(val.to<string>());
         }
         return state;
     }
@@ -156,23 +172,23 @@ State fillCredential(const State& state, const string& line)
     MemPiece table = extractTable(MemPiece::from(trimmed));
     if (table.length() > 0) {
         State nxtState = state;
-        nxtState.mFn = bind(expectTable, _1, _2);
+        nxtState.fn() = bind(expectTable, _1, _2);
         return nxtState;
     } else {
         MemPiece key;
         MemPiece val;
-        extractKeyValue(&key, &val, MemPiece::from(trimmed));
+        extractKeyValue(key, val, MemPiece::from(trimmed));
         if (key == MemPiece::from("access-key-id")) {
-            *state.mCredential->mutableAccessKeyId() =
-                val.subpiece(1, val.length() - 2).toStr();
+            state.credential().mutableAccessKeyId() =
+                val.subpiece(1, val.length() - 2).to<string>();
         } else if (key == MemPiece::from("access-key-secret")) {
-            *state.mCredential->mutableAccessKeySecret() =
-                val.subpiece(1, val.length() - 2).toStr();
+            state.credential().mutableAccessKeySecret() =
+                val.subpiece(1, val.length() - 2).to<string>();
         } else if (key == MemPiece::from("security-token")) {
-            *state.mCredential->mutableSecurityToken() =
-                val.subpiece(1, val.length() - 2).toStr();
+            state.credential().mutableSecurityToken() =
+                val.subpiece(1, val.length() - 2).to<string>();
         } else {
-            OTS_ASSERT(false)(key.toStr())(val.toStr());
+            OTS_ASSERT(false)(key.to<string>())(val.to<string>());
         }
         return state;
     }
@@ -188,11 +204,11 @@ State expectTable(const State& state, const string& line)
     if (table.length() > 0) {
         if (table == MemPiece::from("endpoint")) {
             State nxt = state;
-            nxt.mFn = bind(fillEndpoint, _1, _2);
+            nxt.fn() = bind(fillEndpoint, _1, _2);
             return nxt;
         } else if (table == MemPiece::from("credential")) {
             State nxt = state;
-            nxt.mFn = bind(fillCredential, _1, _2);
+            nxt.fn() = bind(fillCredential, _1, _2);
             return nxt;
         } else {
             return state;
@@ -204,7 +220,7 @@ State expectTable(const State& state, const string& line)
 
 } // namespace
 
-void read(Endpoint* ep, Credential* cr)
+void read(Endpoint& ep, Credential& cr)
 {
     {
         Endpoint empty;
@@ -218,13 +234,13 @@ void read(Endpoint* ep, Credential* cr)
     ifstream fin("config.toml");
     string line;
     State state(ep, cr);
-    state.mFn = bind(expectTable, _1, _2);
+    state.fn() = bind(expectTable, _1, _2);
     for(;;) {
         getline(fin, line);
         if (!fin) {
             break;
         }
-        State nxtState = state.mFn(state, line);
+        State nxtState = state.fn()(state, line);
         state = nxtState;
     }
     fin.close();

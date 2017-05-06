@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/util/metaprogramming.hpp"
 #include <tr1/type_traits>
 #include <tr1/memory>
+#include <memory>
 #include <string>
 
 namespace aliyun {
@@ -60,50 +61,49 @@ struct MoveCategory<T, typename mp::EnableIfExists<typename T::value_type, void>
     typedef ClearSwapable Category;
 };
 
-struct SharedPtr {};
+struct SmartPtr {};
 
 template<class T>
-struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_same<T, std::tr1::shared_ptr<typename T::element_type> >::value, void>::Type>
+struct MoveCategory<T, typename mp::EnableIfExists<typename T::element_type, void>::Type>
 {
-    typedef SharedPtr Category;
+    typedef SmartPtr Category;
 };
 
 template<class T>
 struct MoveAssignment<Moveable, T>
 {
-    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
-        *to = from;
+        to = from;
     }
 };
 
 template<class T>
 struct MoveAssignment<ClearSwapable, T>
 {
-    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
-        to->clear();
-        to->swap(*from);
+        to.clear();
+        to.swap(*from);
     }
 };
 
 template<class T>
 struct MoveAssignment<Copyable, T>
 {
-    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
-        *to = *from;
+        to = *from;
     }
 };
 
 template<class T>
-struct MoveAssignment<SharedPtr, T>
+struct MoveAssignment<SmartPtr, T>
 {
-    void operator()(T* to, const MoveHolder<T>& from) const
+    void operator()(T& to, const MoveHolder<T>& from) const
     {
-        T empty;
-        to->swap(empty);
-        to->swap(*from);
+        to = *from;
+        from->reset();
     }
 };
 

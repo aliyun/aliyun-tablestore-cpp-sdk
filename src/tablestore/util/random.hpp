@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
 
+#include <algorithm>
 #include <stdint.h>
 
 namespace aliyun {
@@ -38,10 +39,10 @@ namespace tablestore {
 namespace util {
 namespace random {
 
-class IRandom
+class Random
 {
 public:
-    virtual ~IRandom()
+    virtual ~Random()
     {}
 
     virtual int64_t next() =0;
@@ -49,11 +50,21 @@ public:
     virtual uint64_t seed() const =0;
 };
 
-IRandom* newDefault();
-IRandom* newDefault(uint64_t seed);
+Random* newDefault();
+Random* newDefault(uint64_t seed);
 
-int64_t nextInt(IRandom*, int64_t exclusiveUpper);
-int64_t nextInt(IRandom*, int64_t inclusiveLower, int64_t exclusiveUpper);
+int64_t nextInt(Random&, int64_t exclusiveUpper);
+int64_t nextInt(Random&, int64_t inclusiveLower, int64_t exclusiveUpper);
+
+template<class T>
+void shuffle(Random& rng, T& xs)
+{
+    int64_t from = xs.size();
+    for(--from; from > 0; --from) {
+        int64_t to = nextInt(rng, from);
+        std::swap(xs[from], xs[to]);
+    }
+}
 
 } // namespace random
 } // namespace util

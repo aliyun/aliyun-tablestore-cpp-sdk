@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,63 +30,51 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "profiling.hpp"
-#include <sys/time.h>
-#include <sstream>
-
-using namespace std;
+#include "tablestore/util/mempool.hpp"
+#include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/optional.hpp"
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace core {
 
-// Profiling
-Profiling::Profiling()
+class MemPoolZeroCopyInputStream: public google::protobuf::io::ZeroCopyInputStream
 {
-    static string startState = "START";
-    KeepTimeWithState(startState);
-}
+public:
+    explicit MemPoolZeroCopyInputStream(std::deque<util::MemPiece>&);
 
-void Profiling::KeepTime()
+    bool Next(const void** data, int* size);
+    void BackUp(int count);
+    bool Skip(int count);
+    int64_t ByteCount() const;
+
+private:
+    std::deque<util::MemPiece> mPieces;
+    util::MemPiece mLastPiece;
+    util::Optional<util::MemPiece> mBackupPiece;
+    int64_t mReadBytes;
+};
+
+class MemPoolZeroCopyOutputStream: public google::protobuf::io::ZeroCopyOutputStream
 {
-    string emptyState;
-    KeepTimeWithState(emptyState);
-}
+public:
+    explicit MemPoolZeroCopyOutputStream(util::MemPool* mpool);
+    ~MemPoolZeroCopyOutputStream();
 
-void Profiling::KeepTimeWithState(const string& recState)
-{
-    timeval tv;
-    gettimeofday(&tv, NULL);
-    TimeRecord record;
-    record.mRecordState = recState;
-    record.mTimeInUsec = tv.tv_sec * 1000000 + tv.tv_usec;
-    mRecordList.push_back(record);
-}
+    bool Next(void** data, int* size);
+    void BackUp(int count);
+    int64_t ByteCount() const;
+    util::MoveHolder<std::deque<util::MemPiece> > pieces();
 
-int64_t Profiling::GetTotalTime() const
-{
-    if (!mRecordList.empty()) {
-        return mRecordList.back().mTimeInUsec - mRecordList.front().mTimeInUsec;
-    } else {
-        return 0;
-    }
-}
+private:
+    util::MemPool* mMemPool;
+    std::deque<util::MemPool::Block*> mBlocks;
+    std::deque<util::MemPiece> mPieces;
+    int64_t mByteCount;
+};
 
-const list<TimeRecord>& Profiling::GetRecordList() const
-{
-    return mRecordList;
-}
-
-std::string Profiling::GetProfilingInfo() const
-{
-    stringstream ss;
-    string profilingInfo;
-    typeof(mRecordList.begin()) iter = mRecordList.begin();
-    for (; iter != mRecordList.end(); ++iter) {
-        ss << iter->mRecordState << ": " << iter->mTimeInUsec << " ";
-    }
-    ss << "TotalTime: " << GetTotalTime();
-    return ss.str();
-}
-
-} // end of tablestore
-} // end of aliyun
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun

@@ -31,11 +31,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "testa/testa.hpp"
 #include "config.hpp"
-#include "tablestore/core/types.hpp"
+#include "tablestore/core/range_iterator.hpp"
 #include "tablestore/core/client.hpp"
+#include "tablestore/core/types.hpp"
+#include "tablestore/util/random.hpp"
+#include "tablestore/util/logging.hpp"
 #include <tr1/functional>
 #include <tr1/tuple>
 #include <set>
+#include <vector>
 #include <stdexcept>
 
 using namespace std;
@@ -51,28 +55,32 @@ namespace {
 
 void Table_tb(
     const string& name,
-    function<void(const tuple<ISyncClient*, string>&)> cs)
+    function<void(const tuple<SyncClient*, string>&)> cs)
 {
     Endpoint ep;
     Credential cr;
-    read(&ep, &cr);
+    read(ep, cr);
+    ep.mutableEndpoint() = "http://" + ep.endpoint();
     ClientOptions opts;
+    opts.mutableRequestTimeout() = Duration::fromSec(30);
+    opts.mutableMaxConnections() = 2;
+    opts.resetLogger(createLogger("/", Logger::kDebug));
 
-    ISyncClient* pclient = NULL;
+    SyncClient* pclient = NULL;
     {
-        Optional<Error> res = ISyncClient::create(&pclient, ep, cr, opts);
+        Optional<Error> res = SyncClient::create(pclient, ep, cr, opts);
         TESTA_ASSERT(!res.present())
             (*res)(ep)(cr)(opts).issue();
     }
-    auto_ptr<ISyncClient> client(pclient);
+    auto_ptr<SyncClient> client(pclient);
     for(;;) {
         {
             CreateTableRequest req;
-            *req.mutableMeta()->mutableTableName() = name;
-            *req.mutableMeta()->mutableSchema()->append().mutableName() = "pkey";
-            *req.mutableMeta()->mutableSchema()->back().mutableType() = PKT_INTEGER;
+            req.mutableMeta().mutableTableName() = name;
+            req.mutableMeta().mutableSchema().append() =
+                PrimaryKeyColumnSchema("pkey", kPKT_Integer);
             CreateTableResponse resp;
-            Optional<Error> err = client->createTable(&resp, req);
+            Optional<Error> err = client->createTable(resp, req);
             if (!err.present()) {
                 break;
             }
@@ -83,71 +91,64 @@ void Table_tb(
         }
         {
             DeleteTableRequest req;
-            *req.mutableTable() = name;
+            req.mutableTable() = name;
             DeleteTableResponse resp;
-            Optional<Error> res = client->deleteTable(&resp, req);
+            Optional<Error> res = client->deleteTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
     }
     try {
         cs(make_tuple(pclient, name));
-        {
-            DeleteTableRequest req;
-            *req.mutableTable() = name;
-            DeleteTableResponse resp;
-            Optional<Error> res = client->deleteTable(&resp, req);
-            TESTA_ASSERT(!res.present())
-                (*res)(req).issue();
-        }
     } catch(const std::logic_error& ex) {
         DeleteTableRequest req;
-        *req.mutableTable() = name;
+        req.mutableTable() = name;
         DeleteTableResponse resp;
-        Optional<Error> res = client->deleteTable(&resp, req);
+        Optional<Error> res = client->deleteTable(resp, req);
+        (void) res;
         throw;
+    }
+    {
+        DeleteTableRequest req;
+        req.mutableTable() = name;
+        DeleteTableResponse resp;
+        Optional<Error> res = client->deleteTable(resp, req);
+        TESTA_ASSERT(!res.present())
+            (*res)(req).issue();
     }
 }
 
-PutRowRequest PutRow(const tuple<ISyncClient*, string>& in)
+PutRowRequest PutRow(const tuple<SyncClient*, string>& in)
 {
     PutRowRequest req;
-    *req.mutableRowChange()->mutableTable() = get<1>(in);
-    req.mutableRowChange()->mutablePrimaryKey()->append() =
+    req.mutableRowChange().mutableTable() = get<1>(in);
+    req.mutableRowChange().mutablePrimaryKey().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
-    req.mutableRowChange()->mutableAttributes()->append() =
-        Attribute("attr", AttributeValue::toStr(MemPiece::from("abc")));
+    req.mutableRowChange().mutableAttributes().append() =
+        Attribute("attr", AttributeValue::toStr("abc"));
     PutRowResponse resp;
-    for(;;) {
-        Optional<Error> err = get<0>(in)->putRow(&resp, req);
-        if (!err.present()) {
-            break;
-        } else if (err->errorCode() == "OTSTableNotReady") {
-            sleepFor(Duration::fromSec(1));
-        } else {
-            TESTA_ASSERT(!err.present())
-                (req)(*err).issue();
-        }
-    }
+    Optional<Error> err = get<0>(in)->putRow(resp, req);
+    TESTA_ASSERT(!err.present())
+        (req)(*err).issue();
     return req;
 }
 
-void GetRow(const PutRowRequest& putrow, const tuple<ISyncClient*, string>& in)
+void GetRow(const PutRowRequest& putrow, const tuple<SyncClient*, string>& in)
 {
     {
         GetRowRequest req;
-        *req.mutableQueryCriterion()->mutableTable() = get<1>(in);
-        *req.mutableQueryCriterion()->mutableMaxVersions() = 1;
-        *req.mutableQueryCriterion()->mutablePrimaryKey() = putrow.rowChange().primaryKey();
+        req.mutableQueryCriterion().mutableTable() = get<1>(in);
+        req.mutableQueryCriterion().mutableMaxVersions().reset(1);
+        req.mutableQueryCriterion().mutablePrimaryKey() = putrow.rowChange().primaryKey();
         GetRowResponse resp;
-        Optional<Error> err = get<0>(in)->getRow(&resp, req);
+        Optional<Error> err = get<0>(in)->getRow(resp, req);
         TESTA_ASSERT(!err.present())
             (req)(*err).issue();
 
         const Optional<Row>& row = resp.row();
         TESTA_ASSERT(row.present())
             (req)(resp).issue();
-        TESTA_ASSERT(row->primaryKey().compare(putrow.rowChange().primaryKey()) == EQUAL_TO)
+        TESTA_ASSERT(row->primaryKey().compare(putrow.rowChange().primaryKey()) == kCR_Equivalent)
             (resp)(putrow).issue();
         TESTA_ASSERT(row->attributes().size() == 1)
             (resp)(putrow).issue();
@@ -155,17 +156,17 @@ void GetRow(const PutRowRequest& putrow, const tuple<ISyncClient*, string>& in)
             (resp)(putrow).issue();
         TESTA_ASSERT(row->attributes()[0].name() == putrow.rowChange().attributes()[0].name())
             (resp)(putrow).issue();
-        TESTA_ASSERT(row->attributes()[0].value().compare(putrow.rowChange().attributes()[0].value()) == EQUAL_TO)
+        TESTA_ASSERT(row->attributes()[0].value().compare(putrow.rowChange().attributes()[0].value()) == kCR_Equivalent)
             (resp)(putrow).issue();
     }
     {
         GetRowRequest req;
-        *req.mutableQueryCriterion()->mutableTable() = get<1>(in);
-        *req.mutableQueryCriterion()->mutableMaxVersions() = 1;
-        req.mutableQueryCriterion()->mutablePrimaryKey()->append() =
+        req.mutableQueryCriterion().mutableTable() = get<1>(in);
+        req.mutableQueryCriterion().mutableMaxVersions().reset(1);
+        req.mutableQueryCriterion().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(456));
         GetRowResponse resp;
-        Optional<Error> err = get<0>(in)->getRow(&resp, req);
+        Optional<Error> err = get<0>(in)->getRow(resp, req);
         TESTA_ASSERT(!err.present())
             (req)(*err).issue();
 
@@ -178,32 +179,32 @@ void GetRow(const PutRowRequest& putrow, const tuple<ISyncClient*, string>& in)
 TESTA_DEF_VERIFY_WITH_TB(PutRow_GetRow, Table_tb, GetRow, PutRow);
 
 namespace {
-void GetRange(const PutRowRequest& putrow, const tuple<ISyncClient*, string>& in)
+void GetRange(const PutRowRequest& putrow, const tuple<SyncClient*, string>& in)
 {
     RangeQueryCriterion cri;
-    cri.mutableInclusiveStart()->append() =
+    cri.mutableInclusiveStart().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMin());
-    cri.mutableExclusiveEnd()->append() =
+    cri.mutableExclusiveEnd().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
-    *cri.mutableTable() = get<1>(in);
-    *cri.mutableMaxVersions() = 1;
+    cri.mutableTable() = get<1>(in);
+    cri.mutableMaxVersions().reset(1);
     GetRangeRequest req;
-    *req.mutableQueryCriterion() = util::move(cri);
+    req.mutableQueryCriterion() = util::move(cri);
     GetRangeResponse resp;
-    Optional<Error> err = get<0>(in)->getRange(&resp, req);
+    Optional<Error> err = get<0>(in)->getRange(resp, req);
     TESTA_ASSERT(!err.present())
         (req)(*err).issue();
 
     TESTA_ASSERT(resp.rows().size() == 1)
         (resp)(putrow).issue();
     const Row& row = resp.rows()[0];
-    TESTA_ASSERT(row.primaryKey().compare(putrow.rowChange().primaryKey()) == EQUAL_TO)
+    TESTA_ASSERT(row.primaryKey().compare(putrow.rowChange().primaryKey()) == kCR_Equivalent)
         (resp)(putrow).issue();
     TESTA_ASSERT(row.attributes().size() == 1)
         (resp)(putrow).issue();
     TESTA_ASSERT(row.attributes()[0].name() == putrow.rowChange().attributes()[0].name())
         (resp)(putrow).issue();
-    TESTA_ASSERT(row.attributes()[0].value().compare(putrow.rowChange().attributes()[0].value()) == EQUAL_TO)
+    TESTA_ASSERT(row.attributes()[0].value().compare(putrow.rowChange().attributes()[0].value()) == kCR_Equivalent)
         (resp)(putrow).issue();
 }
 } // namespace
@@ -213,62 +214,73 @@ namespace {
 
 void ScanTable(
     const DequeBasedVector<Row>& oracle,
-    const tuple<ISyncClient*, string>& in)
+    const tuple<SyncClient*, string>& in)
 {
     RangeQueryCriterion cri;
-    cri.mutableInclusiveStart()->append() =
+    cri.mutableInclusiveStart().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMin());
-    cri.mutableExclusiveEnd()->append() =
+    cri.mutableExclusiveEnd().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
-    *cri.mutableTable() = get<1>(in);
-    *cri.mutableMaxVersions() = 1000;
-    GetRangeRequest req;
-    *req.mutableQueryCriterion() = util::move(cri);
-    Iterator<MoveHolder<Row>, Error>* iter = NULL;
-    Optional<Error> err = get<0>(in)->getRangeIterator(&iter, req);
-    TESTA_ASSERT(!err.present())
-        (*err)(req).issue();
-    int64_t i = 0;
-    for(int64_t sz = oracle.size(); iter->valid() && i < sz; ++i) {
-        Row trial(iter->get());
-        const Row& orc = oracle[i];
-        TESTA_ASSERT(pp::prettyPrint(trial) == pp::prettyPrint(orc))
-            (trial)(orc)(i).issue();
-        Optional<Error> nxtErr = iter->moveNext();
-        TESTA_ASSERT(!nxtErr.present())
-            (*nxtErr)(req)(i).issue();
+    cri.mutableTable() = get<1>(in);
+    cri.mutableMaxVersions().reset(1000);
+    SyncClient& client = *get<0>(in);
+    auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
+    auto_ptr<RangeIterator> iter(new RangeIterator(*aclient, cri));
+    DequeBasedVector<Row> trial;
+    for(;;) {
+        Optional<Error> err = iter->moveNext();
+        TESTA_ASSERT(!err.present())
+            (*err).issue();
+        if (!iter->valid()) {
+            break;
+        }
+        moveAssign(trial.append(), util::move(iter->get()));
     }
-    TESTA_ASSERT(i == oracle.size())
-        (i)
-        (oracle.size())
-        (oracle[i]).issue();
-    TESTA_ASSERT(!iter->valid())
-        (i)
-        (oracle.size())
-        (*iter->get()).issue();
+
+    int64_t osz = oracle.size();
+    int64_t tsz = trial.size();
+    for(int64_t i = 0; i < osz && i < tsz; ++i) {
+        const Row& orc = oracle[i];
+        const Row& tri = trial[i];
+        TESTA_ASSERT(pp::prettyPrint(tri) == pp::prettyPrint(orc))
+            (tri)(orc)(i).issue();
+    }
+    if (osz < tsz) {
+        TESTA_ASSERT(osz == tsz)
+            (osz)
+            (tsz)
+            (trial[osz])
+            .issue("oracle is smaller than trial.");
+    } else if (osz > tsz) {
+        TESTA_ASSERT(osz == tsz)
+            (osz)
+            (tsz)
+            (oracle[tsz])
+            .issue("oracle is larger than trial.");
+    }
 }
 
-DequeBasedVector<Row> UpdateRow(const tuple<ISyncClient*, string>& in)
+DequeBasedVector<Row> UpdateRow(const tuple<SyncClient*, string>& in)
 {
     UtcTime ts = UtcTime::fromMsec(UtcTime::now().toMsec());
     {
         PutRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
-        req.mutableRowChange()->mutableAttributes()->append() =
+        req.mutableRowChange().mutableAttributes().append() =
             Attribute(
                 "A",
-                AttributeValue::toStr(MemPiece::from("a")),
+                AttributeValue::toStr("a"),
                 ts);
-        req.mutableRowChange()->mutableAttributes()->append() =
+        req.mutableRowChange().mutableAttributes().append() =
             Attribute(
                 "B",
-                AttributeValue::toStr(MemPiece::from("b")),
+                AttributeValue::toBlob("b"),
                 ts);
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(&resp, req);
+            Optional<Error> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -281,36 +293,36 @@ DequeBasedVector<Row> UpdateRow(const tuple<ISyncClient*, string>& in)
     }
     {
         UpdateRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
-        RowUpdateChange::Update& a = req.mutableRowChange()->mutableUpdates()
-            ->append();
-        *a.mutableType() = RowUpdateChange::Update::DELETE;
-        *a.mutableAttrName() = "A";
-        *a.mutableTimestamp() = ts;
-        RowUpdateChange::Update& b = req.mutableRowChange()->mutableUpdates()
-            ->append();
-        *b.mutableType() = RowUpdateChange::Update::DELETE_ALL;
-        *b.mutableAttrName() = "B";
-        RowUpdateChange::Update& c = req.mutableRowChange()->mutableUpdates()
-            ->append();
-        *c.mutableType() = RowUpdateChange::Update::PUT;
-        *c.mutableAttrName() = "C";
-        *c.mutableAttrValue() = AttributeValue::toStr(MemPiece::from("c"));
-        *c.mutableTimestamp() = ts;
+        RowUpdateChange::Update& a = req.mutableRowChange().mutableUpdates()
+            .append();
+        a.mutableType() = RowUpdateChange::Update::kDelete;
+        a.mutableAttrName() = "A";
+        a.mutableTimestamp().reset(ts);
+        RowUpdateChange::Update& b = req.mutableRowChange().mutableUpdates()
+            .append();
+        b.mutableType() = RowUpdateChange::Update::kDeleteAll;
+        b.mutableAttrName() = "B";
+        RowUpdateChange::Update& c = req.mutableRowChange().mutableUpdates()
+            .append();
+        c.mutableType() = RowUpdateChange::Update::kPut;
+        c.mutableAttrName() = "C";
+        c.mutableAttrValue().reset(AttributeValue::toStr("c"));
+        c.mutableTimestamp().reset(ts);
         UpdateRowResponse resp;
-        Optional<Error> err = get<0>(in)->updateRow(&resp, req);
+        Optional<Error> err = get<0>(in)->updateRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
         DequeBasedVector<Row> result;
         Row& row = result.append();
-        row.mutablePrimaryKey()->append() = req.rowChange().primaryKey()[0];
-        Attribute& attr = row.mutableAttributes()->append();
-        *attr.mutableName() = req.rowChange().updates()[2].attrName();
-        *attr.mutableValue() = *req.rowChange().updates()[2].attrValue();
-        *attr.mutableTimestamp() = *req.rowChange().updates()[2].timestamp();
+        row.mutablePrimaryKey().append() = req.rowChange().primaryKey()[0];
+        Attribute& attr = row.mutableAttributes().append();
+        attr.mutableName() = req.rowChange().updates()[2].attrName();
+        attr.mutableValue() = *req.rowChange().updates()[2].attrValue();
+        attr.mutableTimestamp().reset(*req.rowChange().updates()[2].timestamp());
         return result;
     }
 }
@@ -318,16 +330,16 @@ DequeBasedVector<Row> UpdateRow(const tuple<ISyncClient*, string>& in)
 TESTA_DEF_VERIFY_WITH_TB(UpdateRow, Table_tb, ScanTable, UpdateRow);
 
 namespace {
-DequeBasedVector<Row> DeleteRow(const tuple<ISyncClient*, string>& in)
+DequeBasedVector<Row> DeleteRow(const tuple<SyncClient*, string>& in)
 {
     {
         PutRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(&resp, req);
+            Optional<Error> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -340,11 +352,11 @@ DequeBasedVector<Row> DeleteRow(const tuple<ISyncClient*, string>& in)
     }
     {
         DeleteRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         DeleteRowResponse resp;
-        Optional<Error> err = get<0>(in)->deleteRow(&resp, req);
+        Optional<Error> err = get<0>(in)->deleteRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
@@ -356,16 +368,16 @@ DequeBasedVector<Row> DeleteRow(const tuple<ISyncClient*, string>& in)
 TESTA_DEF_VERIFY_WITH_TB(DeleteRow, Table_tb, ScanTable, DeleteRow);
 
 namespace {
-void BatchGetRow(const tuple<ISyncClient*, string>& in)
+void BatchGetRow(const tuple<SyncClient*, string>& in)
 {
     {
         PutRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(&resp, req);
+            Optional<Error> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -381,26 +393,26 @@ void BatchGetRow(const tuple<ISyncClient*, string>& in)
         const char kMissRowKey[] = "MissRowKey";
         BatchGetRowRequest req;
         {
-            MultiPointQueryCriterion& cri = req.mutableCriteria()->append();
-            *cri.mutableTable() = get<1>(in);
-            *cri.mutableMaxVersions() = 1;
+            MultiPointQueryCriterion& cri = req.mutableCriteria().append();
+            cri.mutableTable() = get<1>(in);
+            cri.mutableMaxVersions().reset(1);
             {
-                PrimaryKey& pkey = *cri.mutableRowKeys()->append().mutableGet();
+                PrimaryKey& pkey = cri.mutableRowKeys().append().mutableGet();
                 pkey.append() = PrimaryKeyColumn(
                     "pkey",
                     PrimaryKeyValue::toInteger(123));
-                *cri.mutableRowKeys()->back().mutableUserData() = kHitRowKey;
+                cri.mutableRowKeys().back().mutableUserData() = kHitRowKey;
             }
             {
-                PrimaryKey& pkey = *cri.mutableRowKeys()->append().mutableGet();
+                PrimaryKey& pkey = cri.mutableRowKeys().append().mutableGet();
                 pkey.append() = PrimaryKeyColumn(
                     "pkey",
                     PrimaryKeyValue::toInteger(456));
-                *cri.mutableRowKeys()->back().mutableUserData() = kMissRowKey;
+                cri.mutableRowKeys().back().mutableUserData() = kMissRowKey;
             }
         }
         BatchGetRowResponse resp;
-        Optional<Error> err = get<0>(in)->batchGetRow(&resp, req);
+        Optional<Error> err = get<0>(in)->batchGetRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
@@ -433,17 +445,17 @@ void BatchGetRow_verify(const string& csname)
 TESTA_DEF_JUNIT_LIKE2(BatchGetRow, BatchGetRow_verify);
 
 namespace {
-DequeBasedVector<Row> BatchWriteRow(const tuple<ISyncClient*, string>& in)
+DequeBasedVector<Row> BatchWriteRow(const tuple<SyncClient*, string>& in)
 {
     UtcTime ts = UtcTime::fromMsec(UtcTime::now().toMsec());
     {
         PutRowRequest req;
-        *req.mutableRowChange()->mutableTable() = get<1>(in);
-        req.mutableRowChange()->mutablePrimaryKey()->append() =
+        req.mutableRowChange().mutableTable() = get<1>(in);
+        req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(3));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(&resp, req);
+            Optional<Error> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -455,51 +467,51 @@ DequeBasedVector<Row> BatchWriteRow(const tuple<ISyncClient*, string>& in)
         }
     }
     {
-        const char kPut[] = "PUT";
+        const char kPut[] = "kPut";
         const char kUpdate[] = "UPDATE";
-        const char kDelete[] = "DELETE";
+        const char kDelete[] = "kDelete";
         DequeBasedVector<Row> result;
 
         BatchWriteRowRequest req;
         {
-            BatchWriteRowRequest::Put& put = req.mutablePuts()->append();
-            *put.mutableUserData() =  kPut;
-            *put.mutableGet()->mutableTable() = get<1>(in);
-            put.mutableGet()->mutablePrimaryKey()->append() =
+            BatchWriteRowRequest::Put& put = req.mutablePuts().append();
+            put.mutableUserData() =  kPut;
+            put.mutableGet().mutableTable() = get<1>(in);
+            put.mutableGet().mutablePrimaryKey().append() =
                 PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(1));
-            *put.mutableGet()->mutableReturnType() = RowChange::RT_PRIMARY_KEY;
+            put.mutableGet().mutableReturnType() = RowChange::kRT_PrimaryKey;
 
             Row& res = result.append();
-            *res.mutablePrimaryKey() = put.get().primaryKey();
+            res.mutablePrimaryKey() = put.get().primaryKey();
         }
         {
-            BatchWriteRowRequest::Update& update = req.mutableUpdates()->append();
-            *update.mutableUserData() =  kUpdate;
-            *update.mutableGet()->mutableTable() = get<1>(in);
-            update.mutableGet()->mutablePrimaryKey()->append() =
+            BatchWriteRowRequest::Update& update = req.mutableUpdates().append();
+            update.mutableUserData() =  kUpdate;
+            update.mutableGet().mutableTable() = get<1>(in);
+            update.mutableGet().mutablePrimaryKey().append() =
                 PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(2));
-            RowUpdateChange::Update& c = update.mutableGet()->mutableUpdates()
-                ->append();
-            *c.mutableType() = RowUpdateChange::Update::PUT;
-            *c.mutableAttrName() = "C";
-            *c.mutableAttrValue() = AttributeValue::toStr(MemPiece::from("c"));
-            *c.mutableTimestamp() = ts;
-            *update.mutableGet()->mutableReturnType() = RowChange::RT_PRIMARY_KEY;
+            RowUpdateChange::Update& c = update.mutableGet().mutableUpdates()
+                .append();
+            c.mutableType() = RowUpdateChange::Update::kPut;
+            c.mutableAttrName() = "C";
+            c.mutableAttrValue().reset(AttributeValue::toStr("c"));
+            c.mutableTimestamp().reset(ts);
+            update.mutableGet().mutableReturnType() = RowChange::kRT_PrimaryKey;
 
             Row& res = result.append();
-            *res.mutablePrimaryKey() = update.get().primaryKey();
-            res.mutableAttributes()->append() = Attribute(c.attrName(), *c.attrValue(), *c.timestamp());
+            res.mutablePrimaryKey() = update.get().primaryKey();
+            res.mutableAttributes().append() = Attribute(c.attrName(), *c.attrValue(), *c.timestamp());
         }
         {
-            BatchWriteRowRequest::Delete& del = req.mutableDeletes()->append();
-            *del.mutableUserData() =  kDelete;
-            *del.mutableGet()->mutableTable() = get<1>(in);
-            del.mutableGet()->mutablePrimaryKey()->append() =
+            BatchWriteRowRequest::Delete& del = req.mutableDeletes().append();
+            del.mutableUserData() =  kDelete;
+            del.mutableGet().mutableTable() = get<1>(in);
+            del.mutableGet().mutablePrimaryKey().append() =
                 PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(3));
-            *del.mutableGet()->mutableReturnType() = RowChange::RT_PRIMARY_KEY;
+            del.mutableGet().mutableReturnType() = RowChange::kRT_PrimaryKey;
         }
         BatchWriteRowResponse resp;
-        Optional<Error> err = get<0>(in)->batchWriteRow(&resp, req);
+        Optional<Error> err = get<0>(in)->batchWriteRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
         TESTA_ASSERT(resp.putResults().size() == 1)
@@ -520,6 +532,32 @@ DequeBasedVector<Row> BatchWriteRow(const tuple<ISyncClient*, string>& in)
 }
 } // namespace
 TESTA_DEF_VERIFY_WITH_TB(BatchWriteRow, Table_tb, ScanTable, BatchWriteRow);
+
+namespace {
+
+ComputeSplitsBySizeResponse computeSplitsBySize(const tuple<SyncClient*, string>& in)
+{
+    ComputeSplitsBySizeRequest req;
+    req.mutableTable() = get<1>(in);
+    req.mutableSplitSize() = 1; // 100MB
+    ComputeSplitsBySizeResponse resp;
+    Optional<Error> err = get<0>(in)->computeSplitsBySize(resp, req);
+    TESTA_ASSERT(!err.present())
+        (*err)
+        (req).issue();
+    return resp;
+}
+
+void verifyComputeSplitsBySize(
+    const ComputeSplitsBySizeResponse& result,
+    const tuple<SyncClient*, string>& in)
+{
+    TESTA_ASSERT(result.splits().size() == 1)
+        (result).issue();
+}
+} // namespace
+TESTA_DEF_VERIFY_WITH_TB(ComputeSplitsBySize, Table_tb, verifyComputeSplitsBySize, computeSplitsBySize);
+
 
 } // namespace core
 } // namespace tablestore

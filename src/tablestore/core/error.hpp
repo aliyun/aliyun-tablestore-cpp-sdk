@@ -41,21 +41,88 @@ namespace core {
 class Error
 {
 public:
+    /*
+     * HTTP status that indicate SDK errors.
+     */
+    static const int64_t kHttpStatus_CouldntResolveHost = 6;
+    static const int64_t kHttpStatus_CouldntConnect = 7;
+    static const int64_t kHttpStatus_OperationTimeout = 28;
+    static const int64_t kHttpStatus_WriteRequestFail = 55;
+    static const int64_t kHttpStatus_CorruptedResponse = 56;
+    static const int64_t kHttpStatus_NoAvailableConnection = 89;
+    static const int64_t kHttpStatus_SslHandshakeFail = 35;
+    
+    /*
+     * Error codes that indicate SDK errors.
+     */
+    static const std::string kErrorCode_CouldntResolveHost;
+    static const std::string kErrorCode_CouldntConnect;
+    static const std::string kErrorCode_WriteRequestFail;
+    static const std::string kErrorCode_CorruptedResponse;
+    static const std::string kErrorCode_NoAvailableConnection;
+    static const std::string kErrorCode_OTSRequestTimeout;
+    static const std::string kErrorCode_SslHandshakeFail;
+
+    /*
+     * Error codes reported by TableStore servers
+     */
+    static const std::string kErrorCode_OTSOutOfColumnCountLimit;
+    static const std::string kErrorCode_OTSObjectNotExist;
+    static const std::string kErrorCode_OTSServerBusy;
+    static const std::string kErrorCode_OTSCapacityUnitExhausted;
+    static const std::string kErrorCode_OTSTooFrequentReservedThroughputAdjustment;
+    static const std::string kErrorCode_OTSInternalServerError;
+    static const std::string kErrorCode_OTSQuotaExhausted;
+    static const std::string kErrorCode_OTSRequestBodyTooLarge;
+    static const std::string kErrorCode_OTSTimeout;
+    static const std::string kErrorCode_OTSObjectAlreadyExist;
+    static const std::string kErrorCode_OTSTableNotReady;
+    static const std::string kErrorCode_OTSConditionCheckFail;
+    static const std::string kErrorCode_OTSOutOfRowSizeLimit;
+    static const std::string kErrorCode_OTSInvalidPK;
+    static const std::string kErrorCode_OTSMethodNotAllowed;
+    static const std::string kErrorCode_OTSAuthFailed;
+    static const std::string kErrorCode_OTSServerUnavailable;
+    static const std::string kErrorCode_OTSParameterInvalid;
+    static const std::string kErrorCode_OTSRowOperationConflict;
+    static const std::string kErrorCode_OTSPartitionUnavailable;
+
+    enum Predefined
+    {
+        kPredefined_CouldntResoveHost,
+        kPredefined_CouldntConnect,
+        kPredefined_OperationTimeout,
+        kPredefined_WriteRequestFail,
+        kPredefined_CorruptedResponse,
+        kPredefined_NoConnectionAvailable,
+        kPredefined_SslHandshakeFail,
+
+        kPredefined_OTSOutOfColumnCountLimit,
+        kPredefined_OTSObjectNotExist,
+        kPredefined_OTSServerBusy,
+        kPredefined_OTSCapacityUnitExhausted,
+        kPredefined_OTSTooFrequentReservedThroughputAdjustment,
+        kPredefined_OTSInternalServerError,
+        kPredefined_OTSQuotaExhausted,
+        kPredefined_OTSRequestBodyTooLarge,
+        kPredefined_OTSTimeout,
+        kPredefined_OTSObjectAlreadyExist,
+        kPredefined_OTSTableNotReady,
+        kPredefined_OTSConditionCheckFail,
+        kPredefined_OTSOutOfRowSizeLimit,
+        kPredefined_OTSInvalidPK,
+        kPredefined_OTSMethodNotAllowed,
+        kPredefined_OTSAuthFailed,
+        kPredefined_OTSServerUnavailable,
+        kPredefined_OTSParameterInvalid,
+        kPredefined_OTSRowOperationConflict,
+        kPredefined_OTSPartitionUnavailable,
+    };
+    
     explicit Error()
-      : mHttpStatus(0)
+      : mHttpStatus(200)
     {}
-    explicit Error(
-        int64_t httpStatus,
-        const std::string& errorCode,
-        const std::string& message,
-        const std::string& traceId = std::string(),
-        const std::string& requestId = std::string())
-      : mHttpStatus(httpStatus),
-        mErrorCode(errorCode),
-        mMessage(message),
-        mRequestId(requestId),
-        mTraceId(traceId)
-    {}
+    explicit Error(Predefined);
     ~Error() {}
 
     explicit Error(const util::MoveHolder<Error>& ano)
@@ -68,11 +135,11 @@ public:
 
     Error& operator=(const util::MoveHolder<Error>& ano)
     {
-        util::moveAssign(&mHttpStatus, util::move(ano->mHttpStatus));
-        util::moveAssign(&mErrorCode, util::move(ano->mErrorCode));
-        util::moveAssign(&mMessage, util::move(ano->mMessage));
-        util::moveAssign(&mRequestId, util::move(ano->mRequestId));
-        util::moveAssign(&mTraceId, util::move(ano->mTraceId));
+        util::moveAssign(mHttpStatus, util::move(ano->mHttpStatus));
+        util::moveAssign(mErrorCode, util::move(ano->mErrorCode));
+        util::moveAssign(mMessage, util::move(ano->mMessage));
+        util::moveAssign(mRequestId, util::move(ano->mRequestId));
+        util::moveAssign(mTraceId, util::move(ano->mTraceId));
         return *this;
     }
 
@@ -81,9 +148,9 @@ public:
         return mErrorCode;
     }
 
-    std::string* mutableErrorCode() throw()
+    std::string& mutableErrorCode() throw()
     {
-        return &mErrorCode;
+        return mErrorCode;
     }
 
     const std::string& message() const
@@ -91,9 +158,9 @@ public:
         return mMessage;
     }
 
-    std::string* mutableMessage() throw()
+    std::string& mutableMessage() throw()
     {
-        return &mMessage;
+        return mMessage;
     }
     
 
@@ -102,9 +169,9 @@ public:
         return mRequestId;
     }
 
-    std::string* mutableRequestId() throw()
+    std::string& mutableRequestId() throw()
     {
-        return &mRequestId;
+        return mRequestId;
     }
     
 
@@ -113,9 +180,9 @@ public:
         return mTraceId;
     }
 
-    std::string* mutableTraceId() throw()
+    std::string& mutableTraceId() throw()
     {
-        return &mTraceId;
+        return mTraceId;
     }
     
     int64_t httpStatus() const throw()
@@ -123,12 +190,15 @@ public:
         return mHttpStatus;
     }
 
-    int64_t* mutableHttpStatus() throw()
+    int64_t& mutableHttpStatus() throw()
     {
-        return &mHttpStatus;
+        return mHttpStatus;
     }
     
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
+
+private:
+    void init(int64_t, const std::string&);
 
 private:
     int64_t mHttpStatus;
@@ -138,10 +208,9 @@ private:
     std::string mTraceId;
 };
 
-bool isOk(const Error&);
 bool isCurlError(const Error&);
-bool isSdkError(const Error&);
 bool isTemporary(const Error&);
+
 
 } // namespace core
 } // namespace tablestore

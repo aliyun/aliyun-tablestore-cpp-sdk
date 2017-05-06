@@ -7,4 +7,5 @@ objs = env.Object(env.Glob('*.cpp'))
 env.Install('$LIB_DIR', [
     env.StaticLibrary('tablestore_util_static', objs),
     env.SharedLibrary('tablestore_util', objs)])
+env.libDeps('tablestore_util_static', ['boost_system', 'boost_chrono', 'boost_thread', 'crypto'])
 

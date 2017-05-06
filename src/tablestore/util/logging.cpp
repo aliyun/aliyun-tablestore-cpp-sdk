@@ -30,6 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "logging.ipp"
+#include "tablestore/util/logger.hpp"
 #include <cstdlib>
 #include <stdint.h>
 
@@ -53,24 +54,24 @@ int64_t calcSize(
 
     res += 5; // "FILE:"
     res += file.size();
-    res += 2; // ", "
+    res += 1; // "\t"
     res += 5; // "LINE:"
     res += line.size();
-    res += 2; // ", "
+    res += 1; // "\t"
     res += 9; // "FUNCTION:"
     res += func.size();
-    res += 2; // ", "
+    res += 1; // "\t"
     
     if (!what.empty()) {
         res += 5; // "what:"
         res += what.size();
         if (!xs.empty()) {
-            res += 2; // ", "
+            res += 1; // "\t"
         }
     }
     
     if (!xs.empty()) {
-        res += (xs.size() - 1) * 2; // ", "
+        res += (xs.size() - 1) * 1; // "\t"
         for(int64_t i = 0, sz = xs.size(); i < sz; ++i) {
             res += xs[i].first.size();
             res += 1; // ":"
@@ -88,7 +89,7 @@ int64_t calcSize(
 
 LogHelper::~LogHelper()
 {
-    const string kSep(", ");
+    const string kSep("\t");
 
     int64_t size = calcSize(mFile, mLine, mFunc, mWhat, mValues);
     string res;
@@ -96,9 +97,7 @@ LogHelper::~LogHelper()
 
     res.append("FILE:");
     res.append(mFile);
-    res.append(kSep);
-
-    res.append("LINE:");
+    res.append(":");
     res.append(mLine);
     res.append(kSep);
 
@@ -123,7 +122,7 @@ LogHelper::~LogHelper()
         res.append(mValues[i].second);
     }
 
-    mLogger->record(mLevel, res);
+    mLogger.record(mLevel, res);
 }
 
 } // namespace impl

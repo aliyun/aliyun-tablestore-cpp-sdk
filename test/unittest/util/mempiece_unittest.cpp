@@ -30,11 +30,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/foreach.hpp"
 #include "testa/testa.hpp"
+#include <tr1/functional>
+#include <deque>
 #include <string>
+#include <limits>
 #include <stdint.h>
 
 using namespace std;
+using namespace std::tr1;
 using namespace aliyun::tablestore::util;
 
 namespace aliyun {
@@ -45,19 +50,19 @@ void MemPiece_fromStr(const string&)
     {
         string s("abc");
         MemPiece piece = MemPiece::from(s);
-        TESTA_ASSERT(piece.toStr() == "abc")
-            (piece.toStr()).issue();
+        TESTA_ASSERT(piece.to<string>() == "abc")
+            (piece.to<string>()).issue();
     }
     {
         string s("def");
         MemPiece piece = MemPiece::from(s.c_str());
-        TESTA_ASSERT(piece.toStr() == "def")
-            (piece.toStr()).issue();
+        TESTA_ASSERT(piece.to<string>() == "def")
+            (piece.to<string>()).issue();
     }
     {
         MemPiece piece = MemPiece::from("ghi");
-        TESTA_ASSERT(piece.toStr() == "ghi")
-            (piece.toStr()).issue();
+        TESTA_ASSERT(piece.to<string>() == "ghi")
+            (piece.to<string>()).issue();
     }
 }
 TESTA_DEF_JUNIT_LIKE1(MemPiece_fromStr);
@@ -172,6 +177,135 @@ void MemPiece_quasilexi_order(const string&)
     TESTA_ASSERT(less(b, aa)).issue();
 }
 TESTA_DEF_JUNIT_LIKE1(MemPiece_quasilexi_order);
+
+void MutableMemPiece_pp(const string&)
+{
+    {
+        MutableMemPiece mp;
+        TESTA_ASSERT(pp::prettyPrint(mp) == "b\"\"")
+            (mp).issue();
+    }
+    char str[] = "abc";
+    {
+        MutableMemPiece mp(str, sizeof(str) - 1);
+        TESTA_ASSERT(pp::prettyPrint(mp) == "b\"abc\"")
+            (mp).issue();
+    }
+    {
+        MutableMemPiece mp(str, str + 1);
+        TESTA_ASSERT(pp::prettyPrint(mp) == "b\"a\"")
+            (mp).issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(MutableMemPiece_pp);
+
+void MutableMemPiece_subpiece(const string&)
+{
+    {
+        MutableMemPiece mp;
+        TESTA_ASSERT(pp::prettyPrint(mp.subpiece(NULL)) == "b\"\"")
+            (mp.subpiece(NULL)).issue();
+        TESTA_ASSERT(pp::prettyPrint(mp.subpiece(NULL, NULL)) == "b\"\"")
+            (mp.subpiece(NULL, NULL)).issue();
+    }
+    char str[] = "abc";
+    {
+        MutableMemPiece mp(str, sizeof(str) - 1);
+        TESTA_ASSERT(pp::prettyPrint(mp.subpiece(str + 1)) == "b\"bc\"")
+            (mp.subpiece(str + 1)).issue();
+        TESTA_ASSERT(pp::prettyPrint(mp.subpiece(str + 1, str + 2)) == "b\"b\"")
+            (mp.subpiece(str + 1, str + 2)).issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(MutableMemPiece_subpiece);
+
+void MutableMemPiece_length_get(const string&)
+{
+    {
+        MutableMemPiece mp;
+        TESTA_ASSERT(mp.length() == 0)
+            (mp).issue();
+    }
+    {
+        char str[] = "abc";
+        MutableMemPiece mp(str, sizeof(str) - 1);
+        TESTA_ASSERT(mp.length() == 3)
+            (mp).issue();
+        TESTA_ASSERT(mp.get(1) == 'b')
+            (mp).issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(MutableMemPiece_length_get);
+
+int64_t to_int64(const int64_t& in)
+{
+    string s = pp::prettyPrint(in);
+    return MemPiece::from(s).to<int64_t>();
+}
+
+void to_int64_tb(const string& name, function<void(const int64_t&)> cs)
+{
+    deque<int64_t> oracles;
+    oracles.push_back(0);
+    oracles.push_back(1);
+    oracles.push_back(12);
+    oracles.push_back(-1);
+    oracles.push_back(-12);
+    oracles.push_back(numeric_limits<int64_t>::min());
+    oracles.push_back(numeric_limits<int64_t>::max());
+    FOREACH_ITER(i, oracles) {
+        cs(*i);
+    }
+}
+
+void to_int64_verifier(const int64_t& res, const int64_t& in)
+{
+    TESTA_ASSERT(res == in)
+        (res)
+        (in)
+        .issue();
+}
+TESTA_DEF_VERIFY_WITH_TB(MemPiece_ToInt64, to_int64_tb, to_int64_verifier, to_int64);
+
+void MemPiece_ToInt64_errors(const string&)
+{
+    {
+        int64_t x;
+        Optional<string> err = MemPiece().to(x);
+        TESTA_ASSERT(err.present()).issue();
+        TESTA_ASSERT(*err == "Empty piece of memory.")
+            (*err).issue();
+    }
+    {
+        int64_t x;
+        Optional<string> err = MemPiece::from("-").to(x);
+        TESTA_ASSERT(err.present()).issue();
+        TESTA_ASSERT(*err == "A single '-'.")
+            (*err).issue();
+    }
+    {
+        int64_t x;
+        Optional<string> err = MemPiece::from("a").to(x);
+        TESTA_ASSERT(err.present()).issue();
+        TESTA_ASSERT(*err == "Nondigital.")
+            (*err).issue();
+    }
+    {
+        int64_t x;
+        Optional<string> err = MemPiece::from("9223372036854775808").to(x);
+        TESTA_ASSERT(err.present()).issue();
+        TESTA_ASSERT(*err == "Overflow.")
+            (*err).issue();
+    }
+    {
+        int64_t x;
+        Optional<string> err = MemPiece::from("-9223372036854775809").to(x);
+        TESTA_ASSERT(err.present()).issue();
+        TESTA_ASSERT(*err == "Underflow.")
+            (*err).issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(MemPiece_ToInt64_errors);
 
 } // namespace tablestore
 } // namespace aliyun

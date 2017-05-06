@@ -31,6 +31,6 @@ env.Append(BUILDERS={
 env.TableStoreProtoc('table_store.proto')
 env.FilterProtoc('table_store_filter.proto')
 
-objs = env.Object(['table_store.pb.cc', 'table_store_filter.pb.cc'])
+objs = env.Object(['table_store.pb.cc', 'table_store_filter.pb.cc'] + env.Glob('*.cpp'))
 Return('objs')
 

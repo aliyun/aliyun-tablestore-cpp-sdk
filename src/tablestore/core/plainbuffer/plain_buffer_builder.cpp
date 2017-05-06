@@ -46,19 +46,19 @@ int32_t PlainBufferBuilder::ComputePrimaryKeyValueSize(const PrimaryKeyValue& va
     int32_t size = 1;   // TAG_CELL_VALUE
     size += LITTLE_ENDIAN_32_SIZE + 1;  // length + type
     switch (value.category()) {
-    case PrimaryKeyValue::NONE:
+    case PrimaryKeyValue::kNone:
         OTS_ASSERT(false)(value);
-    case PrimaryKeyValue::INF_MIN: case PrimaryKeyValue::INF_MAX: case PrimaryKeyValue::AUTO_INCR:
+    case PrimaryKeyValue::kInfMin: case PrimaryKeyValue::kInfMax: case PrimaryKeyValue::kAutoIncr:
         size += 1;
         break;
-    case PrimaryKeyValue::INTEGER:
+    case PrimaryKeyValue::kInteger:
         size += sizeof(int64_t); // value size
         break;
-    case PrimaryKeyValue::STRING:
+    case PrimaryKeyValue::kString:
         size += LITTLE_ENDIAN_32_SIZE; // length size
         size += static_cast<int32_t>(value.str().length()); // value size
         break;
-    case PrimaryKeyValue::BINARY:
+    case PrimaryKeyValue::kBinary:
         size += LITTLE_ENDIAN_32_SIZE; // length size
         size += static_cast<int32_t>(value.blob().length()); // value size
         break;
@@ -87,23 +87,23 @@ int32_t PlainBufferBuilder::ComputeColumnValueSize(const AttributeValue& value)
     int32_t size = 1;   // TAG_CELL_VALUE
     size += LITTLE_ENDIAN_32_SIZE + 1;  // length + type
     switch (value.category()) {
-    case AttributeValue::NONE:
+    case AttributeValue::kNone:
         break;
-    case AttributeValue::INTEGER:
+    case AttributeValue::kInteger:
         size += sizeof(int64_t); // value size
         break;
-    case AttributeValue::STRING:
+    case AttributeValue::kString:
         size += LITTLE_ENDIAN_32_SIZE; // length size
         size += static_cast<int32_t>(value.str().length()); // value size
         break;
-    case AttributeValue::BINARY:
+    case AttributeValue::kBinary:
         size += LITTLE_ENDIAN_32_SIZE; // length size
         size += static_cast<int32_t>(value.blob().length()); // value size
         break;
-    case AttributeValue::BOOLEAN:
+    case AttributeValue::kBoolean:
         size += 1;
         break;
-    case AttributeValue::FLOATING_POINT:
+    case AttributeValue::kFloatPoint:
         size += LITTLE_ENDIAN_64_SIZE;
         break;
     }
@@ -137,21 +137,21 @@ int32_t PlainBufferBuilder::ComputeColumnSize(
     size += LITTLE_ENDIAN_32_SIZE; // length
     size += update.attrName().size();
     switch(update.type()) {
-    case RowUpdateChange::Update::PUT:
+    case RowUpdateChange::Update::kPut:
         size += ComputeColumnValueSize(*update.attrValue());
         if (update.timestamp().present()) {
             size += 1; // TAG_CELL_TIMESTAMP
             size += LITTLE_ENDIAN_64_SIZE; // ts
         }
         break;
-    case RowUpdateChange::Update::DELETE:
+    case RowUpdateChange::Update::kDelete:
         size += 1 + LITTLE_ENDIAN_32_SIZE + 1;  // value placeholder
         if (update.timestamp().present()) {
             size += 1 + LITTLE_ENDIAN_64_SIZE;  // TAG_CELL_TIMESTAMP + ts size
         }
         size += 2;  // TAG_CELL_TYPE + type
         break;
-    case RowUpdateChange::Update::DELETE_ALL:
+    case RowUpdateChange::Update::kDeleteAll:
         size += 1 + LITTLE_ENDIAN_32_SIZE + 1;  // value placeholder
         size += 2;  // TAG_CELL_TYPE + type
         break;

@@ -38,7 +38,7 @@ namespace core {
 class Endpoint;
 class Credential;
 
-void read(Endpoint*, Credential*);
+void read(Endpoint&, Credential&);
 
 } // namespace core
 } // namespace tablestore

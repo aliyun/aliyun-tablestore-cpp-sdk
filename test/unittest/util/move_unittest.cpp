@@ -31,10 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/move.hpp"
 #include "testa/testa.hpp"
+#include <tr1/memory>
+#include <memory>
 #include <deque>
 #include <string>
 
 using namespace std;
+using namespace std::tr1;
 
 namespace aliyun {
 namespace tablestore {
@@ -88,6 +91,11 @@ public:
         mLog->append(mId);
         mLog->push_back(',');
     }
+
+    string id() const
+    {
+        return mId;
+    }
 };
 
 } // namespace
@@ -98,7 +106,7 @@ void Move_Moveable(const string&)
     {
         A a("a", &log);
         A b("b", &log);
-        util::moveAssign(&a, util::move(b));
+        util::moveAssign(a, util::move(b));
     }
     TESTA_ASSERT(log == "ctor:a,ctor:b,dtor:a,move assign:b,dtor:,dtor:b,")
         (log)
@@ -110,7 +118,7 @@ void Move_int(const string&)
 {
     int a = 10;
     int b = 0;
-    util::moveAssign(&b, util::move(a));
+    util::moveAssign(b, util::move(a));
     TESTA_ASSERT(b == 10)
         (a)
         .issue();
@@ -122,11 +130,37 @@ void Move_deque(const string&)
     deque<int> a;
     a.push_back(1);
     deque<int> b;
-    util::moveAssign(&b, util::move(a));
+    util::moveAssign(b, util::move(a));
     TESTA_ASSERT(pp::prettyPrint(a) == "[]" && pp::prettyPrint(b) == "[1]")
         (a)(b).issue();
 }
 TESTA_DEF_JUNIT_LIKE1(Move_deque);
+
+void Move_autoptr(const string&)
+{
+    string log;
+    auto_ptr<A> a(new A("a", &log));
+    auto_ptr<A> b(new A("b", &log));
+    util::moveAssign(a, util::move(b));
+    TESTA_ASSERT(log == "ctor:a,ctor:b,dtor:a,")
+        (log).issue();
+    TESTA_ASSERT(a->id() == "b")
+        (a->id()).issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Move_autoptr);
+
+void Move_sharedptr(const string&)
+{
+    string log;
+    shared_ptr<A> a(new A("a", &log));
+    shared_ptr<A> b(new A("b", &log));
+    util::moveAssign(a, util::move(b));
+    TESTA_ASSERT(log == "ctor:a,ctor:b,dtor:a,")
+        (log).issue();
+    TESTA_ASSERT(a->id() == "b")
+        (a->id()).issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Move_sharedptr);
 
 } // namespace tablestore
 } // namespace aliyun

@@ -78,6 +78,24 @@ struct ToMemPiece<const char[N], void>
     }
 };
 
+template<int N>
+struct ToMemPiece<uint8_t[N], void>
+{
+    MemPiece operator()(const uint8_t* x) const
+    {
+        return MemPiece(x, N);
+    }
+};
+
+template<int N>
+struct ToMemPiece<const uint8_t[N], void>
+{
+    MemPiece operator()(const uint8_t* x) const
+    {
+        return MemPiece(x, N);
+    }
+};
+
 template<>
 struct ToMemPiece<char*, void>
 {
@@ -95,6 +113,28 @@ struct ToMemPiece<const char*, void>
         ToMemPiece<char*, void> p;
         return p(x);
     }
+};
+
+template<>
+struct ToMemPiece<MutableMemPiece, void>
+{
+    MemPiece operator()(const MutableMemPiece& mp) const
+    {
+        return MemPiece(mp.begin(), mp.end() - mp.begin());
+    }
+};
+
+
+template<>
+struct FromMemPiece<int64_t, void>
+{
+    Optional<std::string> operator()(int64_t&, const MemPiece&) const;
+};
+
+template<>
+struct FromMemPiece<std::string, void>
+{
+    Optional<std::string> operator()(std::string&, const MemPiece&) const;
 };
 
 } // namspace impl

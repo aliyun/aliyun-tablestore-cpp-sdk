@@ -86,7 +86,6 @@ int32_t PlainBufferCodedInputStream::ReadHeader()
 }
 
 void PlainBufferCodedInputStream::ReadPrimaryKeyValue(
-    IVector<string>* holder,
     PrimaryKeyValue* result,
     int8_t* cellChecksum)
 {
@@ -107,22 +106,20 @@ void PlainBufferCodedInputStream::ReadPrimaryKeyValue(
     }
     case VT_STRING: {
         int32_t valueSize = mInputStream->ReadInt32();
-        holder->append() = mInputStream->ReadUTFString(valueSize);
-        MemPiece val = MemPiece::from(holder->back());
+        string val = mInputStream->ReadUTFString(valueSize);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_STRING);
         *cellChecksum = PlainBufferCrc8::CrcInt32(*cellChecksum, valueSize);
-        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, val);
+        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, MemPiece::from(val));
         ReadTag();
         *result = PrimaryKeyValue::toStr(val);
         break;
     }
     case VT_BLOB: {
         int32_t valueSize = mInputStream->ReadInt32();
-        holder->append() = mInputStream->ReadBytes(valueSize);
-        MemPiece val = MemPiece::from(holder->back());
+        string val = mInputStream->ReadBytes(valueSize);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_BLOB);
         *cellChecksum = PlainBufferCrc8::CrcInt32(*cellChecksum, valueSize);
-        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, val);
+        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, MemPiece::from(val));
         ReadTag();
         *result = PrimaryKeyValue::toBlob(val);
         break;
@@ -131,7 +128,6 @@ void PlainBufferCodedInputStream::ReadPrimaryKeyValue(
 }
 
 void PlainBufferCodedInputStream::ReadColumnValue(
-    IVector<string>* holder,
     AttributeValue* column,
     int8_t* cellChecksum)
 {
@@ -152,22 +148,20 @@ void PlainBufferCodedInputStream::ReadColumnValue(
     }
     case VT_STRING: {
         int32_t valueSize = mInputStream->ReadInt32();
-        holder->append() = mInputStream->ReadUTFString(valueSize);
-        MemPiece val = MemPiece::from(holder->back());
+        string val = mInputStream->ReadUTFString(valueSize);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_STRING);
         *cellChecksum = PlainBufferCrc8::CrcInt32(*cellChecksum, valueSize);
-        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, val);
+        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, MemPiece::from(val));
         ReadTag();
         *column = AttributeValue::toStr(val);
         break;
     }
     case VT_BLOB: {
         int32_t valueSize = mInputStream->ReadInt32();
-        holder->append() = mInputStream->ReadBytes(valueSize);
-        MemPiece val = MemPiece::from(holder->back());
+        string val = mInputStream->ReadBytes(valueSize);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_BLOB);
         *cellChecksum = PlainBufferCrc8::CrcInt32(*cellChecksum, valueSize);
-        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, val);
+        *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, MemPiece::from(val));
         ReadTag();
         *column = AttributeValue::toBlob(val);
         break;
@@ -194,7 +188,6 @@ void PlainBufferCodedInputStream::ReadColumnValue(
 }
 
 void PlainBufferCodedInputStream::ReadPrimaryKeyColumn(
-    IVector<string>* holder,
     PrimaryKeyColumn* column,
     int8_t* rowChecksum)
 {
@@ -219,9 +212,9 @@ void PlainBufferCodedInputStream::ReadPrimaryKeyColumn(
             "Expect TAG_CELL_VALUE E but it was " + pp::prettyPrint(GetLastTag()));
     }
     PrimaryKeyValue primaryKeyValue;
-    ReadPrimaryKeyValue(holder, &primaryKeyValue, &cellChecksum);
+    ReadPrimaryKeyValue(&primaryKeyValue, &cellChecksum);
     PrimaryKeyColumn primaryKeyColumn;
-    *primaryKeyColumn.mutableName() = columnName;
+    primaryKeyColumn.mutableName() = columnName;
     moveAssign(primaryKeyColumn.mutableValue(), util::move(primaryKeyValue));
 
     if (GetLastTag() == TAG_CELL_CHECKSUM) {
@@ -237,11 +230,11 @@ void PlainBufferCodedInputStream::ReadPrimaryKeyColumn(
     }
     *rowChecksum = PlainBufferCrc8::CrcInt8(*rowChecksum, cellChecksum);
 
-    moveAssign(column, util::move(primaryKeyColumn));
+    moveAssign(*column, util::move(primaryKeyColumn));
 }
 
 void PlainBufferCodedInputStream::ReadColumn(
-    IVector<string>* holder, Attribute* column, int8_t* rowChecksum)
+    Attribute* column, int8_t* rowChecksum)
 {
     if (!CheckLastTagWas(TAG_CELL)) {
         throw OTSClientException(
@@ -257,13 +250,13 @@ void PlainBufferCodedInputStream::ReadColumn(
     int32_t nameSize = mInputStream->ReadRawLittleEndian32();
     string columnName = mInputStream->ReadUTFString(nameSize);
     Attribute tmpColumn;
-    *tmpColumn.mutableName() = columnName;
+    tmpColumn.mutableName() = columnName;
     cellChecksum = PlainBufferCrc8::CrcString(cellChecksum, MemPiece::from(columnName));
     ReadTag();
 
     if (GetLastTag() == TAG_CELL_VALUE) {
         AttributeValue val;
-        ReadColumnValue(holder, &val, &cellChecksum);
+        ReadColumnValue(&val, &cellChecksum);
         moveAssign(tmpColumn.mutableValue(), util::move(val));
     }
 
@@ -276,7 +269,7 @@ void PlainBufferCodedInputStream::ReadColumn(
 
     if (GetLastTag() == TAG_CELL_TIMESTAMP) {
         int64_t timestamp = mInputStream->ReadInt64();
-        *tmpColumn.mutableTimestamp() = UtcTime::fromMsec(timestamp);
+        tmpColumn.mutableTimestamp().reset(UtcTime::fromMsec(timestamp));
         cellChecksum = PlainBufferCrc8::CrcInt64(cellChecksum, timestamp);
         ReadTag(); 
     }
@@ -294,12 +287,10 @@ void PlainBufferCodedInputStream::ReadColumn(
     }
     *rowChecksum = PlainBufferCrc8::CrcInt8(*rowChecksum, cellChecksum);
 
-    moveAssign(column, util::move(tmpColumn));
+    moveAssign(*column, util::move(tmpColumn));
 }
 
-void PlainBufferCodedInputStream::ReadRowWithoutHeader(
-    IVector<string>* holder,
-    Row* row)
+void PlainBufferCodedInputStream::ReadRowWithoutHeader(Row* row)
 {
     row->reset();
     int8_t rowChecksum = 0;
@@ -312,17 +303,15 @@ void PlainBufferCodedInputStream::ReadRowWithoutHeader(
     ReadTag();
     while (CheckLastTagWas(TAG_CELL)) {
         PrimaryKeyColumn primaryKeyColumn;
-        ReadPrimaryKeyColumn(holder, &primaryKeyColumn, &rowChecksum);
-        moveAssign(&row->mutablePrimaryKey()->append(), util::move(primaryKeyColumn));
+        ReadPrimaryKeyColumn(&primaryKeyColumn, &rowChecksum);
+        moveAssign(row->mutablePrimaryKey().append(), util::move(primaryKeyColumn));
     }
 
     // parse columns.
     if (CheckLastTagWas(TAG_ROW_DATA)) {
         ReadTag();
         while (CheckLastTagWas(TAG_CELL)) {
-            Attribute column;
-            ReadColumn(holder, &column, &rowChecksum);
-            moveAssign(&row->mutableAttributes()->append(), util::move(column));
+            ReadColumn(&row->mutableAttributes().append(), &rowChecksum);
         }
     }
 
@@ -347,17 +336,16 @@ void PlainBufferCodedInputStream::ReadRowWithoutHeader(
     }
 }
 
-void PlainBufferCodedInputStream::ReadRow(IVector<string>* holder, Row* row)
+void PlainBufferCodedInputStream::ReadRow(Row* row)
 {
     if (ReadHeader() != HEADER) {
         throw OTSClientException("Invalid header from plain buffer.");
     }
     ReadTag();
-    ReadRowWithoutHeader(holder, row);
+    ReadRowWithoutHeader(row);
 }
 
 void PlainBufferCodedInputStream::ReadRows(
-    IVector<string>* holder,
     IVector<Row>* rows)
 {
     if (ReadHeader() != HEADER) {
@@ -369,8 +357,8 @@ void PlainBufferCodedInputStream::ReadRows(
     // read all rows.
     while (!mInputStream->IsAtEnd()) {
         Row row;
-        ReadRowWithoutHeader(holder, &row);
-        moveAssign(&rows->append(), util::move(row));
+        ReadRowWithoutHeader(&row);
+        moveAssign(rows->append(), util::move(row));
     }
 }
 
@@ -411,32 +399,32 @@ void PlainBufferCodedOutputStream::WritePrimaryKeyValue(
     WriteTag(TAG_CELL_VALUE);
 
     switch (value.category()) {
-    case PrimaryKeyValue::NONE:
+    case PrimaryKeyValue::kNone:
         OTS_ASSERT(false)(value);
-    case PrimaryKeyValue::INF_MIN:
+    case PrimaryKeyValue::kInfMin:
         mOutputStream->WriteRawLittleEndian32(1);
         mOutputStream->WriteRawByte(VT_INF_MIN);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_INF_MIN);
         break;
-    case PrimaryKeyValue::INF_MAX:
+    case PrimaryKeyValue::kInfMax:
         mOutputStream->WriteRawLittleEndian32(1);
         mOutputStream->WriteRawByte(VT_INF_MAX);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_INF_MAX);
         break;
-    case PrimaryKeyValue::AUTO_INCR:
+    case PrimaryKeyValue::kAutoIncr:
         mOutputStream->WriteRawLittleEndian32(1);
         mOutputStream->WriteRawByte(VT_AUTO_INCREMENT);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_AUTO_INCREMENT);
         break;
-    case PrimaryKeyValue::INTEGER: 
+    case PrimaryKeyValue::kInteger: 
         mOutputStream->WriteRawLittleEndian32(1 + LITTLE_ENDIAN_64_SIZE);
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_INTEGER);
         *cellChecksum = PlainBufferCrc8::CrcInt64(*cellChecksum, value.integer());
         break;
-    case PrimaryKeyValue::STRING: {
-        const MemPiece& stringValue = value.str();
+    case PrimaryKeyValue::kString: {
+        MemPiece stringValue = MemPiece::from(value.str());
         int32_t prefixLength = LITTLE_ENDIAN_32_SIZE + 1; // length + type
         mOutputStream->WriteRawLittleEndian32(prefixLength + stringValue.length());  // length + type + value
         mOutputStream->WriteRawByte(VT_STRING);
@@ -447,8 +435,8 @@ void PlainBufferCodedOutputStream::WritePrimaryKeyValue(
         *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, stringValue);
         break;
     }
-    case PrimaryKeyValue::BINARY: {
-        const MemPiece& blob = value.blob();
+    case PrimaryKeyValue::kBinary: {
+        MemPiece blob = MemPiece::from(value.blob());
         int32_t prefixLength = LITTLE_ENDIAN_32_SIZE + 1;    // length + type
         mOutputStream->WriteRawLittleEndian32(prefixLength + blob.length()); // length + type + value
         mOutputStream->WriteRawByte(VT_BLOB);
@@ -465,31 +453,31 @@ void PlainBufferCodedOutputStream::WritePrimaryKeyValue(
 void PlainBufferCodedOutputStream::WritePrimaryKeyValue(const PrimaryKeyValue& value)
 {
     switch (value.category()) {
-    case PrimaryKeyValue::NONE:
+    case PrimaryKeyValue::kNone:
         OTS_ASSERT(false)(value);
-    case PrimaryKeyValue::INF_MIN:
+    case PrimaryKeyValue::kInfMin:
         mOutputStream->WriteRawByte(VT_INF_MIN);
         break;
-    case PrimaryKeyValue::INF_MAX:
+    case PrimaryKeyValue::kInfMax:
         mOutputStream->WriteRawByte(VT_INF_MAX);
         break;
-    case PrimaryKeyValue::AUTO_INCR:
+    case PrimaryKeyValue::kAutoIncr:
         mOutputStream->WriteRawByte(VT_AUTO_INCREMENT);
         break;
-    case PrimaryKeyValue::INTEGER: {
+    case PrimaryKeyValue::kInteger: {
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
         break;
     }
-    case PrimaryKeyValue::STRING: {
-        const MemPiece& stringValue = value.str();
+    case PrimaryKeyValue::kString: {
+        MemPiece stringValue = MemPiece::from(value.str());
         mOutputStream->WriteRawByte(VT_STRING);
         mOutputStream->WriteRawLittleEndian32(stringValue.length());
         mOutputStream->WriteBytes(stringValue);
         break;
     }
-    case PrimaryKeyValue::BINARY: {
-        const MemPiece& binaryValue = value.blob();
+    case PrimaryKeyValue::kBinary: {
+        MemPiece binaryValue = MemPiece::from(value.blob());
         mOutputStream->WriteRawByte(VT_BLOB);
         mOutputStream->WriteRawLittleEndian32(binaryValue.length());
         mOutputStream->WriteBytes(binaryValue);
@@ -504,10 +492,10 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
 {
     WriteTag(TAG_CELL_VALUE);
     switch (value.category()) {
-    case AttributeValue::NONE:
+    case AttributeValue::kNone:
         OTS_ASSERT(false)(value);
         break;
-    case AttributeValue::INTEGER: {
+    case AttributeValue::kInteger: {
         mOutputStream->WriteRawLittleEndian32(1 + LITTLE_ENDIAN_64_SIZE);
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
@@ -515,8 +503,8 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
         *cellChecksum = PlainBufferCrc8::CrcInt64(*cellChecksum, value.integer());
         break;
     }
-    case AttributeValue::STRING: {
-        const MemPiece& stringValue = value.str();
+    case AttributeValue::kString: {
+        const MemPiece& stringValue = MemPiece::from(value.str());
         int32_t prefixLength = LITTLE_ENDIAN_32_SIZE + 1;   // length + type
         mOutputStream->WriteRawLittleEndian32(prefixLength + stringValue.length()); // length + type + value
         mOutputStream->WriteRawByte(VT_STRING);
@@ -527,8 +515,8 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
         *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, stringValue);
         break;
     }
-    case AttributeValue::BINARY: {
-        const MemPiece& binaryValue = value.blob();
+    case AttributeValue::kBinary: {
+        const MemPiece& binaryValue = MemPiece::from(value.blob());
         int32_t prefixLength = LITTLE_ENDIAN_32_SIZE + 1;   // length + type
         mOutputStream->WriteRawLittleEndian32(prefixLength + binaryValue.length()); // length + type
         mOutputStream->WriteRawByte(VT_BLOB);
@@ -539,7 +527,7 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
         *cellChecksum = PlainBufferCrc8::CrcString(*cellChecksum, binaryValue);
         break;
     }
-    case AttributeValue::BOOLEAN: {
+    case AttributeValue::kBoolean: {
         mOutputStream->WriteRawLittleEndian32(2);
         mOutputStream->WriteRawByte(VT_BOOLEAN);
         mOutputStream->WriteBoolean(value.boolean());
@@ -548,7 +536,7 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, booleanInt8);
         break;
     }
-    case AttributeValue::FLOATING_POINT: {
+    case AttributeValue::kFloatPoint: {
         mOutputStream->WriteRawLittleEndian32(1 + LITTLE_ENDIAN_64_SIZE);
         mOutputStream->WriteRawByte(VT_DOUBLE);
         mOutputStream->WriteDouble(value.floatPoint());
@@ -563,33 +551,33 @@ void PlainBufferCodedOutputStream::WriteColumnValue(
 void PlainBufferCodedOutputStream::WriteColumnValue(const AttributeValue& value)
 {
     switch (value.category()) {
-    case AttributeValue::NONE:
+    case AttributeValue::kNone:
         OTS_ASSERT(false)(value);
         break;
-    case AttributeValue::INTEGER: 
+    case AttributeValue::kInteger: 
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
         break;
-    case AttributeValue::STRING: {
-        const MemPiece& stringValue = value.str();
+    case AttributeValue::kString: {
+        const MemPiece& stringValue = MemPiece::from(value.str());
         mOutputStream->WriteRawByte(VT_STRING);
         mOutputStream->WriteRawLittleEndian32(stringValue.length());
         mOutputStream->WriteBytes(stringValue);
         break;
     }
-    case AttributeValue::BINARY: {
-        const MemPiece& blob = value.blob();
+    case AttributeValue::kBinary: {
+        const MemPiece& blob = MemPiece::from(value.blob());
         mOutputStream->WriteRawByte(VT_BLOB);
         mOutputStream->WriteRawLittleEndian32(blob.length());
         mOutputStream->WriteBytes(blob);
         break;
     }
-    case AttributeValue::BOOLEAN: {
+    case AttributeValue::kBoolean: {
         mOutputStream->WriteRawByte(VT_BOOLEAN);
         mOutputStream->WriteBoolean(value.boolean());
         break;
     }
-    case AttributeValue::FLOATING_POINT: {
+    case AttributeValue::kFloatPoint: {
         mOutputStream->WriteRawByte(VT_DOUBLE);
         mOutputStream->WriteDouble(value.floatPoint());
         break;
@@ -641,13 +629,13 @@ void PlainBufferCodedOutputStream::WriteColumn(
     }
 
     switch(update.type()) {
-    case RowUpdateChange::Update::PUT:
+    case RowUpdateChange::Update::kPut:
         break;
-    case RowUpdateChange::Update::DELETE:
+    case RowUpdateChange::Update::kDelete:
         WriteTag(TAG_CELL_TYPE);
         mOutputStream->WriteRawByte(DELETE_ONE_VERSION);
         break;
-    case RowUpdateChange::Update::DELETE_ALL:
+    case RowUpdateChange::Update::kDeleteAll:
         WriteTag(TAG_CELL_TYPE);
         mOutputStream->WriteRawByte(DELETE_ALL_VERSION);
         break;
@@ -665,12 +653,12 @@ void PlainBufferCodedOutputStream::WriteColumn(
     }
 
     switch(update.type()) {
-    case RowUpdateChange::Update::PUT:
+    case RowUpdateChange::Update::kPut:
         break;
-    case RowUpdateChange::Update::DELETE:
+    case RowUpdateChange::Update::kDelete:
         cellChecksum = PlainBufferCrc8::CrcInt8(cellChecksum, DELETE_ONE_VERSION);
         break;
-    case RowUpdateChange::Update::DELETE_ALL:
+    case RowUpdateChange::Update::kDeleteAll:
         cellChecksum = PlainBufferCrc8::CrcInt8(cellChecksum, DELETE_ALL_VERSION);
         break;
     }

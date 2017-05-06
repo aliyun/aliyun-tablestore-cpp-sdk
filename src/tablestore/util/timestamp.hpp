@@ -207,7 +207,7 @@ public:
         return mValue / kUsecPerHour;
     }
 
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
 };
 
 inline Duration operator+(Duration a, Duration b)
@@ -287,7 +287,7 @@ public:
         return *this;
     }
 
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
 
 private:
     int64_t toUsec() const throw()
@@ -423,10 +423,10 @@ public:
      * usec is of 6 digits (padding with 0).
      * There is no whitespaces between all parts.
      */
-    void toIso8601(std::string*) const;
+    void toIso8601(std::string&) const;
     std::string toIso8601() const;
 
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
 };
 
 inline UtcTime operator+(UtcTime base, Duration delta) throw()

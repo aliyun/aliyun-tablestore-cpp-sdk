@@ -41,8 +41,15 @@ namespace tablestore {
 
 void Error_complete(const string&)
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
+    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    err.mutableMessage() = "xxx";
+    err.mutableTraceId() = "trace";
+    err.mutableRequestId() = "request";
+    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, "
+        "\"ErrorCode\": \"OTSParameterInvalid\", "
+        "\"Message\": \"xxx\", "
+        "\"RequestId\": \"request\", "
+        "\"TraceId\": \"trace\"}")
         (err)
         .issue();
 }
@@ -50,8 +57,13 @@ TESTA_DEF_JUNIT_LIKE1(Error_complete);
 
 void Error_no_traceid(const string&)
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
+    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    err.mutableMessage() = "xxx";
+    err.mutableTraceId() = "trace";
+    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, "
+        "\"ErrorCode\": \"OTSParameterInvalid\", "
+        "\"Message\": \"xxx\", "
+        "\"TraceId\": \"trace\"}")
         (err)
         .issue();
 }
@@ -59,8 +71,11 @@ TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
 
 void Error_no_requestid_traceid(const string&)
 {
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
+    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    err.mutableMessage() = "xxx";
+    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, "
+        "\"ErrorCode\": \"OTSParameterInvalid\", "
+        "\"Message\": \"xxx\"}")
         (err)
         .issue();
 }

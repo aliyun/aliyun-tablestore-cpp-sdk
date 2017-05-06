@@ -37,61 +37,6 @@ using namespace std;
 namespace aliyun {
 namespace tablestore {
 
-// OTSException
-
-OTSException::OTSException(
-    const string& errrorCode,
-    const string& message,
-    const string& requestId,
-    const string& traceId,
-    int httpStatus)
-    : mErrorCode(errrorCode)
-    , mMessage(message)
-    , mRequestId(requestId)
-    , mTraceId(traceId)
-    , mHttpStatus(httpStatus)
-{
-    mWhat = "ErrorCode: " + mErrorCode + 
-        ", Message: " + mMessage + 
-        ", RequestId: " + mRequestId + 
-        ", TraceId: " + mTraceId + 
-        ", HttpStatus: " + pp::prettyPrint(mHttpStatus);
-}
-
-OTSException::~OTSException() throw()
-{
-}
-
-const char* OTSException::what() const throw()
-{
-    return mWhat.c_str();
-}
-
-string OTSException::GetErrorCode() const
-{
-    return mErrorCode;
-}
-
-string OTSException::GetMessage() const
-{
-    return mMessage;
-}
-
-string OTSException::GetRequestId() const
-{
-    return mRequestId;
-}
-
-string OTSException::GetTraceId() const
-{
-    return mTraceId;
-}
-
-int OTSException::GetHttpStatus() const
-{
-    return mHttpStatus;
-}
-
 // OTSClientException
 
 OTSClientException::OTSClientException(const string& message)

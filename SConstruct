@@ -285,15 +285,33 @@ flags = {
     'CFLAGS': [],
     'CXXFLAGS': [],
     'CCFLAGS': ['-Wall', '-pthread', '-fPIC', '-g',
-                '-Wno-float-equal', '-fno-strict-overflow',
-                '-I%s' % env['HEADER_DIR'].path],
-    'LINKFLAGS': ['-pthread', '-rdynamic', '-L' + env.Dir('$LIB_DIR').path]}
+                '-Wno-float-equal', '-fwrapv'],
+    'LINKFLAGS': ['-pthread', '-rdynamic', '-L%s' % env['LIB_DIR'].path]}
 if mode == 'debug':
     flags['CCFLAGS'] += ['-O0']
     flags['LINKFLAGS'] += []
 elif mode == 'release':
     flags['CCFLAGS'] += ['-O2', '-Werror', '-DNDEBUG']
+
+def detect_compiler():
+    out = sp.check_output(['g++', '--version'])
+    gcc = re.compile('^g[+]{2} [(].*[)] (\d+)[.](\d+)[.](\d+)')
+    m = gcc.match(out)
+    if m:
+        return 'g++', [int(x) for x in m.groups()]
+
+compiler, version = detect_compiler()
+if compiler == 'g++':
+    flags['CXXFLAGS'].append('--std=gnu++03')
+    if version >= [4, 9, 0]:
+        flags['CCFLAGS'].extend(['--coverage', '-fsanitize=address', '-fvar-tracking-assignments'])
+        flags['LINKFLAGS'].extend(['--coverage', '-fsanitize=address'])
+else:
+    print compiler, version
+    assert False, 'unsupport compiler'
+
 env.MergeFlags(flags)
+env.AppendUnique(CPPPATH=[env['BUILD_DIR'], env['HEADER_DIR']])
 
 _extLibs = set()
 _libDeps = {}

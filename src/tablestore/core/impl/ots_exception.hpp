@@ -36,46 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 
-class OTSException : public std::exception
-{
-public:
-
-    OTSException(
-        const std::string& errrorCode,
-        const std::string& message,
-        const std::string& requestId,
-        const std::string& traceId,
-        int httpStatus);
-
-    virtual ~OTSException() throw();
-
-    virtual const char* what() const throw();
-
-    std::string GetErrorCode() const;
-
-    std::string GetMessage() const;
-
-    std::string GetRequestId() const;
-
-    std::string GetTraceId() const;
-
-    int GetHttpStatus() const;
-
-private:
-
-    std::string mErrorCode;
-
-    std::string mMessage;
-
-    std::string mRequestId;
-
-    std::string mTraceId;
-
-    std::string mWhat;
-
-    int mHttpStatus;
-};
-
 class OTSClientException : public std::exception
 {
 public:

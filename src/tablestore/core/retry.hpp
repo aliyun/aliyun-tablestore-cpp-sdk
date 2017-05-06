@@ -40,7 +40,7 @@ namespace aliyun {
 namespace tablestore {
 namespace util {
 namespace random {
-class IRandom;
+class Random;
 } // namespace random
 } // namespace util
 
@@ -48,22 +48,9 @@ namespace core {
 
 class Error;
 
-class IRetryStrategy
+class RetryStrategy
 {
 public:
-    virtual ~IRetryStrategy() {}
-
-    virtual IRetryStrategy* clone() const =0;
-    virtual int64_t retries() const throw() =0;
-    virtual bool shouldRetry(Action, const Error&) const =0;
-    virtual util::Duration nextPause() =0;
-};
-
-class DefaultRetryStrategy: public IRetryStrategy
-{
-public:
-    explicit DefaultRetryStrategy(util::random::IRandom*, util::Duration timeout);
-
     enum RetryCategory
     {
         UNRETRIABLE,
@@ -74,7 +61,22 @@ public:
     static RetryCategory retriable(const Error&);
     static bool retriable(Action, const Error&);
 
-    DefaultRetryStrategy* clone() const;
+    virtual ~RetryStrategy() {}
+
+    virtual RetryStrategy* clone() const =0;
+    virtual int64_t retries() const throw() =0;
+    virtual bool shouldRetry(Action, const Error&) const =0;
+    virtual util::Duration nextPause() =0;
+};
+
+class DeadlineRetryStrategy: public RetryStrategy
+{
+public:
+    explicit DeadlineRetryStrategy(
+        const std::tr1::shared_ptr<util::random::Random>&,
+        util::Duration timeout);
+
+    DeadlineRetryStrategy* clone() const;
     int64_t retries() const throw();
     bool shouldRetry(Action, const Error&) const;
     util::Duration nextPause();
@@ -82,13 +84,46 @@ public:
 private:
     static const util::Duration kMaxPauseBase;
 
-    util::random::IRandom* mRandom;
+    std::tr1::shared_ptr<util::random::Random> mRandom;
     util::Duration mTimeout;
 
     // reset for cloned ones
     util::Duration mPauseBase;
     int64_t mRetries;
     util::MonotonicTime mDeadline;
+};
+
+class CountingRetryStrategy: public RetryStrategy
+{
+public:
+    explicit CountingRetryStrategy(
+        const std::tr1::shared_ptr<util::random::Random>&,
+        int64_t n,
+        util::Duration interval);
+
+    CountingRetryStrategy* clone() const;
+    int64_t retries() const throw();
+    bool shouldRetry(Action, const Error&) const;
+    util::Duration nextPause();
+
+private:
+    std::tr1::shared_ptr<util::random::Random> mRandom;
+    util::Duration mInterval;
+    const int64_t mMaxRetries;
+    
+    // reset for cloned ones
+    int64_t mRetries;
+};
+
+class NoRetry: public RetryStrategy
+{
+public:
+    explicit NoRetry();
+
+    NoRetry* clone() const;
+    int64_t retries() const throw();
+    bool shouldRetry(Action, const Error&) const;
+    util::Duration nextPause();
 };
 
 } // namespace core

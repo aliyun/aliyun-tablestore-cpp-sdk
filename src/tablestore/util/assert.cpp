@@ -30,7 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "assert.ipp"
-
+#include "tablestore/util/logger.hpp"
 #include <cstdlib>
 #include <cstdio>
 #include <stdint.h>
@@ -92,6 +92,8 @@ int64_t calcSize(
 
 AssertHelper::~AssertHelper()
 {
+    SinkerCenter::singleton()->flushAll();
+
     const string kSep(", ");
 
     int64_t size = calcSize(mFile, mLine, mFunc, mWhat, mValues);
@@ -127,13 +129,11 @@ AssertHelper::~AssertHelper()
         res.append(mValues[i].second);
     }
 
-    if (OTSFLAG_ASSERT_ABORT > 0) {
-        fprintf(stderr, "Assertion fails: %s\n", res.c_str());
-        if (OTSFLAG_ASSERT_ABORT == 1) {
-            abort();
-        } else if (OTSFLAG_ASSERT_ABORT == 2) {
-            _Exit(1);
-        }
+    fprintf(stderr, "Assertion fails: %s\n", res.c_str());
+    if (OTSFLAG_ASSERT_ABORT == 1) {
+        abort();
+    } else if (OTSFLAG_ASSERT_ABORT == 2) {
+        _Exit(1);
     }
 }
 

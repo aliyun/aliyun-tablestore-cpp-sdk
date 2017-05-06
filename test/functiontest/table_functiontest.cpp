@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "tablestore/core/types.hpp"
 #include "tablestore/core/client.hpp"
+#include "tablestore/util/logging.hpp"
 #include <tr1/functional>
 #include <tr1/tuple>
 #include <set>
@@ -50,62 +51,66 @@ namespace {
 
 void Table_tb(
     const string& name,
-    function<void(const tuple<ISyncClient*, string>&)> cs)
+    function<void(const tuple<SyncClient*, string>&)> cs)
 {
     Endpoint ep;
     Credential cr;
-    read(&ep, &cr);
+    read(ep, cr);
+    ep.mutableEndpoint() = "http://" + ep.endpoint();
     ClientOptions opts;
+    opts.mutableRequestTimeout() = Duration::fromSec(30);
+    opts.mutableMaxConnections() = 2;
+    opts.resetLogger(createLogger("/", Logger::kDebug));
 
-    ISyncClient* pclient = NULL;
+    SyncClient* pclient = NULL;
     {
-        Optional<Error> res = ISyncClient::create(&pclient, ep, cr, opts);
+        Optional<Error> res = SyncClient::create(pclient, ep, cr, opts);
         TESTA_ASSERT(!res.present())
             (*res)(ep)(cr)(opts).issue();
     }
-    auto_ptr<ISyncClient> client(pclient);
+    auto_ptr<SyncClient> client(pclient);
     try {
         {
             CreateTableRequest req;
-            *req.mutableMeta()->mutableTableName() = name;
-            *req.mutableMeta()->mutableSchema()->append().mutableName() = "pkey";
-            *req.mutableMeta()->mutableSchema()->back().mutableType() = PKT_INTEGER;
+            req.mutableMeta().mutableTableName() = name;
+            req.mutableMeta().mutableSchema().append() =
+                PrimaryKeyColumnSchema("pkey", kPKT_Integer);
             CreateTableResponse resp;
-            Optional<Error> res = client->createTable(&resp, req);
+            Optional<Error> res = client->createTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
         cs(make_tuple(pclient, name));
         {
             DeleteTableRequest req;
-            *req.mutableTable() = name;
+            req.mutableTable() = name;
             DeleteTableResponse resp;
-            Optional<Error> res = client->deleteTable(&resp, req);
+            Optional<Error> res = client->deleteTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
     } catch(const std::logic_error& ex) {
         DeleteTableRequest req;
-        *req.mutableTable() = name;
+        req.mutableTable() = name;
         DeleteTableResponse resp;
-        Optional<Error> res = client->deleteTable(&resp, req);
+        Optional<Error> res = client->deleteTable(resp, req);
         throw;
     }
 }
 
-void ListTable_verify(const set<string>& tables, const tuple<ISyncClient*, string>& in)
+void ListTable_verify(const set<string>& tables, const tuple<SyncClient*, string>& in)
 {
     string csname = get<1>(in);
     TESTA_ASSERT(tables.find(csname) != tables.end())
         (tables)(csname).issue();
 }
 
-set<string> ListTable(const tuple<ISyncClient*, string>& in)
+set<string> ListTable(const tuple<SyncClient*, string>& in)
 {
-    ISyncClient* client = get<0>(in);
+    SyncClient* client = get<0>(in);
     ListTableRequest req;
     ListTableResponse resp;
-    Optional<Error> res = client->listTable(&resp, req);
+    Optional<Error> res = client->listTable(resp, req);
     TESTA_ASSERT(!res.present())
         (*res).issue();
     set<string> tables;
@@ -121,12 +126,12 @@ TESTA_DEF_VERIFY_WITH_TB(ListTable, Table_tb, ListTable_verify, ListTable);
 
 namespace {
 
-DescribeTableResponse DescribeTable(const tuple<ISyncClient*, string>& in)
+DescribeTableResponse DescribeTable(const tuple<SyncClient*, string>& in)
 {
     DescribeTableRequest req;
-    *req.mutableTable() = get<1>(in);
+    req.mutableTable() = get<1>(in);
     DescribeTableResponse resp;
-    Optional<Error> err = get<0>(in)->describeTable(&resp, req);
+    Optional<Error> err = get<0>(in)->describeTable(resp, req);
     TESTA_ASSERT(!err.present())
         (*err)(req).issue();
     return resp;
@@ -134,19 +139,19 @@ DescribeTableResponse DescribeTable(const tuple<ISyncClient*, string>& in)
 
 void DescribeTable_verify(
     const DescribeTableResponse& resp,
-    const tuple<ISyncClient*, string>& in)
+    const tuple<SyncClient*, string>& in)
 {
     const TableMeta& meta = resp.meta();
     TESTA_ASSERT(meta.tableName() == get<1>(in))
         (get<1>(in))(resp).issue();
-    TESTA_ASSERT(pp::prettyPrint(meta.schema()) == "[{\"pkey\":PKT_INTEGER}]")
+    TESTA_ASSERT(pp::prettyPrint(meta.schema()) == "[{\"pkey\":kPKT_Integer}]")
         (resp).issue();
     const TableOptions& opts = resp.options();
     TESTA_ASSERT(pp::prettyPrint(opts) == "{"
         "\"ReservedThroughput\":{\"Read\":0,\"Write\":0},"
         "\"TimeToLive\":-1,\"MaxVersions\":1,\"MaxTimeDeviation\":86400}")
         (resp).issue();
-    TESTA_ASSERT(resp.status() == ACTIVE)
+    TESTA_ASSERT(resp.status() == kTS_Active)
         (resp).issue();
     TESTA_ASSERT(resp.shardSplitPoints().size() == 0)
         (resp).issue();
@@ -157,13 +162,13 @@ TESTA_DEF_VERIFY_WITH_TB(DescribeTable, Table_tb, DescribeTable_verify, Describe
 
 namespace {
 
-UpdateTableRequest UpdateTable(const tuple<ISyncClient*, string>& in)
+UpdateTableRequest UpdateTable(const tuple<SyncClient*, string>& in)
 {
     UpdateTableRequest req;
-    *req.mutableTable() = get<1>(in);
-    *req.mutableOptions()->mutableMaxVersions() = 2;
+    req.mutableTable() = get<1>(in);
+    req.mutableOptions().mutableMaxVersions().reset(2);
     UpdateTableResponse resp;
-    Optional<Error> err = get<0>(in)->updateTable(&resp, req);
+    Optional<Error> err = get<0>(in)->updateTable(resp, req);
     TESTA_ASSERT(!err.present())
         (req).issue();
     return req;
@@ -171,12 +176,12 @@ UpdateTableRequest UpdateTable(const tuple<ISyncClient*, string>& in)
 
 void UpdateTable_verify(
     const UpdateTableRequest& req,
-    const tuple<ISyncClient*, string>& in)
+    const tuple<SyncClient*, string>& in)
 {
     DescribeTableRequest dreq;
-    *dreq.mutableTable() = get<1>(in);
+    dreq.mutableTable() = get<1>(in);
     DescribeTableResponse resp;
-    Optional<Error> err = get<0>(in)->describeTable(&resp, dreq);
+    Optional<Error> err = get<0>(in)->describeTable(resp, dreq);
     TESTA_ASSERT(!err.present())
         (*err)(dreq).issue();
     TESTA_ASSERT(resp.options().maxVersions().present())

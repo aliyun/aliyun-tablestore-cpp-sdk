@@ -1,4 +1,3 @@
-#pragma once
 /* 
 BSD 3-Clause License
 
@@ -30,34 +29,43 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/util/logger.hpp"
-#include <map>
+#include "tablestore/util/threading.hpp"
+#include "testa/testa.hpp"
+#include <tr1/functional>
 #include <string>
 
-class ScreenLogger: public aliyun::tablestore::util::Logger
+using namespace std;
+using namespace std::tr1;
+
+namespace aliyun {
+namespace tablestore {
+
+namespace {
+
+void scene(string* out, const string& act)
 {
-public:
-    ScreenLogger(LogLevel);
-    ~ScreenLogger();
+    out->append(act);
+}
 
-    virtual LogLevel level() const;
+void final(util::Semaphore* sem)
+{
+    sem->post();
+}
 
-    /**
-     * Record a piece of log
-     */
-    virtual void record(LogLevel, const std::string&);
+void Actor(const string&)
+{
+    util::Semaphore sem(0);
+    string log;
+    util::Actor actor;
+    actor.pushBack(bind(scene, &log, "hello "));
+    actor.pushBack(bind(scene, &log, "world"));
+    actor.pushBack(bind(final, &sem));
+    sem.wait();
+    TESTA_ASSERT(log == "hello world")
+        (log).issue();
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(Actor);
 
-    /**
-     * Flush logs into disk
-     */
-    virtual void flush();
-
-    /**
-     * Spawn a Logger, which is owned by its root.
-     */
-    virtual Logger* spawn(const std::string& key);
-
-private:
-    const LogLevel mLevel;
-    std::map<std::string, Logger*> mSubs;
-};
+} // namespace tablestore
+} // namespace aliyun

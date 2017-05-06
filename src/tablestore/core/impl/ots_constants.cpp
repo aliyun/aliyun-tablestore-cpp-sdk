@@ -29,44 +29,37 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "screen_logger.hpp"
-#include "tablestore/util/foreach.hpp"
-#include <cstdio>
+#include "ots_constants.hpp"
 
 using namespace std;
 
-ScreenLogger::ScreenLogger(LogLevel lvl)
-  : mLevel(lvl)
-{}
+namespace aliyun {
+namespace tablestore {
+namespace core {
+namespace impl {
 
-ScreenLogger::~ScreenLogger()
-{
-    FOREACH_ITER(it, mSubs) {
-        delete it->second;
-    }
-    mSubs.clear();
-}
+const string kOTSHeaderPrefix("x-ots-");
+const string kAPIVersion("2015-12-31");
+const string kOTSContentMD5("x-ots-contentmd5");
+const string kOTSDate("x-ots-date");
+const string kOTSAPIVersion("x-ots-apiversion");
+const string kOTSAccessKeyId("x-ots-accesskeyid");
+const string kOTSStsToken("x-ots-ststoken");
+const string kOTSInstanceName("x-ots-instancename");
+const string kOTSSignature("x-ots-signature");
+const string kOTSTraceId("x-ots-sdk-traceid");
+const string kHttpContentType("Content-Type");
+const string kHttpContentLength("Content-Length");
+const string kHttpAccept("Accept");
+const string kMimeType("application/x.pb2");
+const string kUserAgent("User-Agent");
 
-ScreenLogger::LogLevel ScreenLogger::level() const
-{
-    return mLevel;
-}
+const string kOTSRequestId("x-ots-requestid");
+const string kOTSAuthorization("Authorization");
+const string kOTSTraceInfo("x-ots-traceinfo");
+const string kOTSContentType("x-ots-contenttype");
 
-void ScreenLogger::record(LogLevel lvl, const string& msg)
-{
-    printf("%s\n", msg.c_str());
-}
-
-void ScreenLogger::flush()
-{}
-
-aliyun::tablestore::util::Logger* ScreenLogger::spawn(const string& key)
-{
-    map<string, Logger*>::iterator it = mSubs.find(key);
-    if (it != mSubs.end()) {
-        return it->second;
-    }
-    Logger* sub = new ScreenLogger(level());
-    mSubs.insert(make_pair(key, sub));
-    return sub;
-}
+} // namespace impl
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun
