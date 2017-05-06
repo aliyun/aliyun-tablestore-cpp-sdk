@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,79 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
+#include <exception>
 #include <string>
-
-using namespace std;
 
 namespace aliyun {
 namespace tablestore {
 
-void Error_complete(const string&)
+class OTSException : public std::exception
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
 
-void Error_no_traceid(const string&)
+    OTSException(
+        const std::string& errrorCode,
+        const std::string& message,
+        const std::string& requestId,
+        const std::string& traceId,
+        int httpStatus);
+
+    virtual ~OTSException() throw();
+
+    virtual const char* what() const throw();
+
+    std::string GetErrorCode() const;
+
+    std::string GetMessage() const;
+
+    std::string GetRequestId() const;
+
+    std::string GetTraceId() const;
+
+    int GetHttpStatus() const;
+
+private:
+
+    std::string mErrorCode;
+
+    std::string mMessage;
+
+    std::string mRequestId;
+
+    std::string mTraceId;
+
+    std::string mWhat;
+
+    int mHttpStatus;
+};
+
+class OTSClientException : public std::exception
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+public:
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    OTSClientException(const std::string& message);
 
-} // namespace tablestore
-} // namespace aliyun
+    OTSClientException(
+        const std::string& message,
+        const std::string& traceId);
+
+    virtual ~OTSClientException() throw();
+
+    virtual const char* what() const throw();
+
+    std::string GetMessage() const;
+
+    std::string GetTraceId() const;
+
+private:
+
+    std::string mMessage;
+
+    std::string mTraceId;
+
+    std::string mWhat;
+};
+
+} // end of tablestore
+} // end of aliyun
 

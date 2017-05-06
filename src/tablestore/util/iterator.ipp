@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,31 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
-#include <string>
-
-using namespace std;
+#include "tablestore/util/metaprogramming.hpp"
+#include <tr1/type_traits>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+namespace impl {
 
-void Error_complete(const string&)
+template<class T, class Enable = void>
+struct IteratorTraits
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+    typedef typename std::tr1::remove_cv<typename std::tr1::remove_reference<T>::type>::type ContainerType;
+    typedef typename ContainerType::iterator IteratorType;
+    typedef typename ContainerType::value_type& ElemType;
+};
 
-void Error_no_traceid(const string&)
+template<class T>
+struct IteratorTraits<T, typename mp::EnableIf<std::tr1::is_const<typename std::tr1::remove_reference<T>::type>::value, void>::Type>
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+    typedef typename std::tr1::remove_cv<typename std::tr1::remove_reference<T>::type>::type ContainerType;
+    typedef typename ContainerType::const_iterator IteratorType;
+    typedef const typename ContainerType::value_type  & ElemType;
+};
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
-
+} // namespace impl
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-

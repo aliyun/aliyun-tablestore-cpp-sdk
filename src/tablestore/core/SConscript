@@ -1,0 +1,19 @@
+# -*- python -*-
+Import('env')
+
+env.header('tablestore/core', [env.Glob('*.hpp'), env.Glob('*.ipp')])
+
+public_objs = env.Object(env.Glob('*.cpp'))
+http_objs = env.subDir('http')
+impl_objs = env.subDir('impl')
+proto_objs = env.subDir('protocol')
+plainbuffer_objs = env.subDir('plainbuffer')
+
+env.Install('$LIB_DIR', [
+    env.StaticLibrary('tablestore_core_static',
+                      [public_objs, http_objs, impl_objs, proto_objs, plainbuffer_objs]),
+    env.SharedLibrary('tablestore_core',
+                      [public_objs, http_objs, impl_objs, proto_objs, plainbuffer_objs])])
+env.libDeps('tablestore_core_static',
+            ['tablestore_util_static', 'protobuf', 'curl', 'crypto', 'ssl', 'uuid'])
+

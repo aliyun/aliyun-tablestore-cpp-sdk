@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,86 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
-#include <string>
 
-using namespace std;
+#include "tablestore/util/optional.hpp"
+#include <tr1/type_traits>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
 
-void Error_complete(const string&)
+template<class T, class Err>
+class Iterator
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
+    typedef T ElemType;
 
-void Error_no_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+    virtual ~Iterator() {}
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    virtual bool valid() const throw() =0;
+    virtual T get() throw() =0;
+    /**
+     * Move to next valid element if exists.
+     * If any error occurs on the way, wraps it into an Optional and returns;
+     * otherwise, returns absent Optional.
+     *
+     */
+    virtual Optional<Err> moveNext() =0;
+};
 
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
 
+#include "iterator.ipp"
+
+namespace aliyun {
+namespace tablestore {
+namespace util {
+
+template<class C>
+class StlContainerIterator
+  : public Iterator<typename impl::IteratorTraits<C>::ElemType, int>
+{
+public:
+    typedef typename impl::IteratorTraits<C>::ElemType ElemType;
+    typedef typename impl::IteratorTraits<C>::IteratorType IteratorType;
+
+    explicit StlContainerIterator(C& container)
+      : mContainer(container),
+        mIter(container.begin())
+    {}
+
+    bool valid() const throw()
+    {
+        return mIter != mContainer.end();
+    }
+
+    ElemType get() throw()
+    {
+        return *mIter;
+    }
+
+    /**
+     * Always returns an absent Optional
+     */
+    Optional<int> moveNext()
+    {
+        ++mIter;
+        return Optional<int>();
+    }
+    
+private:
+    C& mContainer;
+    IteratorType mIter;
+};
+
+template<class C>
+StlContainerIterator<C> iterate(C& xs)
+{
+    return StlContainerIterator<C>(xs);
+}
+
+} // namespace util
+} // namespace tablestore
+} // namespace aliyun

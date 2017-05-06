@@ -29,43 +29,30 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
+#include "mempiece.hpp"
 #include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
-#include <string>
 
 using namespace std;
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
 
-void Error_complete(const string&)
+void MemPiece::prettyPrint(string* out) const
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
+    if (data() == NULL) {
+        out->append("b\"\"");
+        return;
+    }
+    out->append("b\"");
+    const uint8_t* b = data();
+    const uint8_t* e = b + length();
+    for(; b < e; ++b) {
+        pp::impl::Character::prettyPrint(out, static_cast<char>(*b));
+    }
+    out->append("\"");
 }
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
 
-void Error_no_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
-
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
-
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-

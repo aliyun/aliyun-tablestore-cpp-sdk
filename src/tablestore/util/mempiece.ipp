@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,74 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
-#include <string>
-
-using namespace std;
+#include "tablestore/util/metaprogramming.hpp"
+#include <tr1/type_traits>
+#include <cstring>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
 
-void Error_complete(const string&)
+namespace impl {
+
+template<>
+struct ToMemPiece<std::string, void>
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+    MemPiece operator()(const std::string& x) const
+    {
+        return MemPiece(x.data(), x.size());
+    }
+};
 
-void Error_no_traceid(const string&)
+template<>
+struct ToMemPiece<const std::string, void>
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+    MemPiece operator()(const std::string& x) const
+    {
+        ToMemPiece<std::string, void> p;
+        return p(x);
+    }
+};
 
-void Error_no_requestid_traceid(const string&)
+template<int N>
+struct ToMemPiece<char[N], void>
 {
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    MemPiece operator()(const char* x) const
+    {
+        return MemPiece(x, N - 1); // trim tailing '\0'
+    }
+};
 
+template<int N>
+struct ToMemPiece<const char[N], void>
+{
+    MemPiece operator()(const char* x) const
+    {
+        ToMemPiece<char[N], void> p;
+        return p(x);
+    }
+};
+
+template<>
+struct ToMemPiece<char*, void>
+{
+    MemPiece operator()(const char* x) const
+    {
+        return MemPiece(x, ::strlen(x));
+    }
+};
+
+template<>
+struct ToMemPiece<const char*, void>
+{
+    MemPiece operator()(const char* x) const
+    {
+        ToMemPiece<char*, void> p;
+        return p(x);
+    }
+};
+
+} // namspace impl
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-

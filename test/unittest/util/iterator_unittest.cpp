@@ -30,7 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "util/iterator.hpp"
+#include "tablestore/util/iterator.hpp"
 #include "testa/testa.hpp"
 #include <tr1/type_traits>
 #include <deque>

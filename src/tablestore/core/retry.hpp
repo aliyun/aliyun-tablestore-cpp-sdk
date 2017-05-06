@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,68 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
+#include "tablestore/core/types.hpp"
+#include "tablestore/util/timestamp.hpp"
+#include <tr1/memory>
 #include <string>
-
-using namespace std;
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+namespace random {
+class IRandom;
+} // namespace random
+} // namespace util
 
-void Error_complete(const string&)
+namespace core {
+
+class Error;
+
+class IRetryStrategy
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
+    virtual ~IRetryStrategy() {}
 
-void Error_no_traceid(const string&)
+    virtual IRetryStrategy* clone() const =0;
+    virtual int64_t retries() const throw() =0;
+    virtual bool shouldRetry(Action, const Error&) const =0;
+    virtual util::Duration nextPause() =0;
+};
+
+class DefaultRetryStrategy: public IRetryStrategy
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+public:
+    explicit DefaultRetryStrategy(util::random::IRandom*, util::Duration timeout);
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    enum RetryCategory
+    {
+        UNRETRIABLE,
+        RETRIABLE,
+        DEPENDS,
+    };
 
+    static RetryCategory retriable(const Error&);
+    static bool retriable(Action, const Error&);
+
+    DefaultRetryStrategy* clone() const;
+    int64_t retries() const throw();
+    bool shouldRetry(Action, const Error&) const;
+    util::Duration nextPause();
+
+private:
+    static const util::Duration kMaxPauseBase;
+
+    util::random::IRandom* mRandom;
+    util::Duration mTimeout;
+
+    // reset for cloned ones
+    util::Duration mPauseBase;
+    int64_t mRetries;
+    util::MonotonicTime mDeadline;
+};
+
+} // namespace core
 } // namespace tablestore
 } // namespace aliyun
 

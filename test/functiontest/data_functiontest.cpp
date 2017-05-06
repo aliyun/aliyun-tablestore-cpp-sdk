@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "testa/testa.hpp"
 #include "config.hpp"
-#include "core/types.hpp"
-#include "core/client.hpp"
+#include "tablestore/core/types.hpp"
+#include "tablestore/core/client.hpp"
 #include <tr1/functional>
 #include <tr1/tuple>
 #include <set>

@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,65 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
+#include "tablestore/util/logger.hpp"
 #include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
+#include <deque>
 #include <string>
-
-using namespace std;
+#include <utility>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+namespace impl {
 
-void Error_complete(const string&)
+class LogHelper
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
+    LogHelper(
+        Logger::LogLevel lvl,
+        Logger* logger,
+        const char* fn,
+        int line,
+        const char* func)
+      : mLevel(lvl),
+        mLogger(logger),
+        mFile(fn),
+        mLine(pp::prettyPrint(line)),
+        mFunc(func),
+        OTS_LOG_PINGPONG_A(*this),
+        OTS_LOG_PINGPONG_B(*this)
+    {}
+    ~LogHelper();
 
-void Error_no_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+    LogHelper& append(const char* msg, const std::string& x)
+    {
+        mValues.push_back(std::make_pair(std::string(msg), x));
+        return *this;
+    }
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    void what(const std::string& msg)
+    {
+        mWhat = msg;
+    }
 
+private:
+    Logger::LogLevel mLevel;
+    Logger* mLogger;
+    std::deque< std::pair< std::string, std::string> > mValues;
+    std::string mWhat;
+    std::string mFile;
+    std::string mLine;
+    std::string mFunc;
+
+public:
+    /**
+     * Ender of macro expansion
+     */
+    LogHelper& OTS_LOG_PINGPONG_A;
+    LogHelper& OTS_LOG_PINGPONG_B;
+};
+
+} // namespace impl
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-

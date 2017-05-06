@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -28,44 +28,86 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
-#include <string>
+ */
 
-using namespace std;
+#include "tablestore/util/metaprogramming.hpp"
+#include <tr1/type_traits>
+#include <tr1/memory>
+#include <string>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+namespace impl {
 
-void Error_complete(const string&)
+struct ClearSwapable {};
+struct Copyable {};
+
+template<class T>
+struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_arithmetic<T>::value, void>::Type>
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
-
-void Error_no_traceid(const string&)
+    typedef Copyable Category;
+};
+template<class T>
+struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_enum<T>::value, void>::Type>
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+    typedef Copyable Category;
+};
 
-void Error_no_requestid_traceid(const string&)
+template<class T>
+struct MoveCategory<T, typename mp::EnableIfExists<typename T::value_type, void>::Type>
 {
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    typedef ClearSwapable Category;
+};
 
+struct SharedPtr {};
+
+template<class T>
+struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_same<T, std::tr1::shared_ptr<typename T::element_type> >::value, void>::Type>
+{
+    typedef SharedPtr Category;
+};
+
+template<class T>
+struct MoveAssignment<Moveable, T>
+{
+    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    {
+        *to = from;
+    }
+};
+
+template<class T>
+struct MoveAssignment<ClearSwapable, T>
+{
+    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    {
+        to->clear();
+        to->swap(*from);
+    }
+};
+
+template<class T>
+struct MoveAssignment<Copyable, T>
+{
+    void operator()(T* to, const MoveHolder<T>& from) const throw()
+    {
+        *to = *from;
+    }
+};
+
+template<class T>
+struct MoveAssignment<SharedPtr, T>
+{
+    void operator()(T* to, const MoveHolder<T>& from) const
+    {
+        T empty;
+        to->swap(empty);
+        to->swap(*from);
+    }
+};
+
+} // namespace impl
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-

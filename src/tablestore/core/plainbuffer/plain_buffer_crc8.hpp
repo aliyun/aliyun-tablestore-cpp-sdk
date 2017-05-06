@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,43 +30,70 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
+#include "tablestore/util/mempiece.hpp"
 #include <string>
-
-using namespace std;
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace core {
 
-void Error_complete(const string&)
+const int32_t kCrc8TableSize = 256;
+
+/**
+ * @brief Crc8Table
+ *
+ * CRC8码表，用于静态初始化变量。
+ */
+class Crc8Table
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
 
-void Error_no_traceid(const string&)
+    Crc8Table()
+    {
+        for (int32_t i = 0; i < kCrc8TableSize; ++i) {
+            uint8_t x = (uint8_t) i;
+            for (int32_t j = 8; j > 0; --j) {
+                x = ((x << 1) ^ (((x & 0x80) != 0) ? 0x07 : 0));
+            }
+            mDataTable[i] = x;
+        }
+    }
+
+    inline uint8_t operator[](int32_t index)
+    {
+        return mDataTable[index];
+    }
+
+private:
+
+    uint8_t mDataTable[kCrc8TableSize];
+};
+
+/**
+ * @brief PlainBufferCrc8
+ *
+ * 采用crc-8-ATM规范
+ * 多项式: x^8 + x^2 + x + 1
+ */
+class PlainBufferCrc8
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
+public:
 
-void Error_no_requestid_traceid(const string&)
-{
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
+    static uint8_t CrcInt8(uint8_t crc, uint8_t in);
+    
+    static uint8_t CrcInt32(uint8_t crc, uint32_t in);
+    
+    static uint8_t CrcInt64(uint8_t crc, uint64_t in);
+    
+    static uint8_t CrcString(uint8_t crc, const util::MemPiece& in);
+    
+private:
 
+    static Crc8Table mCrc8Table;
+};
+
+} // namespace core
 } // namespace tablestore
 } // namespace aliyun
 

@@ -30,11 +30,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "config.hpp"
-#include "core/types.hpp"
-#include "util/mempiece.hpp"
-#include "util/assert.hpp"
-#include "util/move.hpp"
-#include "util/foreach.hpp"
+#include "tablestore/core/types.hpp"
+#include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/assert.hpp"
+#include "tablestore/util/move.hpp"
+#include "tablestore/util/foreach.hpp"
 #include <tr1/functional>
 #include <string>
 #include <fstream>

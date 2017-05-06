@@ -29,11 +29,11 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "core/retry.hpp"
-#include "core/types.hpp"
-#include "core/error.hpp"
-#include "util/prettyprint.hpp"
-#include "util/foreach.hpp"
+#include "tablestore/core/retry.hpp"
+#include "tablestore/core/types.hpp"
+#include "tablestore/core/error.hpp"
+#include "tablestore/util/prettyprint.hpp"
+#include "tablestore/util/foreach.hpp"
 #include "testa/testa.hpp"
 #include <tr1/tuple>
 #include <deque>

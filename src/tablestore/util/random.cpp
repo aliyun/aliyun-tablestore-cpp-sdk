@@ -29,43 +29,95 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/core/error.hpp"
-#include "tablestore/util/prettyprint.hpp"
-#include "testa/testa.hpp"
+#include "random.hpp"
+#include "tablestore/util/assert.hpp"
 #include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno>
+#include <cstring>
+extern "C" {
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+}
 
 using namespace std;
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+namespace random {
 
-void Error_complete(const string&)
+namespace {
+
+class Default : public IRandom
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace", "request");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"RequestId\": \"request\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
-}
-TESTA_DEF_JUNIT_LIKE1(Error_complete);
+public:
+    explicit Default(unsigned int seed)
+      : mSeed(seed)
+    {}
+    explicit Default()
+      : mSeed(0)
+    {
+        int fd = open("/dev/urandom", O_RDONLY);
+        OTS_ASSERT(fd >= 0)(errno)(string(strerror(errno)));
+        {
+            int64_t ret = read(fd, &mSeed, sizeof(mSeed));
+            OTS_ASSERT(ret >= 0)(errno)(string(strerror(errno)));
+        }
+        {
+            int ret = close(fd);
+            OTS_ASSERT(ret == 0)(errno)(string(strerror(errno)));
+        }
+    }
 
-void Error_no_traceid(const string&)
+    int64_t upperBound() const
+    {
+        return RAND_MAX;
+    }
+
+    uint64_t seed() const
+    {
+        return mSeed;
+    }
+
+    int64_t next()
+    {
+        return rand_r(&mSeed);
+    }
+
+private:
+    unsigned int mSeed;
+};
+
+} // namespace
+
+IRandom* newDefault()
 {
-    core::Error err(400, "ParameterInvalid", "xxx", "trace");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\", \"TraceId\": \"trace\"}")
-        (err)
-        .issue();
+    return new Default();
 }
-TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
 
-void Error_no_requestid_traceid(const string&)
+IRandom* newDefault(uint64_t seed)
 {
-    core::Error err(400, "ParameterInvalid", "xxx");
-    TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, \"ErrorCode\": \"ParameterInvalid\", \"Message\": \"xxx\"}")
-        (err)
-        .issue();
+    return new Default(seed);
 }
-TESTA_DEF_JUNIT_LIKE1(Error_no_requestid_traceid);
 
+int64_t nextInt(IRandom* rnd, int64_t exclusiveUpper)
+{
+    OTS_ASSERT(exclusiveUpper > 0)(exclusiveUpper);
+    return rnd->next() % exclusiveUpper;
+}
+
+int64_t nextInt(IRandom* rnd, int64_t inclusiveLower, int64_t exclusiveUpper)
+{
+    int64_t rng = exclusiveUpper - inclusiveLower;
+    OTS_ASSERT(rng > 0)(rng);
+    return inclusiveLower + rnd->next() % rng;
+}
+
+} // namespace random
+} // namespace util
 } // namespace tablestore
 } // namespace aliyun
-
