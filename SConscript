@@ -1,4 +1,19 @@
 # -*- python -*-
+import platform
+architecture = platform.machine()
+system = platform.system()
+if system == 'Linux':
+    dist = platform.linux_distribution(full_distribution_name=False)
+    operating_system = dist[0] + dist[1]
+elif system == 'Darwin':
+    dist = platform.mac_os()
+    operating_system = system + dist[0]
+elif system == 'Windows':
+    dist = platform.release()
+    operating_system = system + dist
+else:
+    raise Exception('unsupported system: ' + system)
+
 from ConfigParser import ConfigParser
 Import('env')
 
@@ -16,8 +31,8 @@ ver = {'major': cfg.get('DEFAULT', 'major'),
        'minor': cfg.get('DEFAULT', 'minor'),
        'revision': cfg.get('DEFAULT', 'revision'),
        'language': cfg.get('DEFAULT', 'language'),
-       'platform': cfg.get('DEFAULT', 'platform'),
-       'architecture': cfg.get('DEFAULT', 'architecture')}
+       'platform': operating_system,
+       'architecture': architecture}
 tarball_name = 'aliyun-tablestore-%(language)s-sdk-%(major)s.%(minor)s.%(revision)s-%(platform)s-%(architecture)s.tar.gz' % ver
 xs = [
     ('', '#version.ini'),
