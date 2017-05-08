@@ -40,5 +40,6 @@ xs = [
               '$LIB_DIR/libtablestore_core_static.a',
               '$LIB_DIR/libtablestore_util.so',
               '$LIB_DIR/libtablestore_util_static.a']),
-    ('include/ots', [x for x in env.Glob('#src/include/*.h')])]
+    ('include/tablestore/util/', env.Glob('$BUILD_DIR/include/tablestore/util/*.hpp') + env.Glob('$BUILD_DIR/include/tablestore/util/*.ipp')),
+    ('include/tablestore/core/', env.Glob('$BUILD_DIR/include/tablestore/core/*.hpp') + env.Glob('$BUILD_DIR/include/tablestore/core/*.ipp'))]
 env.Alias('PACK', env.tarball(tarball_name, xs))

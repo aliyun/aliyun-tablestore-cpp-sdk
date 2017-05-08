@@ -475,7 +475,12 @@ def tarball(env, target, source):
         fs = env.Flatten(f)
         for f in fs:
             f = env.File(f).abspath
-            xs.append((op.join(p, op.basename(f)), f))
+            path_in_ball = op.join(p, op.basename(f))
+            path_in_real = f
+            while op.islink(path_in_real):
+                path_in_real = op.join(
+                    op.dirname(path_in_real), os.readlink(path_in_real))
+            xs.append((path_in_ball, path_in_real))
     ball = env._tarball(target=[target],
                         source=[env.File(x) for _,x in xs],
                         __ext = xs)
