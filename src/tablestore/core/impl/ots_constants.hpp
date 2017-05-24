@@ -50,7 +50,7 @@ const std::string kOTSTraceId = "x-ots-sdk-traceid";
 
 const std::string kOTSHeaderPrefix = "x-ots-";
 
-const std::string kUserAgent = "UserAgent";
+const std::string kUserAgent = "User-Agent";
 const std::string kSDKUserAgent = "aliyun-tablestore-sdk-cpp98/4.2.1(amd64;)";
 
 // response
