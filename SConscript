@@ -28,28 +28,11 @@ ver = {'major': cfg.get('DEFAULT', 'major'),
        'platform': operating_system,
        'architecture': architecture}
 
-with open(env.File('$BUILD_DIR/src/tablestore/core/impl/buildinfo.cpp').abspath, 'w') as fp:
-    fp.write('''\
-#include "ots_constants.hpp"
-
-using namespace std;
-
-namespace aliyun {
-namespace tablestore {
-namespace core {
-namespace impl {
-
-const string kSDKUserAgent("aliyun-tablestore-sdk-%(language)s/%(major)s.%(minor)s.%(revision)s(%(architecture)s;%(platform)s)");
-
-} // namespace impl
-} // namespace core
-} // namespace tablestore
-} // namespace aliyun
-
-extern "C" {
-char const * const kTableStoreBuildInfo = "aliyun-tablestore-sdk-%(language)s/%(major)s.%(minor)s.%(revision)s(%(architecture)s;%(platform)s)";
-}
-''' % ver);
+fp = open(env.File('$BUILD_DIR/src/tablestore/core/impl/buildinfo.cpp.in').abspath)
+templ = fp.read()
+fp.close()
+fp = open(env.File('$BUILD_DIR/src/tablestore/core/impl/buildinfo.cpp').abspath, 'w')
+fp.write(templ % ver)
 
 tarball_name = 'aliyun-tablestore-%(language)s-sdk-%(major)s.%(minor)s.%(revision)s-%(platform)s-%(architecture)s.tar.gz' % ver
 xs = [

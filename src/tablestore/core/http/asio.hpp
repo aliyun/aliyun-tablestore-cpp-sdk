@@ -64,7 +64,7 @@ public:
      */
     typedef std::tr1::function<
         util::MutableMemPiece(
-            const util::Optional<Error>&)
+            const util::Optional<OTSError>&)
         > RequestCompletionHandler;
     /**
      * Triggered when a piece of response comes in or an error occurs.
@@ -72,7 +72,7 @@ public:
     typedef std::tr1::function<
         bool( // true means continue
             int64_t readBytes,
-            const util::Optional<Error>&,
+            const util::Optional<OTSError>&,
             // nonempty means "continue with a new piece of memory",
             // empty means "go ahead with the remaining part of the last piece of memory".
             util::MutableMemPiece*)
@@ -119,7 +119,7 @@ class Asio
 public:
     typedef std::tr1::function<
         void(Connection&,
-            const util::Optional<Error>&)
+            const util::Optional<OTSError>&)
         > BorrowConnectionHandler;
 
     static Asio* create(

@@ -58,7 +58,7 @@ void ResponseReader_NoBody(const string&)
         "Content-Length: 0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::STOP).issue();
@@ -89,7 +89,7 @@ void ResponseReader_TooLongStatusLine(const string&)
         "Content-Length: 0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response0));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response0));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     err = rr.feed(more, MemPiece::from(response1));
@@ -111,7 +111,7 @@ void ResponseReader_HttpVer(const string&)
         "Content-Length: 0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(err.present()).issue();
     TESTA_ASSERT(pp::prettyPrint(*err) ==
         "{\"HttpStatus\": 56, "
@@ -130,7 +130,7 @@ void ResponseReader_HttpStatus(const string&)
         "Content-Length: 0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(err.present()).issue();
     TESTA_ASSERT(pp::prettyPrint(*err) ==
         "{\"HttpStatus\": 56, "
@@ -151,7 +151,7 @@ void ResponseReader_ContentLength(const string&)
         "a";
     string response1 = "b";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response0));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response0));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::REQUIRE_MORE).issue();
@@ -180,7 +180,7 @@ void ResponseReader_Chunked(const string&)
         "0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::STOP).issue();
@@ -206,7 +206,7 @@ void ResponseReader_MultipleChunked(const string&)
         "0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::STOP).issue();
@@ -235,7 +235,7 @@ void ResponseReader_LongChunk_lowercase(const string&)
         "0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::STOP).issue();
@@ -270,7 +270,7 @@ void ResponseReader_LongChunk_uppercase(const string&)
         "0\r\n"
         "\r\n";
     http::ResponseReader::RequireMore more = http::ResponseReader::REQUIRE_MORE;
-    Optional<Error> err = rr.feed(more, MemPiece::from(response));
+    Optional<OTSError> err = rr.feed(more, MemPiece::from(response));
     TESTA_ASSERT(!err.present())
         (*err).issue();
     TESTA_ASSERT(more == http::ResponseReader::STOP).issue();

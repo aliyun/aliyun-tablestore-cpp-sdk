@@ -298,7 +298,7 @@ void respCb(
     Logger& logger,
     Slave& slave,
     const Tracker& tracker,
-    const Optional<Error>& err,
+    const Optional<OTSError>& err,
     const http::InplaceHeaders& headers,
     deque<MemPiece>& body)
 {
@@ -336,13 +336,13 @@ struct TestBench
 
     void issue();
     string feedConnection();
-    MutableMemPiece completeRequest(const Optional<Error>&);
+    MutableMemPiece completeRequest(const Optional<OTSError>&);
     void asyncFeedResponsePiece(
         bool& goOn,
         MutableMemPiece& newPiece,
         MutableMemPiece,
         const MemPiece&,
-        const Optional<Error>&);
+        const Optional<OTSError>&);
     void waitForTimerCanceled();
     void waitForResponseHandled();
     void waitForConnectionReturned();
@@ -421,7 +421,7 @@ void TestBench::issue()
 
 string TestBench::feedConnection()
 {
-    mInvoker->pushBack(bind(mAsio.mConnCb, boost::ref(*mConn), Optional<Error>()));
+    mInvoker->pushBack(bind(mAsio.mConnCb, boost::ref(*mConn), Optional<OTSError>()));
     mAsio.mConnCb = http::Asio::BorrowConnectionHandler();
 
     string token = mMasterSlave.master().listen();
@@ -434,7 +434,7 @@ string TestBench::feedConnection()
     return req;
 }
 
-MutableMemPiece TestBench::completeRequest(const Optional<Error>& err)
+MutableMemPiece TestBench::completeRequest(const Optional<OTSError>& err)
 {
     MutableMemPiece mmp;
     function<MutableMemPiece()> fn = bind(mConn->mReqComplete, err);
@@ -456,7 +456,7 @@ void TestBench::asyncFeedResponsePiece(
     MutableMemPiece& newPiece,
     MutableMemPiece buf,
     const MemPiece& content,
-    const Optional<Error>& err)
+    const Optional<OTSError>& err)
 {
     MutableMemPiece mmp1 = write(buf, content);
     function<bool()> fn = bind(mConn->mRespHandler, 
@@ -533,7 +533,7 @@ void HttpClient_normal(const string&)
             "\r\n")
             (req).issue();
     }
-    MutableMemPiece mmp = tb.completeRequest(Optional<Error>());
+    MutableMemPiece mmp = tb.completeRequest(Optional<OTSError>());
 
     MutableMemPiece mmp1;
     bool ret = true;
@@ -543,7 +543,7 @@ void HttpClient_normal(const string&)
             "HTTP/1.1 200 OK\r\n"
             "Content-Length: 0\r\n"
             "\r\n"),
-        Optional<Error>());
+        Optional<OTSError>());
     tb.waitForResponseHandled();
     tb.waitForTimerCanceled();
     tb.waitForConnectionReturned();
@@ -564,10 +564,10 @@ void HttpClient_request_fail(const string&)
     tb.feedConnection();
 
     {
-        Error err;
-        err.mutableHttpStatus() = Error::kHttpStatus_WriteRequestFail;
-        err.mutableErrorCode() = Error::kErrorCode_WriteRequestFail;
-        MutableMemPiece x = tb.completeRequest(Optional<Error>(err));
+        OTSError err;
+        err.mutableHttpStatus() = OTSError::kHttpStatus_WriteRequestFail;
+        err.mutableErrorCode() = OTSError::kErrorCode_WriteRequestFail;
+        MutableMemPiece x = tb.completeRequest(Optional<OTSError>(err));
         TESTA_ASSERT(x.length() == 0)
             (x.length()).issue();
     }
@@ -585,19 +585,19 @@ void HttpClient_response_fail(const string&)
     TestBench tb;
     tb.issue();
     tb.feedConnection();
-    MutableMemPiece mmp = tb.completeRequest(Optional<Error>());
+    MutableMemPiece mmp = tb.completeRequest(Optional<OTSError>());
     (void) mmp;
 
     bool ret = true;
     {
         MutableMemPiece mmp1;
-        Error err;
-        err.mutableHttpStatus() = Error::kHttpStatus_CorruptedResponse;
-        err.mutableErrorCode() = Error::kErrorCode_CorruptedResponse;
+        OTSError err;
+        err.mutableHttpStatus() = OTSError::kHttpStatus_CorruptedResponse;
+        err.mutableErrorCode() = OTSError::kErrorCode_CorruptedResponse;
         tb.asyncFeedResponsePiece(
             ret, mmp1, mmp,
             MemPiece(),
-            Optional<Error>(err));
+            Optional<OTSError>(err));
     }
     tb.waitForResponseHandled();
     tb.waitForTimerCanceled();

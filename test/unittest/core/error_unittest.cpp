@@ -41,7 +41,7 @@ namespace tablestore {
 
 void Error_complete(const string&)
 {
-    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    core::OTSError err(core::OTSError::kPredefined_OTSParameterInvalid);
     err.mutableMessage() = "xxx";
     err.mutableTraceId() = "trace";
     err.mutableRequestId() = "request";
@@ -57,7 +57,7 @@ TESTA_DEF_JUNIT_LIKE1(Error_complete);
 
 void Error_no_traceid(const string&)
 {
-    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    core::OTSError err(core::OTSError::kPredefined_OTSParameterInvalid);
     err.mutableMessage() = "xxx";
     err.mutableTraceId() = "trace";
     TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, "
@@ -71,7 +71,7 @@ TESTA_DEF_JUNIT_LIKE1(Error_no_traceid);
 
 void Error_no_requestid_traceid(const string&)
 {
-    core::Error err(core::Error::kPredefined_OTSParameterInvalid);
+    core::OTSError err(core::OTSError::kPredefined_OTSParameterInvalid);
     err.mutableMessage() = "xxx";
     TESTA_ASSERT(pp::prettyPrint(err) == "{\"HttpStatus\": 400, "
         "\"ErrorCode\": \"OTSParameterInvalid\", "

@@ -53,7 +53,7 @@ class AsyncClient;
  *   the iterator itself is synchronous and blocking.
  * - See util::Iterator for its usage.
  */
-class RangeIterator: public util::Iterator<Row&, Error>
+class RangeIterator: public util::Iterator<Row&, OTSError>
 {
 public:
     explicit RangeIterator(
@@ -63,11 +63,11 @@ public:
 
     bool valid() const throw();
     Row& get() throw();
-    util::Optional<Error> moveNext();
+    util::Optional<OTSError> moveNext();
 
 private:
     void issue();
-    void callback(util::Optional<Error>&, GetRangeResponse&);
+    void callback(util::Optional<OTSError>&, GetRangeResponse&);
 
 private:
     const int64_t mWatermark;
@@ -80,7 +80,7 @@ private:
     mutable util::Mutex mMutex;
     boost::atomic<int64_t> mOngoing;
     std::deque<Row> mBufferedRows;
-    util::Optional<Error> mError;
+    util::Optional<OTSError> mError;
 };
 
 } // namespace core

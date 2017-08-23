@@ -82,7 +82,7 @@ Row& RangeIterator::get() throw()
     return mBufferedRows.front();
 }
 
-Optional<Error> RangeIterator::moveNext()
+Optional<OTSError> RangeIterator::moveNext()
 {
     for(;;) {
         int64_t size = 0;
@@ -97,13 +97,13 @@ Optional<Error> RangeIterator::moveNext()
             }
             size = mBufferedRows.size();
             if (!mBufferedRows.empty()) {
-                return Optional<Error>();
+                return Optional<OTSError>();
             }
             if (mError.present()) {
                 return mError;
             }
             if (!mInclusiveStart.present()) {
-                return Optional<Error>(); 
+                return Optional<OTSError>(); 
             }
         }
         if (size <= mWatermark) {
@@ -133,7 +133,7 @@ void RangeIterator::issue()
 }
 
 void RangeIterator::callback(
-    Optional<Error>& err,
+    Optional<OTSError>& err,
     GetRangeResponse& resp)
 {
     if (err.present()) {

@@ -53,9 +53,9 @@ namespace {
 template<Action kAction>
 void callback(
     Semaphore& sem,
-    Optional<Error>& outErr,
+    Optional<OTSError>& outErr,
     typename impl::ApiTraits<kAction>::ApiResponse& outResp,
-    Optional<Error>& inErr,
+    Optional<OTSError>& inErr,
     typename impl::ApiTraits<kAction>::ApiResponse& inResp)
 {
     if (inErr.present()) {
@@ -68,7 +68,7 @@ void callback(
 
 
 template<Action kAction>
-Optional<Error> go(
+Optional<OTSError> go(
     typename impl::ApiTraits<kAction>::ApiResponse& resp,
     const typename impl::ApiTraits<kAction>::ApiRequest& req,
     impl::AsyncClientBase& ac)
@@ -78,8 +78,8 @@ Optional<Error> go(
 
     Tracker tracker(Tracker::create());
     Semaphore sem(0);
-    Optional<Error> err;
-    function<void(Optional<Error>&, Response&)> cb =
+    Optional<OTSError> err;
+    function<void(Optional<OTSError>&, Response&)> cb =
         bind(&callback<kAction>,
             boost::ref(sem),
             boost::ref(err),
@@ -102,76 +102,76 @@ SyncClient::SyncClient(AsyncClient& client)
   : mAsyncClient(client.mAsyncClient)
 {}
 
-Optional<Error> SyncClient::listTable(
+Optional<OTSError> SyncClient::listTable(
     ListTableResponse& resp, const ListTableRequest& req)
 {
     return go<kApi_ListTable>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::createTable(
+Optional<OTSError> SyncClient::createTable(
     CreateTableResponse& resp, const CreateTableRequest& req)
 {
     return go<kApi_CreateTable>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::deleteTable(
+Optional<OTSError> SyncClient::deleteTable(
     DeleteTableResponse& resp, const DeleteTableRequest& req)
 {
     return go<kApi_DeleteTable>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::describeTable(
+Optional<OTSError> SyncClient::describeTable(
     DescribeTableResponse& resp, const DescribeTableRequest& req)
 {
     return go<kApi_DescribeTable>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::updateTable(
+Optional<OTSError> SyncClient::updateTable(
     UpdateTableResponse& resp, const UpdateTableRequest& req)
 {
     return go<kApi_UpdateTable>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::computeSplitsBySize(
+Optional<OTSError> SyncClient::computeSplitsBySize(
     ComputeSplitsBySizeResponse& resp, const ComputeSplitsBySizeRequest& req)
 {
     return go<kApi_ComputeSplitsBySize>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::putRow(PutRowResponse& resp, const PutRowRequest& req)
+Optional<OTSError> SyncClient::putRow(PutRowResponse& resp, const PutRowRequest& req)
 {
     return go<kApi_PutRow>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::getRow(GetRowResponse& resp, const GetRowRequest& req)
+Optional<OTSError> SyncClient::getRow(GetRowResponse& resp, const GetRowRequest& req)
 {
     return go<kApi_GetRow>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::getRange(GetRangeResponse& resp, const GetRangeRequest& req)
+Optional<OTSError> SyncClient::getRange(GetRangeResponse& resp, const GetRangeRequest& req)
 {
     return go<kApi_GetRange>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::updateRow(
+Optional<OTSError> SyncClient::updateRow(
     UpdateRowResponse& resp, const UpdateRowRequest& req)
 {
     return go<kApi_UpdateRow>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::deleteRow(
+Optional<OTSError> SyncClient::deleteRow(
     DeleteRowResponse& resp, const DeleteRowRequest& req)
 {
     return go<kApi_DeleteRow>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::batchGetRow(
+Optional<OTSError> SyncClient::batchGetRow(
     BatchGetRowResponse& resp, const BatchGetRowRequest& req)
 {
     return go<kApi_BatchGetRow>(resp, req, *mAsyncClient);
 }
 
-Optional<Error> SyncClient::batchWriteRow(
+Optional<OTSError> SyncClient::batchWriteRow(
     BatchWriteRowResponse& resp, const BatchWriteRowRequest& req)
 {
     return go<kApi_BatchWriteRow>(resp, req, *mAsyncClient);

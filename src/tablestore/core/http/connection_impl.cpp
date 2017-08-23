@@ -172,7 +172,7 @@ private:
         size_t);
     void requestComplete(
         const std::tr1::shared_ptr<RequestContext>&,
-        const util::Optional<Error>&,
+        const util::Optional<OTSError>&,
         int64_t);
     size_t handleResponseCompletionCondition(
         const std::tr1::shared_ptr<RequestContext>&,
@@ -343,14 +343,14 @@ void ConnectionImpl<kProto>::handleRequestComplete(
     size_t bytes)
 {
     if (err) {
-        Error e(Error::kPredefined_WriteRequestFail);
+        OTSError e(OTSError::kPredefined_WriteRequestFail);
         e.mutableMessage() = err.message();
         e.mutableTraceId() = ctx->mTracker.traceId();
         ctx->mActor.pushBack(
             bind(&ConnectionImpl::requestComplete,
                 this,
                 ctx,
-                Optional<Error>(e),
+                Optional<OTSError>(e),
                 bytes));
         return;
     }
@@ -358,14 +358,14 @@ void ConnectionImpl<kProto>::handleRequestComplete(
         bind(&ConnectionImpl::requestComplete,
             this,
             ctx,
-            Optional<Error>(),
+            Optional<OTSError>(),
             bytes));
 }
 
 template<Endpoint::Protocol kProto>
 void ConnectionImpl<kProto>::requestComplete(
     const shared_ptr<RequestContext>& ctx,
-    const Optional<Error>& err,
+    const Optional<OTSError>& err,
     int64_t bytes)
 {
     if (!err.present()) {
@@ -432,7 +432,7 @@ void ConnectionImpl<kProto>::responseCompletionCondition(
             .what("CONN: a piece of response comes in.");
         MutableMemPiece mp;
         bool ret = ctx->mResponseCompletion(
-            size, Optional<Error>(), &mp);
+            size, Optional<OTSError>(), &mp);
         if (!ret) {
             return;
         } else if (mp.length() == 0) {
@@ -455,12 +455,12 @@ void ConnectionImpl<kProto>::responseCompletionCondition(
             ("Connection", tracker())
             ("Error", err.message())
             .what("CONN: error in receiving response.");
-        Error e(Error::kPredefined_CorruptedResponse);
+        OTSError e(OTSError::kPredefined_CorruptedResponse);
         e.mutableMessage() = err.message();
         e.mutableTraceId() = ctx->mTracker.traceId();
         MutableMemPiece mp;
         bool ret = ctx->mResponseCompletion(
-            size, Optional<Error>(e), &mp);
+            size, Optional<OTSError>(e), &mp);
         (void) ret;
     }
 }
@@ -476,13 +476,13 @@ Scheduler::WaitForConnection::~WaitForConnection()
 
 void Scheduler::WaitForConnection::close()
 {
-    Error e(Error::kPredefined_NoConnectionAvailable);
+    OTSError e(OTSError::kPredefined_NoConnectionAvailable);
     e.mutableMessage() =
         "Fails requests on the waiting list while closing.";
     mActor.pushBack(
         bind(mCallback,
             boost::ref(*static_cast<Connection*>(NULL)),
-            Optional<Error>(e)));
+            Optional<OTSError>(e)));
 }
 
 Connector::Connector(
@@ -636,10 +636,10 @@ void Connector::handleResolve(
                 ("ErrorMessage", err.message())
                 .what("CONN: fail to resolve endpoint.");
         }
-        Error e(Error::kPredefined_CouldntResoveHost);
+        OTSError e(OTSError::kPredefined_CouldntResoveHost);
         e.mutableMessage() = err.message();
         ctx->mActor.pushBack(
-            bind(ctx->mCallback, Optional<Error>(e), (ConnectionBase*) NULL));
+            bind(ctx->mCallback, Optional<OTSError>(e), (ConnectionBase*) NULL));
     }
 }
 
@@ -673,10 +673,10 @@ void Connector::handleConnect(
                 ("ErrorMessage", err.message())
                 .what("CONN: fail to connect.");
         }
-        Error e(Error::kPredefined_CouldntConnect);
+        OTSError e(OTSError::kPredefined_CouldntConnect);
         e.mutableMessage() = err.message();
         ctx->mActor.pushBack(
-            bind(ctx->mCallback, Optional<Error>(e), (ConnectionBase*) NULL));
+            bind(ctx->mCallback, Optional<OTSError>(e), (ConnectionBase*) NULL));
     }
 }
 
@@ -689,7 +689,7 @@ void Connector::handleHandshake(
         OTS_LOG_DEBUG(mLogger)
             ("Connection", ctx->mTracker)
             .what("CONN: handshake pass");
-        ctx->mActor.pushBack(bind(ctx->mCallback, Optional<Error>(), conn));
+        ctx->mActor.pushBack(bind(ctx->mCallback, Optional<OTSError>(), conn));
     } else {
         MonotonicTime now = MonotonicTime::now();
         Duration silence = Duration::fromSec(15);
@@ -707,10 +707,10 @@ void Connector::handleHandshake(
                 ("ErrorMessage", err.message())
                 .what("CONN: fail to handshake.");
         }
-        Error e(Error::kPredefined_SslHandshakeFail);
+        OTSError e(OTSError::kPredefined_SslHandshakeFail);
         e.mutableMessage() = err.message();
         ctx->mActor.pushBack(
-            bind(ctx->mCallback, Optional<Error>(e), (ConnectionBase*) NULL));
+            bind(ctx->mCallback, Optional<OTSError>(e), (ConnectionBase*) NULL));
     }
 }
 
@@ -738,7 +738,7 @@ void Connector::destroy(ConnectionBase* conn)
 
 void Connector::connectComplete(
     Context* ctx,
-    const Optional<Error>& err,
+    const Optional<OTSError>& err,
     ConnectionBase* conn)
 {
     auto_ptr<Context> ctxHolder(ctx);
@@ -852,7 +852,7 @@ void Scheduler::asyncBorrowConnection(
             .what("CONN: Borrows an idle connection.");
         int64_t x = mBusyCount.fetch_add(1, boost::memory_order_acq_rel);
         OTS_ASSERT(x >= 0)(x);
-        actor.pushBack(bind(cb, boost::ref(*conn), Optional<Error>()));
+        actor.pushBack(bind(cb, boost::ref(*conn), Optional<OTSError>()));
     } else {
         OTS_LOG_DEBUG(mLogger)
             ("Request", tracker)
@@ -905,12 +905,12 @@ void Scheduler::scanWaitingList()
             OTS_LOG_DEBUG(mLogger)
                 ("Request", req->mTracker)
                 .what("CONN: Timeout while waiting for idle connections.");
-            Error e(Error::kPredefined_OperationTimeout);
+            OTSError e(OTSError::kPredefined_OperationTimeout);
             e.mutableMessage() = "Timeout while waiting for idle connections.";
             req->mActor.pushBack(
                 bind(req->mCallback,
                     boost::ref(*static_cast<ConnectionBase*>(NULL)),
-                    Optional<Error>(util::move(e))));
+                    Optional<OTSError>(util::move(e))));
             continue;
         }
 
@@ -925,7 +925,7 @@ void Scheduler::scanWaitingList()
             req->mActor.pushBack(
                 bind(req->mCallback,
                     boost::ref(*conn),
-                    Optional<Error>()));
+                    Optional<OTSError>()));
         } else {
             OTS_LOG_DEBUG(mLogger)
                 .what("CONN: No idle connections anymore.");

@@ -50,7 +50,7 @@ class ResponseParserState
 public:
     virtual ~ResponseParserState() {}
 
-    virtual ResponseParserState* parse(Optional<Error>*, uint8_t) =0;
+    virtual ResponseParserState* parse(Optional<OTSError>*, uint8_t) =0;
 };
 
 } // namespace impl
@@ -67,7 +67,7 @@ public:
         int64_t&,
         impl::ResponseParserState*);
 
-    impl::ResponseParserState* parse(Optional<Error>*, uint8_t);
+    impl::ResponseParserState* parse(Optional<OTSError>*, uint8_t);
 
 private:
     enum State
@@ -113,16 +113,16 @@ inline bool blank(uint8_t c)
     return c == ' ';
 }
 
-void fillError(Optional<Error>& err, const string& msg)
+void fillError(Optional<OTSError>& err, const string& msg)
 {
-    Error e(Error::kPredefined_CorruptedResponse);
+    OTSError e(OTSError::kPredefined_CorruptedResponse);
     e.mutableMessage() = msg;
     err.reset(util::move(e));
 }
 
 } // namespace
 
-impl::ResponseParserState* StatusLineParser::parse(Optional<Error>* err, uint8_t byte)
+impl::ResponseParserState* StatusLineParser::parse(Optional<OTSError>* err, uint8_t byte)
 {
     switch(mState) {
     case INIT: {
@@ -212,7 +212,7 @@ public:
         BookmarkInputStream&,
         deque<MemPiece>& body);
 
-    impl::ResponseParserState* parse(Optional<Error>*, uint8_t);
+    impl::ResponseParserState* parse(Optional<OTSError>*, uint8_t);
 
     int64_t* mutableRemaingBytes()
     {
@@ -248,7 +248,7 @@ ContentLengthParser::ContentLengthParser(
     mRemainingBytes(0)
 {}
     
-impl::ResponseParserState* ContentLengthParser::parse(Optional<Error>* err, uint8_t byte)
+impl::ResponseParserState* ContentLengthParser::parse(Optional<OTSError>* err, uint8_t byte)
 {
     switch(mState) {
     case INIT: {
@@ -287,7 +287,7 @@ public:
         ContentLengthParser*,
         impl::ResponseParserState*);
 
-    impl::ResponseParserState* parse(Optional<Error>*, uint8_t);
+    impl::ResponseParserState* parse(Optional<OTSError>*, uint8_t);
 
 private:
     enum State
@@ -334,7 +334,7 @@ HeaderParser::HeaderParser(
     mChunkedBodyParser(cbparser)
 {}
 
-impl::ResponseParserState* HeaderParser::parse(Optional<Error>* err, uint8_t byte)
+impl::ResponseParserState* HeaderParser::parse(Optional<OTSError>* err, uint8_t byte)
 {
     switch(mState) {
     case INIT: {
@@ -489,7 +489,7 @@ public:
         BookmarkInputStream&,
         deque<MemPiece>& body);
 
-    impl::ResponseParserState* parse(Optional<Error>*, uint8_t);
+    impl::ResponseParserState* parse(Optional<OTSError>*, uint8_t);
 
 private:
     enum State
@@ -543,7 +543,7 @@ ChunkedBodyParser::ChunkedBodyParser(
     mRealChunkSize(0)
 {}
 
-impl::ResponseParserState* ChunkedBodyParser::parse(Optional<Error>* err, uint8_t byte)
+impl::ResponseParserState* ChunkedBodyParser::parse(Optional<OTSError>* err, uint8_t byte)
 {
     switch(mState) {
     case INIT: {
@@ -722,15 +722,15 @@ ResponseReader::~ResponseReader()
     }
 }
 
-Optional<Error> ResponseReader::feed(RequireMore& more, const MemPiece& piece)
+Optional<OTSError> ResponseReader::feed(RequireMore& more, const MemPiece& piece)
 {
     OTS_ASSERT(piece.length() > 0);
     mInputStream.feed(piece);
     TRY(parse(more));
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
-Optional<Error> ResponseReader::parse(RequireMore& more)
+Optional<OTSError> ResponseReader::parse(RequireMore& more)
 {
     OTS_ASSERT(mState != NULL);
     more = REQUIRE_MORE;
@@ -738,7 +738,7 @@ Optional<Error> ResponseReader::parse(RequireMore& more)
         Optional<uint8_t> ch = mInputStream.peek();
         OTS_ASSERT(ch.present());
 
-        Optional<Error> err;
+        Optional<OTSError> err;
         mState = mState->parse(&err, *ch);
         TRY(err);
         if (mState == NULL) {
@@ -751,7 +751,7 @@ Optional<Error> ResponseReader::parse(RequireMore& more)
             break;
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 } // namespace http

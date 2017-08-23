@@ -49,43 +49,43 @@ public:
 
     void createTable(
         CreateTableRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, CreateTableResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, CreateTableResponse&)>&);
     void deleteTable(
         DeleteTableRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, DeleteTableResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, DeleteTableResponse&)>&);
     void listTable(
         ListTableRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, ListTableResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, ListTableResponse&)>&);
     void describeTable(
         DescribeTableRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, DescribeTableResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, DescribeTableResponse&)>&);
     void updateTable(
         UpdateTableRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, UpdateTableResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, UpdateTableResponse&)>&);
     void getRange(
         GetRangeRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, GetRangeResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, GetRangeResponse&)>&);
     void putRow(
         PutRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, PutRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, PutRowResponse&)>&);
     void getRow(
         GetRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, GetRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, GetRowResponse&)>&);
     void updateRow(
         UpdateRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, UpdateRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, UpdateRowResponse&)>&);
     void deleteRow(
         DeleteRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, DeleteRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, DeleteRowResponse&)>&);
     void batchGetRow(
         BatchGetRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, BatchGetRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, BatchGetRowResponse&)>&);
     void batchWriteRow(
         BatchWriteRowRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, BatchWriteRowResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, BatchWriteRowResponse&)>&);
     void computeSplitsBySize(
         ComputeSplitsBySizeRequest&,
-        const std::tr1::function<void(util::Optional<Error>&, ComputeSplitsBySizeResponse&)>&);
+        const std::tr1::function<void(util::Optional<OTSError>&, ComputeSplitsBySizeResponse&)>&);
 
 private:
     std::tr1::shared_ptr<AsyncClientBase> mAsyncClient;

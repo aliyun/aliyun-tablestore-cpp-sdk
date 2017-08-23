@@ -220,7 +220,7 @@ public:
     Endpoint& operator=(const util::MoveHolder<Endpoint>& a);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& endpoint() const
@@ -272,7 +272,7 @@ public:
     Credential& operator=(const util::MoveHolder<Credential>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& accessKeyId() const
@@ -334,7 +334,7 @@ public:
 
     static Tracker create();
 
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void prettyPrint(std::string&) const;
 
     const std::string& traceId() const
@@ -364,7 +364,7 @@ public:
     ClientOptions& operator=(const util::MoveHolder<ClientOptions>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     int64_t maxConnections() const
@@ -495,7 +495,7 @@ public:
     }
     
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
@@ -556,7 +556,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
 
 private:
     DequeBasedVector<PrimaryKeyColumnSchema> mColumns;
@@ -599,7 +599,7 @@ public:
 
     Category category() const;
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     CompareResult compare(const PrimaryKeyValue&) const;
 
@@ -711,7 +711,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
@@ -770,7 +770,7 @@ public:
     }
 
     void prettyPrint(std::string& out) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     CompareResult compare(const PrimaryKey& a) const;
 
 private:
@@ -823,7 +823,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
@@ -868,7 +868,7 @@ public:
         return mWrite;
     }
 
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void prettyPrint(std::string&) const;
     void reset();
 
@@ -893,7 +893,7 @@ public:
     TableOptions& operator=(const util::MoveHolder<TableOptions>& a);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const util::Optional<util::Duration>& timeToLive() const
@@ -1002,7 +1002,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     CompareResult compare(const AttributeValue&) const;
 
@@ -1068,7 +1068,7 @@ public:
     Attribute& operator=(const util::MoveHolder<Attribute>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const std::string& name() const
@@ -1119,7 +1119,7 @@ public:
     Row& operator=(const util::MoveHolder<Row>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PrimaryKey& primaryKey() const
@@ -1168,7 +1168,7 @@ public:
     TimeRange& operator=(const util::MoveHolder<TimeRange>& a);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     util::UtcTime start() const
@@ -1209,7 +1209,7 @@ public:
     Split& operator=(const util::MoveHolder<Split>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     /**
@@ -1272,7 +1272,7 @@ public:
     virtual ~ColumnCondition() {}
     virtual Type type() const =0;
     virtual void prettyPrint(std::string&) const =0;
-    virtual util::Optional<Error> validate() const =0;
+    virtual util::Optional<OTSError> validate() const =0;
     virtual void reset() =0;
 };
 
@@ -1321,7 +1321,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& columnName() const
@@ -1411,7 +1411,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     Operator op() const
@@ -1462,7 +1462,7 @@ public:
     Condition& operator=(const util::MoveHolder<Condition>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     RowExistenceExpectation rowCondition() const
@@ -1511,7 +1511,7 @@ protected:
     
 public:
     virtual ~RowChange() {}
-    virtual util::Optional<Error> validate() const;
+    virtual util::Optional<OTSError> validate() const;
     virtual void reset();
 
     const std::string& table() const
@@ -1573,7 +1573,7 @@ public:
     RowPutChange& operator=(const util::MoveHolder<RowPutChange>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const IVector<Attribute>& attributes() const
@@ -1625,7 +1625,7 @@ public:
 
         Update& operator=(const util::MoveHolder<Update>&);
         void prettyPrint(std::string&) const;
-        util::Optional<Error> validate() const;
+        util::Optional<OTSError> validate() const;
 
         Type type() const
         {
@@ -1684,7 +1684,7 @@ public:
 
     RowUpdateChange& operator=(const util::MoveHolder<RowUpdateChange>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<Update>& updates() const
@@ -1718,7 +1718,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -1790,7 +1790,7 @@ protected:
 public:
     virtual ~QueryCriterion() {}
     virtual void prettyPrint(std::string&) const;
-    virtual util::Optional<Error> validate() const;
+    virtual util::Optional<OTSError> validate() const;
     virtual void reset();
     
     const std::string& table() const
@@ -1876,7 +1876,7 @@ public:
     PointQueryCriterion& operator=(const util::MoveHolder<PointQueryCriterion>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PrimaryKey& primaryKey() const
@@ -1914,7 +1914,7 @@ public:
 
     RangeQueryCriterion& operator=(const util::MoveHolder<RangeQueryCriterion>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     Direction direction() const
@@ -1977,7 +1977,7 @@ public:
     MultiPointQueryCriterion& operator=(
         const util::MoveHolder<MultiPointQueryCriterion>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<RowKey>& rowKeys() const
@@ -2041,7 +2041,7 @@ public:
     CreateTableRequest& operator=(const util::MoveHolder<CreateTableRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const TableMeta& meta() const
@@ -2096,7 +2096,7 @@ public:
     CreateTableResponse& operator=(const util::MoveHolder<CreateTableResponse>& a);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2113,7 +2113,7 @@ public:
     }
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2125,7 +2125,7 @@ public:
     ListTableResponse& operator=(const util::MoveHolder<ListTableResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const IVector<std::string>& tables() const
@@ -2152,7 +2152,7 @@ public:
     DeleteTableRequest& operator=(const util::MoveHolder<DeleteTableRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2177,7 +2177,7 @@ public:
     DeleteTableResponse& operator=(const util::MoveHolder<DeleteTableResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2189,7 +2189,7 @@ public:
     DescribeTableRequest& operator=(const util::MoveHolder<DescribeTableRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2216,7 +2216,7 @@ public:
     DescribeTableResponse& operator=(const util::MoveHolder<DescribeTableResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const TableMeta& meta() const
@@ -2274,7 +2274,7 @@ public:
     UpdateTableRequest& operator=(const util::MoveHolder<UpdateTableRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2310,7 +2310,7 @@ public:
     UpdateTableResponse& operator=(const util::MoveHolder<UpdateTableResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2327,7 +2327,7 @@ public:
     ComputeSplitsBySizeRequest& operator=(const util::MoveHolder<ComputeSplitsBySizeRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2365,7 +2365,7 @@ public:
         const util::MoveHolder<ComputeSplitsBySizeResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2416,7 +2416,7 @@ public:
     PutRowRequest& operator=(const util::MoveHolder<PutRowRequest>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowPutChange& rowChange() const
@@ -2445,7 +2445,7 @@ public:
     PutRowResponse& operator=(const util::MoveHolder<PutRowResponse>&);
 
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const CapacityUnit& consumedCapacity() const
@@ -2485,7 +2485,7 @@ public:
 
     GetRowRequest& operator=(const util::MoveHolder<GetRowRequest>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PointQueryCriterion& queryCriterion() const
@@ -2514,7 +2514,7 @@ public:
 
     GetRowResponse& operator=(const util::MoveHolder<GetRowResponse>& a);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2554,7 +2554,7 @@ public:
 
     GetRangeRequest& operator=(const util::MoveHolder<GetRangeRequest>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RangeQueryCriterion& queryCriterion() const
@@ -2583,7 +2583,7 @@ public:
 
     GetRangeResponse& operator=(const util::MoveHolder<GetRangeResponse>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2634,7 +2634,7 @@ public:
 
     UpdateRowRequest& operator=(const util::MoveHolder<UpdateRowRequest>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowUpdateChange& rowChange() const
@@ -2663,7 +2663,7 @@ public:
 
     UpdateRowResponse& operator=(const util::MoveHolder<UpdateRowResponse>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2703,7 +2703,7 @@ public:
 
     DeleteRowRequest& operator=(const util::MoveHolder<DeleteRowRequest>& a);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowDeleteChange& rowChange() const
@@ -2732,7 +2732,7 @@ public:
 
     DeleteRowResponse& operator=(const util::MoveHolder<DeleteRowResponse>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2767,7 +2767,7 @@ public:
     explicit BatchGetRowRequest(const util::MoveHolder<BatchGetRowRequest>&);
     BatchGetRowRequest& operator=(const util::MoveHolder<BatchGetRowRequest>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<MultiPointQueryCriterion>& criteria() const
@@ -2787,7 +2787,7 @@ private:
 class BatchGetRowResponse : public Response
 {
 public:
-    typedef PairWithUserData<util::Result<util::Optional<Row>, Error> > Result;
+    typedef PairWithUserData<util::Result<util::Optional<Row>, OTSError> > Result;
 
 public:
     explicit BatchGetRowResponse() {}
@@ -2798,7 +2798,7 @@ public:
 
     BatchGetRowResponse& operator=(const util::MoveHolder<BatchGetRowResponse>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2840,7 +2840,7 @@ public:
     BatchWriteRowRequest& operator=(
         const util::MoveHolder<BatchWriteRowRequest>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<Put>& puts() const
@@ -2882,7 +2882,7 @@ private:
 class BatchWriteRowResponse: public Response
 {
 public:
-    typedef PairWithUserData<util::Result<util::Optional<Row>, Error> > Result;
+    typedef PairWithUserData<util::Result<util::Optional<Row>, OTSError> > Result;
 
 public:
     explicit BatchWriteRowResponse() {}
@@ -2891,7 +2891,7 @@ public:
     BatchWriteRowResponse& operator=(
         const util::MoveHolder<BatchWriteRowResponse>&);
     void prettyPrint(std::string&) const;
-    util::Optional<Error> validate() const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -3146,28 +3146,28 @@ struct PrettyPrinterCategory<
             T,
             aliyun::tablestore::util::Result<
                 aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-                aliyun::tablestore::core::Error> >::value,
+                aliyun::tablestore::core::OTSError> >::value,
         void>::Type>
 {
     typedef typename aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error> Category;
+        aliyun::tablestore::core::OTSError> Category;
 };
 
 template<>
 struct PrettyPrinter<
     aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error>,
+        aliyun::tablestore::core::OTSError>,
     aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error> >
+        aliyun::tablestore::core::OTSError> >
 {
     void operator()(
         std::string&,
         const aliyun::tablestore::util::Result<
           aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-          aliyun::tablestore::core::Error>&) const;
+          aliyun::tablestore::core::OTSError>&) const;
 };
 
 } // namespace impl

@@ -72,7 +72,7 @@ public:
      * if returns false, the last piece of the response is fed;
      * if any error occurs, returns it.
      */
-    util::Optional<Error> feed(RequireMore&, const util::MemPiece&);
+    util::Optional<OTSError> feed(RequireMore&, const util::MemPiece&);
 
     std::deque<util::MemPiece>& mutableBody()
     {
@@ -95,7 +95,7 @@ public:
     }
 
 private:
-    util::Optional<Error> parse(RequireMore&);
+    util::Optional<OTSError> parse(RequireMore&);
 
 private:
     util::Logger& mLogger;

@@ -46,24 +46,24 @@ public:
     explicit SyncClient(AsyncClientBase*);
     explicit SyncClient(AsyncClient&);
 
-    util::Optional<Error> listTable(ListTableResponse&, const ListTableRequest&);
-    util::Optional<Error> createTable(
+    util::Optional<OTSError> listTable(ListTableResponse&, const ListTableRequest&);
+    util::Optional<OTSError> createTable(
         CreateTableResponse&, const CreateTableRequest&);
-    util::Optional<Error> deleteTable(
+    util::Optional<OTSError> deleteTable(
         DeleteTableResponse&, const DeleteTableRequest&);
-    util::Optional<Error> describeTable(
+    util::Optional<OTSError> describeTable(
         DescribeTableResponse&, const DescribeTableRequest&);
-    util::Optional<Error> updateTable(UpdateTableResponse&, const UpdateTableRequest&);
-    util::Optional<Error> computeSplitsBySize(ComputeSplitsBySizeResponse&,
+    util::Optional<OTSError> updateTable(UpdateTableResponse&, const UpdateTableRequest&);
+    util::Optional<OTSError> computeSplitsBySize(ComputeSplitsBySizeResponse&,
         const ComputeSplitsBySizeRequest&);
-    util::Optional<Error> putRow(PutRowResponse&, const PutRowRequest&);
-    util::Optional<Error> getRow(GetRowResponse&, const GetRowRequest&);
-    util::Optional<Error> getRange(GetRangeResponse&, const GetRangeRequest&);
-    util::Optional<Error> updateRow(UpdateRowResponse&, const UpdateRowRequest&);
-    util::Optional<Error> deleteRow(DeleteRowResponse&, const DeleteRowRequest&);
-    util::Optional<Error> batchGetRow(
+    util::Optional<OTSError> putRow(PutRowResponse&, const PutRowRequest&);
+    util::Optional<OTSError> getRow(GetRowResponse&, const GetRowRequest&);
+    util::Optional<OTSError> getRange(GetRangeResponse&, const GetRangeRequest&);
+    util::Optional<OTSError> updateRow(UpdateRowResponse&, const UpdateRowRequest&);
+    util::Optional<OTSError> deleteRow(DeleteRowResponse&, const DeleteRowRequest&);
+    util::Optional<OTSError> batchGetRow(
         BatchGetRowResponse&, const BatchGetRowRequest&);
-    util::Optional<Error> batchWriteRow(
+    util::Optional<OTSError> batchWriteRow(
         BatchWriteRowResponse&, const BatchWriteRowRequest&);
 
 private:

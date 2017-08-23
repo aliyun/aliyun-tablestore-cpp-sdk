@@ -64,7 +64,7 @@ void Table_tb(
 
     SyncClient* pclient = NULL;
     {
-        Optional<Error> res = SyncClient::create(pclient, ep, cr, opts);
+        Optional<OTSError> res = SyncClient::create(pclient, ep, cr, opts);
         TESTA_ASSERT(!res.present())
             (*res)(ep)(cr)(opts).issue();
     }
@@ -76,7 +76,7 @@ void Table_tb(
             req.mutableMeta().mutableSchema().append() =
                 PrimaryKeyColumnSchema("pkey", kPKT_Integer);
             CreateTableResponse resp;
-            Optional<Error> res = client->createTable(resp, req);
+            Optional<OTSError> res = client->createTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
@@ -85,7 +85,7 @@ void Table_tb(
             DeleteTableRequest req;
             req.mutableTable() = name;
             DeleteTableResponse resp;
-            Optional<Error> res = client->deleteTable(resp, req);
+            Optional<OTSError> res = client->deleteTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
@@ -93,7 +93,7 @@ void Table_tb(
         DeleteTableRequest req;
         req.mutableTable() = name;
         DeleteTableResponse resp;
-        Optional<Error> res = client->deleteTable(resp, req);
+        Optional<OTSError> res = client->deleteTable(resp, req);
         throw;
     }
 }
@@ -110,7 +110,7 @@ set<string> ListTable(const tuple<SyncClient*, string>& in)
     SyncClient* client = get<0>(in);
     ListTableRequest req;
     ListTableResponse resp;
-    Optional<Error> res = client->listTable(resp, req);
+    Optional<OTSError> res = client->listTable(resp, req);
     TESTA_ASSERT(!res.present())
         (*res).issue();
     set<string> tables;
@@ -131,7 +131,7 @@ DescribeTableResponse DescribeTable(const tuple<SyncClient*, string>& in)
     DescribeTableRequest req;
     req.mutableTable() = get<1>(in);
     DescribeTableResponse resp;
-    Optional<Error> err = get<0>(in)->describeTable(resp, req);
+    Optional<OTSError> err = get<0>(in)->describeTable(resp, req);
     TESTA_ASSERT(!err.present())
         (*err)(req).issue();
     return resp;
@@ -168,7 +168,7 @@ UpdateTableRequest UpdateTable(const tuple<SyncClient*, string>& in)
     req.mutableTable() = get<1>(in);
     req.mutableOptions().mutableMaxVersions().reset(2);
     UpdateTableResponse resp;
-    Optional<Error> err = get<0>(in)->updateTable(resp, req);
+    Optional<OTSError> err = get<0>(in)->updateTable(resp, req);
     TESTA_ASSERT(!err.present())
         (req).issue();
     return req;
@@ -181,7 +181,7 @@ void UpdateTable_verify(
     DescribeTableRequest dreq;
     dreq.mutableTable() = get<1>(in);
     DescribeTableResponse resp;
-    Optional<Error> err = get<0>(in)->describeTable(resp, dreq);
+    Optional<OTSError> err = get<0>(in)->describeTable(resp, dreq);
     TESTA_ASSERT(!err.present())
         (*err)(dreq).issue();
     TESTA_ASSERT(resp.options().maxVersions().present())

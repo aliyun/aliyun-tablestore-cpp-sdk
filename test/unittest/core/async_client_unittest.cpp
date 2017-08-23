@@ -244,7 +244,7 @@ public:
     explicit ResponseCallback(
         http::ResponseCallback& cb,
         const Tracker& tracker,
-        Error& err,
+        OTSError& err,
         http::Headers& headers,
         const string& body)
       : mCb(cb),
@@ -261,7 +261,7 @@ public:
     explicit ResponseCallback(
         http::ResponseCallback& cb,
         const Tracker& tracker,
-        Error& err,
+        OTSError& err,
         http::Headers& headers,
         com::aliyun::tablestore::protocol::Error& pbErr)
       : mCb(cb),
@@ -310,7 +310,7 @@ public:
 private:
     http::ResponseCallback mCb;
     Tracker mTracker;
-    Optional<Error> mError;
+    Optional<OTSError> mError;
     com::aliyun::tablestore::protocol::Error mPbError;
     http::Headers mHeaders;
     com::aliyun::tablestore::protocol::ListTableResponse mResponse;
@@ -323,7 +323,7 @@ public:
     explicit ResultCallback(
         Logger& logger,
         Slave& slave,
-        Optional<Error>& err,
+        Optional<OTSError>& err,
         ListTableResponse& resp)
       : mLogger(logger),
         mSlave(slave),
@@ -331,7 +331,7 @@ public:
         mResponse(resp)
     {}
 
-    void operator()(Optional<Error>& err, ListTableResponse& resp)
+    void operator()(Optional<OTSError>& err, ListTableResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_DEBUG(mLogger)
@@ -348,7 +348,7 @@ public:
 private:
     Logger& mLogger;
     Slave& mSlave;
-    Optional<Error>& mError;
+    Optional<OTSError>& mError;
     ListTableResponse& mResponse;
 };
 
@@ -506,7 +506,7 @@ void AsyncClient_Oneshot(const string&)
 {
     TestBench tb(new NoRetry());
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);
@@ -560,7 +560,7 @@ void AsyncClient_Oneshot_BackendError(const string&)
 {
     TestBench tb;
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);
@@ -578,12 +578,12 @@ void AsyncClient_Oneshot_BackendError(const string&)
         string body = concat(tb.issueContext().mBody);
         TESTA_ASSERT(pp::prettyPrint(MemPiece::from(body)) == "b\"\"")
             (MemPiece::from(body)).issue();
-        Error err;
+        OTSError err;
         err.mutableHttpStatus() = 403;
         http::Headers headers;
         headers[impl::kOTSRequestId] = tb.requestId();
         com::aliyun::tablestore::protocol::Error resp;
-        *resp.mutable_code() = Error::kErrorCode_OTSAuthFailed;
+        *resp.mutable_code() = OTSError::kErrorCode_OTSAuthFailed;
         *resp.mutable_message() = "test";
         ResponseCallback respCb(
             tb.issueContext().mCallback,
@@ -605,7 +605,7 @@ void AsyncClient_Oneshot_BackendError(const string&)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->httpStatus() == 403)
             (*resultErr).issue();
-        TESTA_ASSERT(resultErr->errorCode() == Error::kErrorCode_OTSAuthFailed)
+        TESTA_ASSERT(resultErr->errorCode() == OTSError::kErrorCode_OTSAuthFailed)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->message() == "test")
             (*resultErr).issue();
@@ -621,7 +621,7 @@ void AsyncClient_Oneshot_NetworkError(const string&)
 {
     TestBench tb(new NoRetry());
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);
@@ -639,8 +639,8 @@ void AsyncClient_Oneshot_NetworkError(const string&)
         string body = concat(tb.issueContext().mBody);
         TESTA_ASSERT(pp::prettyPrint(MemPiece::from(body)) == "b\"\"")
             (MemPiece::from(body)).issue();
-        Error err;
-        err.mutableHttpStatus() = Error::kHttpStatus_WriteRequestFail;
+        OTSError err;
+        err.mutableHttpStatus() = OTSError::kHttpStatus_WriteRequestFail;
         http::Headers headers;
         ResponseCallback respCb(
             tb.issueContext().mCallback,
@@ -660,7 +660,7 @@ void AsyncClient_Oneshot_NetworkError(const string&)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->requestId() == "")
             (*resultErr).issue();
-        TESTA_ASSERT(resultErr->httpStatus() == Error::kHttpStatus_WriteRequestFail)
+        TESTA_ASSERT(resultErr->httpStatus() == OTSError::kHttpStatus_WriteRequestFail)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->errorCode() == "")
             (*resultErr).issue();
@@ -678,7 +678,7 @@ void AsyncClient_Retry(const string&)
 {
     TestBench tb;
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);
@@ -693,12 +693,12 @@ void AsyncClient_Retry(const string&)
             (token).issue();
         TESTA_ASSERT(tb.issueContext().mPath == "/ListTable")
             (tb.issueContext().mPath).issue();
-        Error err;
+        OTSError err;
         err.mutableHttpStatus() = 500;
         http::Headers headers;
         headers[impl::kOTSRequestId] = tb.requestId();
         com::aliyun::tablestore::protocol::Error resp;
-        *resp.mutable_code() = Error::kErrorCode_OTSTableNotReady;
+        *resp.mutable_code() = OTSError::kErrorCode_OTSTableNotReady;
         *resp.mutable_message() = "test";
         ResponseCallback respCb(
             tb.issueContext().mCallback,
@@ -771,7 +771,7 @@ void AsyncClient_ResponseValidation(const string&)
 {
     TestBench tb(new NoRetry());
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);
@@ -789,7 +789,7 @@ void AsyncClient_ResponseValidation(const string&)
         string body = concat(tb.issueContext().mBody);
         TESTA_ASSERT(pp::prettyPrint(MemPiece::from(body)) == "b\"\"")
             (MemPiece::from(body)).issue();
-        Error err;
+        OTSError err;
         http::Headers headers;
         headers[impl::kOTSContentMD5] = md5(string());
         ResponseCallback respCb(
@@ -810,9 +810,9 @@ void AsyncClient_ResponseValidation(const string&)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->requestId() == "")
             (*resultErr).issue();
-        TESTA_ASSERT(resultErr->httpStatus() == Error::kHttpStatus_CorruptedResponse)
+        TESTA_ASSERT(resultErr->httpStatus() == OTSError::kHttpStatus_CorruptedResponse)
             (*resultErr).issue();
-        TESTA_ASSERT(resultErr->errorCode() == Error::kErrorCode_CorruptedResponse)
+        TESTA_ASSERT(resultErr->errorCode() == OTSError::kErrorCode_CorruptedResponse)
             (*resultErr).issue();
         TESTA_ASSERT(resultErr->message() == "response digest mismatches: "
             "expect=1B2M2Y8AsgTpgAmY7PhCfg==, "
@@ -840,7 +840,7 @@ void AsyncClient_Sts(const string&)
     TestBench tb(new NoRetry());
     tb.mutableCredential().mutableSecurityToken() = "ststoken";
     tb.resetClient();
-    Optional<Error> resultErr;
+    Optional<OTSError> resultErr;
     ListTableRequest req;
     ListTableResponse resp;
     ResultCallback resultCb(tb.logger(), tb.slave(), resultErr, resp);

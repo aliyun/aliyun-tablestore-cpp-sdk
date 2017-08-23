@@ -45,7 +45,7 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-Optional<Error> SyncClient::create(
+Optional<OTSError> SyncClient::create(
     SyncClient*& result,
     Endpoint& ep, Credential& cr, ClientOptions& opts)
 {
@@ -53,7 +53,7 @@ Optional<Error> SyncClient::create(
     TRY(impl::AsyncClientBase::create(ac, ep, cr, opts));
     result = new impl::SyncClient(ac);
 
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 SyncClient* SyncClient::create(AsyncClient& a)
@@ -65,7 +65,7 @@ SyncClient* SyncClient::create(AsyncClient& a)
     return new impl::SyncClient(*c);
 }
 
-Optional<Error> AsyncClient::create(
+Optional<OTSError> AsyncClient::create(
     AsyncClient*& result,
     Endpoint& ep,
     Credential& cr,
@@ -75,7 +75,7 @@ Optional<Error> AsyncClient::create(
     TRY(impl::AsyncClientBase::create(ac, ep, cr, opts));
     result = new impl::AsyncClient(ac);
 
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 AsyncClient* AsyncClient::create(SyncClient& a)

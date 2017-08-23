@@ -248,7 +248,7 @@ private:
         util::Logger& mLogger;
         util::Actor& mActor;
         const Tracker mTracker;
-        std::tr1::function<void(const util::Optional<Error>&, ConnectionBase*)> mCallback;
+        std::tr1::function<void(const util::Optional<OTSError>&, ConnectionBase*)> mCallback;
         Endpoint mEndpoint;
 
         explicit Context(
@@ -277,7 +277,7 @@ private:
         const boost::system::error_code&);
     void connectComplete(
         Context*,
-        const util::Optional<Error>&,
+        const util::Optional<OTSError>&,
         ConnectionBase*);
     void supplyConnections();
     void handleSupplyConnections();

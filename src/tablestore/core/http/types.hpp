@@ -64,7 +64,7 @@ typedef std::map<
     util::QuasiLexicographicLess<util::MemPiece> > InplaceHeaders;
 typedef std::tr1::function<
     void(const Tracker&,
-        util::Optional<Error>& err,
+        util::Optional<OTSError>& err,
         InplaceHeaders& respHeaders,
         std::deque<util::MemPiece>& respBody)
     > ResponseCallback;

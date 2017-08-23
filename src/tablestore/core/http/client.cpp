@@ -106,19 +106,19 @@ private:
     void connectionBorrowed(
         const shared_ptr<Context>&,
         Connection&,
-        const Optional<Error>&);
+        const Optional<OTSError>&);
     util::MutableMemPiece requestSent(
         const shared_ptr<Context>&,
-        const Optional<Error>&);
+        const Optional<OTSError>&);
     bool responseReceived(
         const shared_ptr<Context>&,
         int64_t readBytes,
-        const util::Optional<Error>&,
+        const util::Optional<OTSError>&,
         util::MutableMemPiece*);
     Actor& assignActor(const Tracker&);
     void invokeCallback(
         const shared_ptr<Context>&,
-        Optional<Error>&);
+        Optional<OTSError>&);
     void giveBackConnection(const shared_ptr<Context>&);
     void closeConnection(const shared_ptr<Context>&);
 
@@ -289,17 +289,17 @@ void ClientImpl::timeout(
     OTS_LOG_DEBUG(mLogger)
         ("Tracker", ctx->mTracker)
         .what("HTTP: timeout");
-    Error e(Error::kPredefined_OperationTimeout);
+    OTSError e(OTSError::kPredefined_OperationTimeout);
     e.mutableMessage() = "Request timeout.";
     ctx->mActor.pushBack(
         bind(&ClientImpl::invokeCallback,
-            this, ctx, Optional<Error>(e)));
+            this, ctx, Optional<OTSError>(e)));
 }
 
 void ClientImpl::connectionBorrowed(
     const shared_ptr<Context>& ctx,
     Connection& conn,
-    const Optional<Error>& err)
+    const Optional<OTSError>& err)
 {
     if (err.present()) {
         OTS_LOG_DEBUG(mLogger)
@@ -355,7 +355,7 @@ void ClientImpl::connectionBorrowed(
 
 util::MutableMemPiece ClientImpl::requestSent(
     const shared_ptr<Context>& ctx,
-    const Optional<Error>& err)
+    const Optional<OTSError>& err)
 {
     if (err.present()) {
         OTS_LOG_DEBUG(mLogger)
@@ -378,7 +378,7 @@ util::MutableMemPiece ClientImpl::requestSent(
 bool ClientImpl::responseReceived(
     const shared_ptr<Context>& ctx,
     int64_t readBytes,
-    const util::Optional<Error>& err,
+    const util::Optional<OTSError>& err,
     MutableMemPiece* newPiece)
 {
     if (err.present()) {
@@ -401,7 +401,7 @@ bool ClientImpl::responseReceived(
         (ctx->mLastRespBuffer.length());
     MemPiece mp(ctx->mLastRespBuffer.begin(), readBytes);
     ResponseReader::RequireMore more = ResponseReader::STOP;
-    Optional<Error> e = ctx->mResponseReader->feed(more, mp);
+    Optional<OTSError> e = ctx->mResponseReader->feed(more, mp);
     OTS_ASSERT(!e.present())
         (ctx->mTracker)
         (*e);
@@ -411,7 +411,7 @@ bool ClientImpl::responseReceived(
             .what("HTTP: response finishes properly.");
         ctx->mActor.pushBack(
             bind(&ClientImpl::invokeCallback,
-                this, ctx, Optional<Error>()));
+                this, ctx, Optional<OTSError>()));
         return false;
     } else {
         OTS_ASSERT(readBytes <= ctx->mLastRespBuffer.length())
@@ -454,7 +454,7 @@ void ClientImpl::closeConnection(const shared_ptr<Context>& ctx)
 
 void ClientImpl::invokeCallback(
     const shared_ptr<Context>& ctx,
-    Optional<Error>& err)
+    Optional<OTSError>& err)
 {
     if (ctx->mAlreadyCallbacked.exchange(true, boost::memory_order_acq_rel)) {
         return;
@@ -487,9 +487,9 @@ void ClientImpl::invokeCallback(
             ("BytesOfHeaders", headers.size())
             ("Body", body)
             .what("HTTP: invoke callback");
-        Optional<Error> ex;
+        Optional<OTSError> ex;
         if (httpStatus < 200 || httpStatus >= 300) {
-            Error x;
+            OTSError x;
             x.mutableHttpStatus() = httpStatus;
             ex.reset(util::move(x));
         }

@@ -59,7 +59,7 @@ namespace impl {
 class AsyncClientBase
 {
 public:
-    static util::Optional<Error> create(
+    static util::Optional<OTSError> create(
         AsyncClientBase*&,
         Endpoint&,
         Credential&,
@@ -87,22 +87,22 @@ public:
 
         explicit Context(AsyncClientBase& base, const Tracker& tracker);
         virtual ~Context();
-        util::Optional<Error> build(
+        util::Optional<OTSError> build(
             const ApiRequest&,
-            const std::tr1::function<void(util::Optional<Error>&, ApiResponse&)>&);
+            const std::tr1::function<void(util::Optional<OTSError>&, ApiResponse&)>&);
         void issue();
 
     private:
         void retryAfter(util::Duration);
         void response(
             const Tracker&,
-            util::Optional<Error>&,
+            util::Optional<OTSError>&,
             http::InplaceHeaders&,
             std::deque<util::MemPiece>&);
         void putHeader(const std::string& key, const std::string& val);
-        bool retry(util::Optional<Error>&, const http::InplaceHeaders&);
+        bool retry(util::Optional<OTSError>&, const http::InplaceHeaders&);
         bool _response(
-            util::Optional<Error>&,
+            util::Optional<OTSError>&,
             ApiResponse&,
             http::InplaceHeaders&,
             std::deque<util::MemPiece>&);
@@ -135,7 +135,7 @@ public:
         http::InplaceHeaders mHeaders;
         std::deque<util::MemPiece> mBody;
         util::MonotonicTime mDeadline;
-        std::tr1::function<void(util::Optional<Error>&, ApiResponse&)> mCallback;
+        std::tr1::function<void(util::Optional<OTSError>&, ApiResponse&)> mCallback;
         Serde<kAction> mSerde;
         std::auto_ptr<RetryStrategy> mRetryStrategy;
     };
@@ -145,7 +145,7 @@ private:
         const std::string& instance,
         const std::tr1::function<http::Client*(const http::Headers&)>&);
     std::string sign(const std::string& path, const http::InplaceHeaders&);
-    util::Optional<Error> validateResponse(
+    util::Optional<OTSError> validateResponse(
         const Tracker&,
         const http::InplaceHeaders&,
         const std::deque<util::MemPiece>&);
@@ -225,9 +225,9 @@ void AsyncClientBase::Context<kAction>::retryAfter(
 }
 
 template<Action kAction>
-util::Optional<Error> AsyncClientBase::Context<kAction>::build(
+util::Optional<OTSError> AsyncClientBase::Context<kAction>::build(
     const ApiRequest& req,
-    const std::tr1::function<void(util::Optional<Error>&, ApiResponse&)>& cb)
+    const std::tr1::function<void(util::Optional<OTSError>&, ApiResponse&)>& cb)
 {
     TRY(req.validate());
     OTS_LOG_DEBUG(*mBase.mLogger)
@@ -245,7 +245,7 @@ util::Optional<Error> AsyncClientBase::Context<kAction>::build(
     putHeader(kHttpContentLength, pp::prettyPrint(util::totalLength(mBody)));
     putHeader(kOTSSignature, mBase.sign(kPath, mHeaders));
 
-    return util::Optional<Error>();
+    return util::Optional<OTSError>();
 }
 
 template<Action kAction>
@@ -261,6 +261,7 @@ void AsyncClientBase::Context<kAction>::putHeader(
 template<Action kAction>
 void AsyncClientBase::Context<kAction>::issue()
 {
+    mRetryTimer = NULL;
     std::deque<util::MemPiece> body = mBody;
     http::InplaceHeaders headers = mHeaders;
     mBase.mHttp->issue(
@@ -280,7 +281,7 @@ void AsyncClientBase::Context<kAction>::issue()
 template<Action kAction>
 void AsyncClientBase::Context<kAction>::response(
     const Tracker& tracker,
-    util::Optional<Error>& err,
+    util::Optional<OTSError>& err,
     http::InplaceHeaders& headers,
     std::deque<util::MemPiece>& body)
 {
@@ -295,14 +296,14 @@ void AsyncClientBase::Context<kAction>::response(
 
 template<Action kAction>
 bool AsyncClientBase::Context<kAction>::_response(
-    util::Optional<Error>& err,
+    util::Optional<OTSError>& err,
     ApiResponse& resp,
     http::InplaceHeaders& headers,
     std::deque<util::MemPiece>& body)
 {
     if (err.present()) {
         if (err->errorCode().empty()) {
-            util::Optional<Error> err2 = deserialize(*err, body);
+            util::Optional<OTSError> err2 = deserialize(*err, body);
             (void) err2;
         }
         return retry(err, headers);
@@ -327,7 +328,7 @@ bool AsyncClientBase::Context<kAction>::_response(
 
 template<Action kAction>
 bool AsyncClientBase::Context<kAction>::retry(
-    util::Optional<Error>& err,
+    util::Optional<OTSError>& err,
     const http::InplaceHeaders& headers)
 {
     OTS_ASSERT(err.present());

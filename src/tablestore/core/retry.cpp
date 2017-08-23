@@ -42,47 +42,47 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-RetryStrategy::RetryCategory RetryStrategy::retriable(const Error& err)
+RetryStrategy::RetryCategory RetryStrategy::retriable(const OTSError& err)
 {
     if (!isTemporary(err)) {
         return UNRETRIABLE;
     }
     int64_t status = err.httpStatus();
     MemPiece code = MemPiece::from(err.errorCode());
-    if (status == Error::kHttpStatus_CouldntResolveHost
-        || code == MemPiece::from(Error::kErrorCode_CouldntResolveHost))
+    if (status == OTSError::kHttpStatus_CouldntResolveHost
+        || code == MemPiece::from(OTSError::kErrorCode_CouldntResolveHost))
     {
         return RETRIABLE;
     }
-    if (status == Error::kHttpStatus_CouldntConnect
-        || code == MemPiece::from(Error::kErrorCode_CouldntConnect))
+    if (status == OTSError::kHttpStatus_CouldntConnect
+        || code == MemPiece::from(OTSError::kErrorCode_CouldntConnect))
     {
         return RETRIABLE;
     }
-    if (status == Error::kHttpStatus_OperationTimeout
-        || code == MemPiece::from(Error::kErrorCode_OTSRequestTimeout))
+    if (status == OTSError::kHttpStatus_OperationTimeout
+        || code == MemPiece::from(OTSError::kErrorCode_OTSRequestTimeout))
     {
         return DEPENDS;
     }
-    if (status == Error::kHttpStatus_WriteRequestFail
-        || code == MemPiece::from(Error::kErrorCode_WriteRequestFail))
+    if (status == OTSError::kHttpStatus_WriteRequestFail
+        || code == MemPiece::from(OTSError::kErrorCode_WriteRequestFail))
     {
         return DEPENDS;
     }
-    if (status == Error::kHttpStatus_CorruptedResponse
-        || code == MemPiece::from(Error::kErrorCode_CorruptedResponse))
+    if (status == OTSError::kHttpStatus_CorruptedResponse
+        || code == MemPiece::from(OTSError::kErrorCode_CorruptedResponse))
     {
         return DEPENDS;
     }
-    if (status == Error::kHttpStatus_NoAvailableConnection
-        || code == MemPiece::from(Error::kErrorCode_NoAvailableConnection))
+    if (status == OTSError::kHttpStatus_NoAvailableConnection
+        || code == MemPiece::from(OTSError::kErrorCode_NoAvailableConnection))
     {
         return RETRIABLE;
     }
     if (status >= 500 && status <= 599) {
-        if (code == MemPiece::from(Error::kErrorCode_OTSServerBusy)) {
+        if (code == MemPiece::from(OTSError::kErrorCode_OTSServerBusy)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSPartitionUnavailable)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSPartitionUnavailable)) {
             return RETRIABLE;
         } else {
             return DEPENDS;
@@ -90,19 +90,19 @@ RetryStrategy::RetryCategory RetryStrategy::retriable(const Error& err)
     }
     if (status >= 400 && status <= 499) {
         MemPiece msg = MemPiece::from(err.message());
-        if (code == MemPiece::from(Error::kErrorCode_OTSQuotaExhausted)
+        if (code == MemPiece::from(OTSError::kErrorCode_OTSQuotaExhausted)
             && msg == MemPiece::from("Too frequent table operations."))
         {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSRowOperationConflict)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSRowOperationConflict)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSTableNotReady)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTableNotReady)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSTooFrequentReservedThroughputAdjustment)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTooFrequentReservedThroughputAdjustment)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSCapacityUnitExhausted)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSCapacityUnitExhausted)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from(Error::kErrorCode_OTSTimeout)) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTimeout)) {
             return DEPENDS;
         } else {
             return UNRETRIABLE;
@@ -130,7 +130,7 @@ bool idempotent(Action act)
 
 } // namespace
 
-bool RetryStrategy::retriable(Action act, const Error& err)
+bool RetryStrategy::retriable(Action act, const OTSError& err)
 {
     RetryCategory cat = retriable(err);
     if (cat == RETRIABLE) {
@@ -165,7 +165,7 @@ int64_t DeadlineRetryStrategy::retries() const throw()
     return mRetries;
 }
 
-bool DeadlineRetryStrategy::shouldRetry(Action act, const Error& err) const
+bool DeadlineRetryStrategy::shouldRetry(Action act, const OTSError& err) const
 {
     if (MonotonicTime::now() >= mDeadline) {
         return false;
@@ -205,7 +205,7 @@ int64_t CountingRetryStrategy::retries() const throw()
     return mRetries;
 }
 
-bool CountingRetryStrategy::shouldRetry(Action act, const Error& err) const
+bool CountingRetryStrategy::shouldRetry(Action act, const OTSError& err) const
 {
     if (mRetries >= mMaxRetries) {
         return false;
@@ -234,7 +234,7 @@ int64_t NoRetry::retries() const throw()
     return 0;
 }
 
-bool NoRetry::shouldRetry(Action, const Error&) const
+bool NoRetry::shouldRetry(Action, const OTSError&) const
 {
     return false;
 }

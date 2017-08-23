@@ -46,7 +46,7 @@ class Random;
 
 namespace core {
 
-class Error;
+class OTSError;
 
 class RetryStrategy
 {
@@ -58,14 +58,14 @@ public:
         DEPENDS,
     };
 
-    static RetryCategory retriable(const Error&);
-    static bool retriable(Action, const Error&);
+    static RetryCategory retriable(const OTSError&);
+    static bool retriable(Action, const OTSError&);
 
     virtual ~RetryStrategy() {}
 
     virtual RetryStrategy* clone() const =0;
     virtual int64_t retries() const throw() =0;
-    virtual bool shouldRetry(Action, const Error&) const =0;
+    virtual bool shouldRetry(Action, const OTSError&) const =0;
     virtual util::Duration nextPause() =0;
 };
 
@@ -78,7 +78,7 @@ public:
 
     DeadlineRetryStrategy* clone() const;
     int64_t retries() const throw();
-    bool shouldRetry(Action, const Error&) const;
+    bool shouldRetry(Action, const OTSError&) const;
     util::Duration nextPause();
 
 private:
@@ -103,7 +103,7 @@ public:
 
     CountingRetryStrategy* clone() const;
     int64_t retries() const throw();
-    bool shouldRetry(Action, const Error&) const;
+    bool shouldRetry(Action, const OTSError&) const;
     util::Duration nextPause();
 
 private:
@@ -122,7 +122,7 @@ public:
 
     NoRetry* clone() const;
     int64_t retries() const throw();
-    bool shouldRetry(Action, const Error&) const;
+    bool shouldRetry(Action, const OTSError&) const;
     util::Duration nextPause();
 };
 

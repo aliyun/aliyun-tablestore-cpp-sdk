@@ -38,7 +38,7 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-class Error
+class OTSError
 {
 public:
     /*
@@ -119,13 +119,13 @@ public:
         kPredefined_OTSPartitionUnavailable,
     };
     
-    explicit Error()
+    explicit OTSError()
       : mHttpStatus(200)
     {}
-    explicit Error(Predefined);
-    ~Error() {}
+    explicit OTSError(Predefined);
+    ~OTSError() {}
 
-    explicit Error(const util::MoveHolder<Error>& ano)
+    explicit OTSError(const util::MoveHolder<OTSError>& ano)
       : mHttpStatus(ano->httpStatus()),
         mErrorCode(ano->errorCode()),
         mMessage(ano->message()),
@@ -133,7 +133,7 @@ public:
         mTraceId(ano->traceId())
     {}
 
-    Error& operator=(const util::MoveHolder<Error>& ano)
+    OTSError& operator=(const util::MoveHolder<OTSError>& ano)
     {
         util::moveAssign(mHttpStatus, util::move(ano->mHttpStatus));
         util::moveAssign(mErrorCode, util::move(ano->mErrorCode));
@@ -208,8 +208,8 @@ private:
     std::string mTraceId;
 };
 
-bool isCurlError(const Error&);
-bool isTemporary(const Error&);
+bool isCurlError(const OTSError&);
+bool isTemporary(const OTSError&);
 
 
 } // namespace core

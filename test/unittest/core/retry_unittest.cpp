@@ -50,34 +50,34 @@ namespace core {
 
 namespace {
 
-void collectPredefinedErrors(deque<Error::Predefined>& def)
+void collectPredefinedErrors(deque<OTSError::Predefined>& def)
 {
-    def.push_back(Error::kPredefined_CouldntResoveHost);
-    def.push_back(Error::kPredefined_CouldntConnect);
-    def.push_back(Error::kPredefined_OperationTimeout);
-    def.push_back(Error::kPredefined_WriteRequestFail);
-    def.push_back(Error::kPredefined_CorruptedResponse);
-    def.push_back(Error::kPredefined_NoConnectionAvailable);
-    def.push_back(Error::kPredefined_OTSOutOfColumnCountLimit);
-    def.push_back(Error::kPredefined_OTSObjectNotExist);
-    def.push_back(Error::kPredefined_OTSServerBusy);
-    def.push_back(Error::kPredefined_OTSCapacityUnitExhausted);
-    def.push_back(Error::kPredefined_OTSTooFrequentReservedThroughputAdjustment);
-    def.push_back(Error::kPredefined_OTSInternalServerError);
-    def.push_back(Error::kPredefined_OTSQuotaExhausted);
-    def.push_back(Error::kPredefined_OTSRequestBodyTooLarge);
-    def.push_back(Error::kPredefined_OTSTimeout);
-    def.push_back(Error::kPredefined_OTSObjectAlreadyExist);
-    def.push_back(Error::kPredefined_OTSTableNotReady);
-    def.push_back(Error::kPredefined_OTSConditionCheckFail);
-    def.push_back(Error::kPredefined_OTSOutOfRowSizeLimit);
-    def.push_back(Error::kPredefined_OTSInvalidPK);
-    def.push_back(Error::kPredefined_OTSMethodNotAllowed);
-    def.push_back(Error::kPredefined_OTSAuthFailed);
-    def.push_back(Error::kPredefined_OTSServerUnavailable);
-    def.push_back(Error::kPredefined_OTSParameterInvalid);
-    def.push_back(Error::kPredefined_OTSRowOperationConflict);
-    def.push_back(Error::kPredefined_OTSPartitionUnavailable);
+    def.push_back(OTSError::kPredefined_CouldntResoveHost);
+    def.push_back(OTSError::kPredefined_CouldntConnect);
+    def.push_back(OTSError::kPredefined_OperationTimeout);
+    def.push_back(OTSError::kPredefined_WriteRequestFail);
+    def.push_back(OTSError::kPredefined_CorruptedResponse);
+    def.push_back(OTSError::kPredefined_NoConnectionAvailable);
+    def.push_back(OTSError::kPredefined_OTSOutOfColumnCountLimit);
+    def.push_back(OTSError::kPredefined_OTSObjectNotExist);
+    def.push_back(OTSError::kPredefined_OTSServerBusy);
+    def.push_back(OTSError::kPredefined_OTSCapacityUnitExhausted);
+    def.push_back(OTSError::kPredefined_OTSTooFrequentReservedThroughputAdjustment);
+    def.push_back(OTSError::kPredefined_OTSInternalServerError);
+    def.push_back(OTSError::kPredefined_OTSQuotaExhausted);
+    def.push_back(OTSError::kPredefined_OTSRequestBodyTooLarge);
+    def.push_back(OTSError::kPredefined_OTSTimeout);
+    def.push_back(OTSError::kPredefined_OTSObjectAlreadyExist);
+    def.push_back(OTSError::kPredefined_OTSTableNotReady);
+    def.push_back(OTSError::kPredefined_OTSConditionCheckFail);
+    def.push_back(OTSError::kPredefined_OTSOutOfRowSizeLimit);
+    def.push_back(OTSError::kPredefined_OTSInvalidPK);
+    def.push_back(OTSError::kPredefined_OTSMethodNotAllowed);
+    def.push_back(OTSError::kPredefined_OTSAuthFailed);
+    def.push_back(OTSError::kPredefined_OTSServerUnavailable);
+    def.push_back(OTSError::kPredefined_OTSParameterInvalid);
+    def.push_back(OTSError::kPredefined_OTSRowOperationConflict);
+    def.push_back(OTSError::kPredefined_OTSPartitionUnavailable);
 }
 
 bool idempotent(Action act)
@@ -96,29 +96,29 @@ bool idempotent(Action act)
 }
 
 bool retriable(
-    const Error& error,
+    const OTSError& error,
     bool idempotent)
 {
     int httpStatus = error.httpStatus();
     if (httpStatus >= 200 && httpStatus <= 299) {
         return false;
     }
-    if (httpStatus == Error::kHttpStatus_CouldntConnect) {
+    if (httpStatus == OTSError::kHttpStatus_CouldntConnect) {
         return true;
     }
-    if (httpStatus == Error::kHttpStatus_CouldntResolveHost) {
+    if (httpStatus == OTSError::kHttpStatus_CouldntResolveHost) {
         return true;
     }
-    if (httpStatus == Error::kHttpStatus_NoAvailableConnection) {
+    if (httpStatus == OTSError::kHttpStatus_NoAvailableConnection) {
         return true;
     }
-    if (httpStatus == Error::kHttpStatus_WriteRequestFail) {
+    if (httpStatus == OTSError::kHttpStatus_WriteRequestFail) {
         return idempotent;
     }
-    if (httpStatus == Error::kHttpStatus_CorruptedResponse) {
+    if (httpStatus == OTSError::kHttpStatus_CorruptedResponse) {
         return idempotent;
     }
-    if (httpStatus == Error::kHttpStatus_OperationTimeout) {
+    if (httpStatus == OTSError::kHttpStatus_OperationTimeout) {
         return idempotent;
     }
     const string errorCode = error.errorCode();
@@ -147,22 +147,22 @@ bool retriable(
 
 } // namespace
 
-bool DefaultRetryStrategy_retriable_oracle(const tuple<Action, Error>& in)
+bool DefaultRetryStrategy_retriable_oracle(const tuple<Action, OTSError>& in)
 {
     Action act = get<0>(in);
-    const Error& err = get<1>(in);
+    const OTSError& err = get<1>(in);
     bool isIdempotent = idempotent(act);
     return retriable(err, isIdempotent);
 }
 
-bool DefaultRetryStrategy_retriable_trial(const tuple<Action, Error>& in)
+bool DefaultRetryStrategy_retriable_trial(const tuple<Action, OTSError>& in)
 {
     return RetryStrategy::retriable(get<0>(in), get<1>(in));
 }
 
-void DefaultRetryStrategy_retriable_tb(const string&, function<void(const tuple<Action, Error>&)> cs)
+void DefaultRetryStrategy_retriable_tb(const string&, function<void(const tuple<Action, OTSError>&)> cs)
 {
-    deque<Error::Predefined> defs;
+    deque<OTSError::Predefined> defs;
     collectPredefinedErrors(defs);
     deque<Action> actions;
     collectEnum(actions);
@@ -170,12 +170,12 @@ void DefaultRetryStrategy_retriable_tb(const string&, function<void(const tuple<
     errMsgs.push_back("Too frequent table operations.");
     errMsgs.push_back("whatever");
     FOREACH_ITER(i, defs) {
-        Error::Predefined def = *i;
+        OTSError::Predefined def = *i;
         FOREACH_ITER(k, errMsgs) {
             const string& errMsg = *k;
             FOREACH_ITER(m, actions) {
                 Action act = *m;
-                Error err(def);
+                OTSError err(def);
                 err.mutableMessage() = errMsg;
                 cs(make_tuple(act, err));
             }

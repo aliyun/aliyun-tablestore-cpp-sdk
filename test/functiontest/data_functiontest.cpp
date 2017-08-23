@@ -68,7 +68,7 @@ void Table_tb(
 
     SyncClient* pclient = NULL;
     {
-        Optional<Error> res = SyncClient::create(pclient, ep, cr, opts);
+        Optional<OTSError> res = SyncClient::create(pclient, ep, cr, opts);
         TESTA_ASSERT(!res.present())
             (*res)(ep)(cr)(opts).issue();
     }
@@ -80,7 +80,7 @@ void Table_tb(
             req.mutableMeta().mutableSchema().append() =
                 PrimaryKeyColumnSchema("pkey", kPKT_Integer);
             CreateTableResponse resp;
-            Optional<Error> err = client->createTable(resp, req);
+            Optional<OTSError> err = client->createTable(resp, req);
             if (!err.present()) {
                 break;
             }
@@ -93,7 +93,7 @@ void Table_tb(
             DeleteTableRequest req;
             req.mutableTable() = name;
             DeleteTableResponse resp;
-            Optional<Error> res = client->deleteTable(resp, req);
+            Optional<OTSError> res = client->deleteTable(resp, req);
             TESTA_ASSERT(!res.present())
                 (*res)(req).issue();
         }
@@ -104,7 +104,7 @@ void Table_tb(
         DeleteTableRequest req;
         req.mutableTable() = name;
         DeleteTableResponse resp;
-        Optional<Error> res = client->deleteTable(resp, req);
+        Optional<OTSError> res = client->deleteTable(resp, req);
         (void) res;
         throw;
     }
@@ -112,7 +112,7 @@ void Table_tb(
         DeleteTableRequest req;
         req.mutableTable() = name;
         DeleteTableResponse resp;
-        Optional<Error> res = client->deleteTable(resp, req);
+        Optional<OTSError> res = client->deleteTable(resp, req);
         TESTA_ASSERT(!res.present())
             (*res)(req).issue();
     }
@@ -127,7 +127,7 @@ PutRowRequest PutRow(const tuple<SyncClient*, string>& in)
     req.mutableRowChange().mutableAttributes().append() =
         Attribute("attr", AttributeValue::toStr("abc"));
     PutRowResponse resp;
-    Optional<Error> err = get<0>(in)->putRow(resp, req);
+    Optional<OTSError> err = get<0>(in)->putRow(resp, req);
     TESTA_ASSERT(!err.present())
         (req)(*err).issue();
     return req;
@@ -141,7 +141,7 @@ void GetRow(const PutRowRequest& putrow, const tuple<SyncClient*, string>& in)
         req.mutableQueryCriterion().mutableMaxVersions().reset(1);
         req.mutableQueryCriterion().mutablePrimaryKey() = putrow.rowChange().primaryKey();
         GetRowResponse resp;
-        Optional<Error> err = get<0>(in)->getRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->getRow(resp, req);
         TESTA_ASSERT(!err.present())
             (req)(*err).issue();
 
@@ -166,7 +166,7 @@ void GetRow(const PutRowRequest& putrow, const tuple<SyncClient*, string>& in)
         req.mutableQueryCriterion().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(456));
         GetRowResponse resp;
-        Optional<Error> err = get<0>(in)->getRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->getRow(resp, req);
         TESTA_ASSERT(!err.present())
             (req)(*err).issue();
 
@@ -191,7 +191,7 @@ void GetRange(const PutRowRequest& putrow, const tuple<SyncClient*, string>& in)
     GetRangeRequest req;
     req.mutableQueryCriterion() = util::move(cri);
     GetRangeResponse resp;
-    Optional<Error> err = get<0>(in)->getRange(resp, req);
+    Optional<OTSError> err = get<0>(in)->getRange(resp, req);
     TESTA_ASSERT(!err.present())
         (req)(*err).issue();
 
@@ -228,7 +228,7 @@ void ScanTable(
     auto_ptr<RangeIterator> iter(new RangeIterator(*aclient, cri));
     DequeBasedVector<Row> trial;
     for(;;) {
-        Optional<Error> err = iter->moveNext();
+        Optional<OTSError> err = iter->moveNext();
         TESTA_ASSERT(!err.present())
             (*err).issue();
         if (!iter->valid()) {
@@ -280,7 +280,7 @@ DequeBasedVector<Row> UpdateRow(const tuple<SyncClient*, string>& in)
                 ts);
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(resp, req);
+            Optional<OTSError> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -312,7 +312,7 @@ DequeBasedVector<Row> UpdateRow(const tuple<SyncClient*, string>& in)
         c.mutableAttrValue().reset(AttributeValue::toStr("c"));
         c.mutableTimestamp().reset(ts);
         UpdateRowResponse resp;
-        Optional<Error> err = get<0>(in)->updateRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->updateRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
@@ -339,7 +339,7 @@ DequeBasedVector<Row> DeleteRow(const tuple<SyncClient*, string>& in)
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(resp, req);
+            Optional<OTSError> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -356,7 +356,7 @@ DequeBasedVector<Row> DeleteRow(const tuple<SyncClient*, string>& in)
         req.mutableRowChange().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         DeleteRowResponse resp;
-        Optional<Error> err = get<0>(in)->deleteRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->deleteRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
@@ -377,7 +377,7 @@ void BatchGetRow(const tuple<SyncClient*, string>& in)
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(resp, req);
+            Optional<OTSError> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -412,7 +412,7 @@ void BatchGetRow(const tuple<SyncClient*, string>& in)
             }
         }
         BatchGetRowResponse resp;
-        Optional<Error> err = get<0>(in)->batchGetRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->batchGetRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
 
@@ -455,7 +455,7 @@ DequeBasedVector<Row> BatchWriteRow(const tuple<SyncClient*, string>& in)
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(3));
         PutRowResponse resp;
         for(;;) {
-            Optional<Error> err = get<0>(in)->putRow(resp, req);
+            Optional<OTSError> err = get<0>(in)->putRow(resp, req);
             if (!err.present()) {
                 break;
             } else if (err->errorCode() == "OTSTableNotReady") {
@@ -511,7 +511,7 @@ DequeBasedVector<Row> BatchWriteRow(const tuple<SyncClient*, string>& in)
             del.mutableGet().mutableReturnType() = RowChange::kRT_PrimaryKey;
         }
         BatchWriteRowResponse resp;
-        Optional<Error> err = get<0>(in)->batchWriteRow(resp, req);
+        Optional<OTSError> err = get<0>(in)->batchWriteRow(resp, req);
         TESTA_ASSERT(!err.present())
             (*err)(req).issue();
         TESTA_ASSERT(resp.putResults().size() == 1)
@@ -541,7 +541,7 @@ ComputeSplitsBySizeResponse computeSplitsBySize(const tuple<SyncClient*, string>
     req.mutableTable() = get<1>(in);
     req.mutableSplitSize() = 1; // 100MB
     ComputeSplitsBySizeResponse resp;
-    Optional<Error> err = get<0>(in)->computeSplitsBySize(resp, req);
+    Optional<OTSError> err = get<0>(in)->computeSplitsBySize(resp, req);
     TESTA_ASSERT(!err.present())
         (*err)
         (req).issue();

@@ -356,8 +356,8 @@ void PrettyPrinter<RowUpdateChange::Update::Type, RowUpdateChange::Update::Type>
 }
 
 void PrettyPrinter<
-    Result<Optional<Row>, Error>, Result<Optional<Row>, Error> >::operator()(
-        string& out, const Result<Optional<Row>, Error>& res) const
+    Result<Optional<Row>, OTSError>, Result<Optional<Row>, OTSError> >::operator()(
+        string& out, const Result<Optional<Row>, OTSError>& res) const
 {
     if (res.ok()) {
         out.append("{\"Ok\":");
@@ -368,7 +368,7 @@ void PrettyPrinter<
             out.push_back('}');
         }
     } else {
-        out.append("{\"Error\":");
+        out.append("{\"OTSError\":");
         pp::prettyPrint(out, res.errValue());
         out.push_back('}');
     }
@@ -448,27 +448,27 @@ void Endpoint::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> Endpoint::validate() const
+Optional<OTSError> Endpoint::validate() const
 {
     if (mEndpoint.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Endpoint must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (!MemPiece::from(mEndpoint).startsWith(MemPiece::from("http://"))
         && !MemPiece::from(mEndpoint).startsWith(MemPiece::from("https://")))
     {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Endpoint must starts with either "
             "\"http://\" or \"https://\".";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mInstanceName.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Instance name must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 Credential::Credential(const MoveHolder<Credential>& a)
@@ -513,34 +513,34 @@ inline bool ContainsCrlf(const string& s)
 
 } // namespace
 
-Optional<Error> Credential::validate() const
+Optional<OTSError> Credential::validate() const
 {
     if (mAccessKeyId.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Access-key id must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (ContainsCrlf(mAccessKeyId)) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Access-key id must contain neither CR nor LF.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mAccessKeySecret.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Access-key secret must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (ContainsCrlf(mAccessKeySecret)) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Access-key secret must contain neither CR nor LF.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (ContainsCrlf(mSecurityToken)) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Security token must contian neither CR nor LF.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -585,9 +585,9 @@ void Tracker::calculateHash()
     mTraceHash = hasher(mTraceId);
 }
 
-Optional<Error> Tracker::validate() const
+Optional<OTSError> Tracker::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void Tracker::prettyPrint(string& out) const
@@ -649,31 +649,31 @@ void ClientOptions::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> ClientOptions::validate() const
+Optional<OTSError> ClientOptions::validate() const
 {
     if (maxConnections() <= 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "MaxConnections must be positive.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (connectTimeout() < Duration::fromMsec(1)) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "ConnectTimeout must be greater than 1 msec. "
             "Recommends 2 secs.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (requestTimeout() < Duration::fromMsec(1)) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "RequestTimeout must be greater than 1 msec. "
             "Recommends 10 secs.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mRetryStrategy.get() == NULL) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "RetryStrategy is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void ClientOptions::resetRetryStrategy(RetryStrategy* rs)
@@ -713,24 +713,24 @@ void PrimaryKeyColumnSchema::reset()
     mOption = Optional<Option>();
 }
 
-Optional<Error> PrimaryKeyColumnSchema::validate() const
+Optional<OTSError> PrimaryKeyColumnSchema::validate() const
 {
     if (name().empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "\"name\" is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mOption.present()) {
         if (*mOption == AutoIncrement && type() != kPKT_Integer) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             string msg("AutoIncrement can only be applied on kPKT_Integer, for primary key \"");
             msg.append(name());
             msg.append("\".");
             e.mutableMessage() = msg;
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void PrimaryKeyColumnSchema::prettyPrint(string& out) const
@@ -751,17 +751,17 @@ void Schema::prettyPrint(string& out) const
     pp::prettyPrint(out, mColumns);
 }
 
-Optional<Error> Schema::validate() const
+Optional<OTSError> Schema::validate() const
 {
     if (size() == 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table schema must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     for(int64_t i = 0, sz = size(); i < sz; ++i) {
         TRY((*this)[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 PrimaryKeyType PrimaryKeyValue::toPrimaryKeyType(Category cat)
@@ -829,14 +829,14 @@ void PrimaryKeyValue::prettyPrint(string& out) const
     }
 }
 
-Optional<Error> PrimaryKeyValue::validate() const
+Optional<OTSError> PrimaryKeyValue::validate() const
 {
     if (category() == kNone) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "value is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void PrimaryKeyValue::reset()
@@ -1050,14 +1050,14 @@ void PrimaryKeyValue::setAutoIncrement()
     moveAssign(*this, util::move(to));
 }
 
-Optional<Error> PrimaryKeyColumn::validate() const
+Optional<OTSError> PrimaryKeyColumn::validate() const
 {
     if (mName.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "name of primary-key column is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    Optional<Error> err = value().validate();
+    Optional<OTSError> err = value().validate();
     if (err.present()) {
         string msg("For primary-key column \"");
         msg.append(mName);
@@ -1066,7 +1066,7 @@ Optional<Error> PrimaryKeyColumn::validate() const
         err->mutableMessage() = msg;
         return err;
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 PrimaryKeyColumn::PrimaryKeyColumn()
@@ -1112,17 +1112,17 @@ void PrimaryKey::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> PrimaryKey::validate() const
+Optional<OTSError> PrimaryKey::validate() const
 {
     if (size() == 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Primary key is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     for(int64_t i = 0, sz = size(); i < sz; ++i) {
         TRY((*this)[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 CompareResult PrimaryKey::compare(const PrimaryKey& b) const
@@ -1157,15 +1157,15 @@ void TableMeta::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> TableMeta::validate() const
+Optional<OTSError> TableMeta::validate() const
 {
     if (tableName().empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     TRY(schema().validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 TableOptions& TableOptions::operator=(const MoveHolder<TableOptions>& a)
@@ -1246,60 +1246,60 @@ void TableOptions::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> TableOptions::validate() const
+Optional<OTSError> TableOptions::validate() const
 {
     if (reservedThroughput().present()) {
         TRY(reservedThroughput()->validate());
         if (!reservedThroughput()->read().present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Read reserved throughput is required.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (!reservedThroughput()->write().present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Write reserved throughput is required.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (mTimeToLive.present()) {
         if (mTimeToLive->toUsec() % kUsecPerSec != 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "TimeToLive must be integral multiple of seconds.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (mTimeToLive->toUsec() <= 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "TimeToLive must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (mMaxVersions.present()) {
         if (*mMaxVersions <= 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "MaxVersions must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (mBlockSize.present()) {
         if (*mBlockSize <= 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "BlockSize must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (mMaxTimeDeviation.present()) {
         if (mMaxTimeDeviation->toUsec() % kUsecPerSec != 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "MaxTimeDeviation must be integral multiple of seconds.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (mMaxTimeDeviation->toUsec() <= 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "MaxTimeDeviation must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 CapacityUnit& CapacityUnit::operator=(const util::MoveHolder<CapacityUnit>& a)
@@ -1315,23 +1315,23 @@ void CapacityUnit::reset()
     mWrite.reset();
 }
 
-Optional<Error> CapacityUnit::validate() const
+Optional<OTSError> CapacityUnit::validate() const
 {
     if (mRead.present()) {
         if (*mRead < 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "read capacity unit must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (mWrite.present()) {
         if (*mWrite < 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "write capacity unit must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void CapacityUnit::prettyPrint(string& out) const
@@ -1410,27 +1410,27 @@ void AttributeValue::prettyPrint(string& out) const
     }
 }
 
-Optional<Error> AttributeValue::validate() const
+Optional<OTSError> AttributeValue::validate() const
 {
     if (category() == kNone) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "value is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (category() == kFloatPoint) {
         double v = floatPoint();
         if (isinf(v)) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "value cannot be set to infinity.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (isnan(v)) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "value cannot be set to NaN.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 CompareResult AttributeValue::compare(const AttributeValue& b) const
@@ -1674,15 +1674,15 @@ void Attribute::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> Attribute::validate() const
+Optional<OTSError> Attribute::validate() const
 {
     if (name().empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Attribute name must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     {
-        Optional<Error> err = value().validate();
+        Optional<OTSError> err = value().validate();
         if (err.present()) {
             string msg("For column ");
             pp::prettyPrint(msg, name());
@@ -1694,21 +1694,21 @@ Optional<Error> Attribute::validate() const
     }
     if (timestamp().present()) {
         if (timestamp()->toMsec() < 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Timestamp of column ";
             pp::prettyPrint(e.mutableMessage(), name());
             e.mutableMessage().append(" must be positive.");
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (timestamp()->toUsec() % kUsecPerMsec != 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Timestamp of column ";
             pp::prettyPrint(e.mutableMessage(), name());
             e.mutableMessage().append(" must be multiple of milliseconds.");
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -1734,13 +1734,13 @@ void Row::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> Row::validate() const
+Optional<OTSError> Row::validate() const
 {
     TRY(mPkey.validate());
     for(int64_t i = 0, sz = mAttrs.size(); i < sz; ++i) {
         TRY(mAttrs[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -1766,27 +1766,27 @@ void TimeRange::prettyPrint(string& out) const
     out.push_back(']');
 }
 
-Optional<Error> TimeRange::validate() const
+Optional<OTSError> TimeRange::validate() const
 {
     if (mStart.toUsec() % kUsecPerMsec != 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Start of time ranges must be integral "
             "multiple of milliseconds.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mEnd.toUsec() % kUsecPerMsec != 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "End of time ranges must be integral multiple "
             "of milliseconds.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mStart > mEnd) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Start of time ranges must be in advance of "
             "their ends.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 Split& Split::operator=(const MoveHolder<Split>& a)
@@ -1819,53 +1819,53 @@ void Split::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> Split::validate() const
+Optional<OTSError> Split::validate() const
 {
     if (mLowerBound.get() == NULL) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Lower bound of a split must be nonnull.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mUpperBound.get() == NULL) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Upper bound of a split must be nonnull.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     TRY(mLowerBound->validate());
     TRY(mUpperBound->validate());
     if (mLowerBound->size() != mUpperBound->size()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Lower bound of a split must be "
             "of the same length of the upper bound of that split.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     for(int64_t i = 0, sz = mLowerBound->size(); i < sz; ++i) {
         const PrimaryKeyColumn& lower = (*mLowerBound)[i];
         const PrimaryKeyColumn& upper = (*mUpperBound)[i];
         if (lower.name() != upper.name()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Lower bound of a split must have the same names of the upper bound of that split.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (lower.value().category() != upper.value().category()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Lower bound of a split must have the same types of the upper bound of that split.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     {
         CompareResult c = mLowerBound->compare(*mUpperBound);
         if (c == kCR_Larger || c == kCR_Equivalent) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Lower bound of a split must be smaller than the upper bound of that split.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         } else if (c == kCR_Uncomparable) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Lower bound of a split must be comparable with the upper bound.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -1932,39 +1932,39 @@ void CreateTableRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> CreateTableRequest::validate() const
+Optional<OTSError> CreateTableRequest::validate() const
 {
     TRY(meta().validate());
     TRY(options().validate());
     if (!options().reservedThroughput().present()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Both read and write capacity units are required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (!options().reservedThroughput()->read().present()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Both read and write capacity units are required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (!options().reservedThroughput()->write().present()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Both read and write capacity units are required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (*options().reservedThroughput()->read() < 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Read capacity units must be positive.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (*options().reservedThroughput()->write() < 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Write capacity units must be positive.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (!options().maxVersions().present()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "MaxVersions is missing while creating table.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     for(int64_t i = 0, sz = mShardSplitPoints.size(); i < sz; ++i) {
         const PrimaryKey& pk = mShardSplitPoints[i];
@@ -1973,9 +1973,9 @@ Optional<Error> CreateTableRequest::validate() const
     for(int64_t i = 0, sz = mShardSplitPoints.size(); i < sz; ++i) {
         const PrimaryKey& pk = mShardSplitPoints[i];
         if (pk.size() != 1) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Length of shard split points must be exactly one.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     for(int64_t i = 0, sz = mShardSplitPoints.size(); i < sz; ++i) {
@@ -1983,32 +1983,32 @@ Optional<Error> CreateTableRequest::validate() const
         OTS_ASSERT(pk.size() >= 1)(pk.size());
         const PrimaryKeyColumn& pkc = pk[0];
         if (!pkc.value().isReal()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Shard split points contains an unreal value type ";
             pp::prettyPrint(e.mutableMessage(), pkc.value().category());
             e.mutableMessage().push_back('.');
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         const Schema& schema = mMeta.schema();
         OTS_ASSERT(schema.size() >= 1)
             (schema.size());
         const PrimaryKeyColumnSchema& colSchema = schema[0];
         if (MemPiece::from(pkc.name()) != MemPiece::from(colSchema.name())) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Shard split points contains ";
             pp::prettyPrint(e.mutableMessage(), pkc.name());
             e.mutableMessage().append(", which is different with that in the schema.");
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (PrimaryKeyValue::toPrimaryKeyType(pkc.value().category()) != colSchema.type()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Type of primary-key column ";
             pp::prettyPrint(e.mutableMessage(), pkc.name());
             e.mutableMessage().append(" mismatches that in schema.");
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 CreateTableResponse& CreateTableResponse::operator=(
@@ -2030,9 +2030,9 @@ void CreateTableResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> CreateTableResponse::validate() const
+Optional<OTSError> CreateTableResponse::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2045,9 +2045,9 @@ void ListTableRequest::prettyPrint(string& out) const
     out.append("{\"API\":\"ListTableRequest\"}");
 }
 
-Optional<Error> ListTableRequest::validate() const
+Optional<OTSError> ListTableRequest::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2077,9 +2077,9 @@ void ListTableResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> ListTableResponse::validate() const
+Optional<OTSError> ListTableResponse::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2106,14 +2106,14 @@ void DeleteTableRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DeleteTableRequest::validate() const
+Optional<OTSError> DeleteTableRequest::validate() const
 {
     if (table().empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 DeleteTableResponse::DeleteTableResponse(const MoveHolder<DeleteTableResponse>& a)
@@ -2139,9 +2139,9 @@ void DeleteTableResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DeleteTableResponse::validate() const
+Optional<OTSError> DeleteTableResponse::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2170,14 +2170,14 @@ void DescribeTableRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DescribeTableRequest::validate() const
+Optional<OTSError> DescribeTableRequest::validate() const
 {
     if (table().empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2221,14 +2221,14 @@ void DescribeTableResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DescribeTableResponse::validate() const
+Optional<OTSError> DescribeTableResponse::validate() const
 {
     TRY(mMeta.validate());
     TRY(mOptions.validate());
     for(int64_t i = 0, sz = mShardSplitPoints.size(); i < sz; ++i) {
         TRY(mShardSplitPoints[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2259,15 +2259,15 @@ void UpdateTableRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> UpdateTableRequest::validate() const
+Optional<OTSError> UpdateTableRequest::validate() const
 {
     if (mTable.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     TRY(mOptions.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2294,9 +2294,9 @@ void UpdateTableResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> UpdateTableResponse::validate() const
+Optional<OTSError> UpdateTableResponse::validate() const
 {
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2329,19 +2329,19 @@ void ComputeSplitsBySizeRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> ComputeSplitsBySizeRequest::validate() const
+Optional<OTSError> ComputeSplitsBySizeRequest::validate() const
 {
     if (mTable.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name must be nonempty.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mSplitSize <= 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Split size must be positive.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2381,14 +2381,14 @@ void ComputeSplitsBySizeResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> ComputeSplitsBySizeResponse::validate() const
+Optional<OTSError> ComputeSplitsBySizeResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     TRY(mSchema.validate());
     for(int64_t i = 0, sz = mSplits.size(); i < sz; ++i) {
         TRY(mSplits[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2415,12 +2415,12 @@ void Condition::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> Condition::validate() const
+Optional<OTSError> Condition::validate() const
 {
     if (mColumnCondition.get() != NULL) {
         TRY(mColumnCondition->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 SingleColumnCondition& SingleColumnCondition::operator=(
@@ -2458,20 +2458,20 @@ void SingleColumnCondition::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> SingleColumnCondition::validate() const
+Optional<OTSError> SingleColumnCondition::validate() const
 {
     if (mColumnName.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Column name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     TRY(mColumnValue.validate());
     if (mColumnValue.category() == AttributeValue::kNone) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Column value is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2498,17 +2498,17 @@ void CompositeColumnCondition::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> CompositeColumnCondition::validate() const
+Optional<OTSError> CompositeColumnCondition::validate() const
 {
     for(int64_t i = 0, sz = mChildren.size(); i < sz; ++i) {
         if (mChildren[i].get() == NULL) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Children of a composite column condition must be nonnull.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         TRY(mChildren[i]->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 void RowChange::move(RowChange& a)
@@ -2539,23 +2539,23 @@ void RowChange::prettyPrint(string& out) const
     pp::prettyPrint(out, mReturnType);
 }
 
-Optional<Error> RowChange::validate() const
+Optional<OTSError> RowChange::validate() const
 {
     if (mTable.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     TRY(mPrimaryKey.validate());
     for(int64_t i = 0, sz = mPrimaryKey.size(); i < sz; ++i) {
         if (mPrimaryKey[i].value().isInfinity()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Infinity is not allowed in writing a row.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     TRY(mCondition.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 RowPutChange& RowPutChange::operator=(const MoveHolder<RowPutChange>& a)
@@ -2580,13 +2580,13 @@ void RowPutChange::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> RowPutChange::validate() const
+Optional<OTSError> RowPutChange::validate() const
 {
     TRY(RowChange::validate());
     for(int64_t i = 0, sz = mAttrs.size(); i < sz; ++i) {
         TRY(mAttrs[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 PutRowRequest& PutRowRequest::operator=(const MoveHolder<PutRowRequest>& a)
@@ -2607,7 +2607,7 @@ void PutRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> PutRowRequest::validate() const
+Optional<OTSError> PutRowRequest::validate() const
 {
     return mRowChange.validate();
 }
@@ -2640,13 +2640,13 @@ void PutRowResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> PutRowResponse::validate() const
+Optional<OTSError> PutRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     if (mRow.present()) {
         TRY(mRow->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2695,29 +2695,29 @@ void QueryCriterion::prettyPrint(string& out) const
     }
 }
 
-Optional<Error> QueryCriterion::validate() const
+Optional<OTSError> QueryCriterion::validate() const
 {
     if (mTable.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Table name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     for(int64_t i = 0, sz = mColumnsToGet.size(); i < sz; ++i) {
         if (mColumnsToGet[i].empty()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Columns in ColumnsToGet must be nonempty.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
     if (!mMaxVersions.present() && !mTimeRange.present()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Either MaxVersions or TimeRange is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mMaxVersions.present() && *mMaxVersions <= 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "MaxVersions must be positive.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mTimeRange.present()) {
         TRY(mTimeRange->validate());
@@ -2725,7 +2725,7 @@ Optional<Error> QueryCriterion::validate() const
     if (mFilter.get() != NULL) {
         TRY(mFilter->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 PointQueryCriterion& PointQueryCriterion::operator=(
@@ -2751,11 +2751,11 @@ void PointQueryCriterion::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> PointQueryCriterion::validate() const
+Optional<OTSError> PointQueryCriterion::validate() const
 {
     TRY(QueryCriterion::validate());
     TRY(mPrimaryKey.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2777,7 +2777,7 @@ void GetRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> GetRowRequest::validate() const
+Optional<OTSError> GetRowRequest::validate() const
 {
     return mQueryCriterion.validate();
 }
@@ -2810,13 +2810,13 @@ void GetRowResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> GetRowResponse::validate() const
+Optional<OTSError> GetRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     if (mRow.present()) {
         TRY(mRow->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 RangeQueryCriterion& RangeQueryCriterion::operator=(
@@ -2854,50 +2854,50 @@ void RangeQueryCriterion::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> RangeQueryCriterion::validate() const
+Optional<OTSError> RangeQueryCriterion::validate() const
 {
     TRY(QueryCriterion::validate());
     TRY(mInclusiveStart.validate());
     TRY(mExclusiveEnd.validate());
     if (mInclusiveStart.size() == 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Start primary key is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mExclusiveEnd.size() == 0) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "End primary key is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mInclusiveStart.size() != mExclusiveEnd.size()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Start primary key must be of the same length of that of the end.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     {
         CompareResult r = mInclusiveStart.compare(mExclusiveEnd);
         if (mDirection == FORWARD) {
             if (r == kCR_Uncomparable || r == kCR_Larger) {
-                Error e(Error::kPredefined_OTSParameterInvalid);
+                OTSError e(OTSError::kPredefined_OTSParameterInvalid);
                 e.mutableMessage() = "Start primary key should be less than or equals to the end in a forward range.";
-                return Optional<Error>(util::move(e));
+                return Optional<OTSError>(util::move(e));
             }
         } else {
             if (r == kCR_Uncomparable || r == kCR_Smaller) {
-                Error e(Error::kPredefined_OTSParameterInvalid);
+                OTSError e(OTSError::kPredefined_OTSParameterInvalid);
                 e.mutableMessage() = "Start primary key should be greater than or equals to the end in a backward range.";
-                return Optional<Error>(util::move(e));
+                return Optional<OTSError>(util::move(e));
             }
         }
     }
     if (mLimit.present()) {
         if (*mLimit <= 0) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Limit of GetRange must be positive.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2920,10 +2920,10 @@ void GetRangeRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> GetRangeRequest::validate() const
+Optional<OTSError> GetRangeRequest::validate() const
 {
     TRY(mQueryCriterion.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -2959,7 +2959,7 @@ void GetRangeResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> GetRangeResponse::validate() const
+Optional<OTSError> GetRangeResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     for(int64_t i = 0, sz = mRows.size(); i < sz; ++i) {
@@ -2968,7 +2968,7 @@ Optional<Error> GetRangeResponse::validate() const
     if (mNextStart.present()) {
         TRY(mNextStart->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 RowUpdateChange::Update& RowUpdateChange::Update::operator=(
@@ -3004,12 +3004,12 @@ void RowUpdateChange::Update::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> RowUpdateChange::Update::validate() const
+Optional<OTSError> RowUpdateChange::Update::validate() const
 {
     if (mAttrName.empty()) {
-        Error e(Error::kPredefined_OTSParameterInvalid);
+        OTSError e(OTSError::kPredefined_OTSParameterInvalid);
         e.mutableMessage() = "Attribute name is required.";
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
     if (mAttrValue.present()) {
         TRY(mAttrValue->validate());
@@ -3017,35 +3017,35 @@ Optional<Error> RowUpdateChange::Update::validate() const
     switch(mType) {
     case kPut:
         if (!mAttrValue.present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Attribute value is required for Put update.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         break;
     case kDelete: {
         if (mAttrValue.present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Attribute value should not be specified for Delete update.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         break;
     }
     case kDeleteAll: {
         if (mAttrValue.present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Attribute value should not be specified for Delete-All update.";
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         if (mTimestamp.present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Timestamp should not be specified for Delete-All update.";
             
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
         break;
     }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 RowUpdateChange& RowUpdateChange::operator=(const MoveHolder<RowUpdateChange>& a)
@@ -3064,13 +3064,13 @@ void RowUpdateChange::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> RowUpdateChange::validate() const
+Optional<OTSError> RowUpdateChange::validate() const
 {
     TRY(RowChange::validate());
     for(int64_t i = 0, sz = mUpdates.size(); i < sz; ++i) {
         TRY(mUpdates[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3092,10 +3092,10 @@ void UpdateRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> UpdateRowRequest::validate() const
+Optional<OTSError> UpdateRowRequest::validate() const
 {
     TRY(mRowChange.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 UpdateRowResponse& UpdateRowResponse::operator=(
@@ -3126,13 +3126,13 @@ void UpdateRowResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> UpdateRowResponse::validate() const
+Optional<OTSError> UpdateRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     if (mRow.present()) {
         TRY(mRow->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3148,10 +3148,10 @@ void RowDeleteChange::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> RowDeleteChange::validate() const
+Optional<OTSError> RowDeleteChange::validate() const
 {
     TRY(RowChange::validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3174,10 +3174,10 @@ void DeleteRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DeleteRowRequest::validate() const
+Optional<OTSError> DeleteRowRequest::validate() const
 {
     TRY(mRowChange.validate());
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3210,13 +3210,13 @@ void DeleteRowResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> DeleteRowResponse::validate() const
+Optional<OTSError> DeleteRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     if (mRow.present()) {
         TRY(mRow->validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3249,13 +3249,13 @@ void MultiPointQueryCriterion::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> MultiPointQueryCriterion::validate() const
+Optional<OTSError> MultiPointQueryCriterion::validate() const
 {
     TRY(QueryCriterion::validate());
     for(int64_t i = 0, sz = mRowKeys.size(); i < sz; ++i) {
         TRY(mRowKeys[i].get().validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3283,12 +3283,12 @@ void BatchGetRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> BatchGetRowRequest::validate() const
+Optional<OTSError> BatchGetRowRequest::validate() const
 {
     for(int64_t i = 0, sz = criteria().size(); i < sz; ++i) {
         TRY(criteria()[i].validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3318,18 +3318,18 @@ void BatchGetRowResponse::prettyPrint(string& out) const
     out.append("}");
 }
 
-Optional<Error> BatchGetRowResponse::validate() const
+Optional<OTSError> BatchGetRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     for(int64_t i = 0, sz = mResults.size(); i < sz; ++i) {
-        const util::Result<Optional<Row>, Error>& result = mResults[i].get();
+        const util::Result<Optional<Row>, OTSError>& result = mResults[i].get();
         if (result.ok()) {
             if (result.okValue().present()) {
                 TRY(result.okValue()->validate());
             }
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3366,7 +3366,7 @@ void BatchWriteRowRequest::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> BatchWriteRowRequest::validate() const
+Optional<OTSError> BatchWriteRowRequest::validate() const
 {
     for(int64_t i = 0, sz = mPuts.size(); i < sz; ++i) {
         TRY(mPuts[i].get().validate());
@@ -3377,7 +3377,7 @@ Optional<Error> BatchWriteRowRequest::validate() const
     for(int64_t i = 0, sz = mDeletes.size(); i < sz; ++i) {
         TRY(mDeletes[i].get().validate());
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 
@@ -3421,28 +3421,28 @@ void BatchWriteRowResponse::prettyPrint(string& out) const
     out.push_back('}');
 }
 
-Optional<Error> BatchWriteRowResponse::validate() const
+Optional<OTSError> BatchWriteRowResponse::validate() const
 {
     TRY(mConsumedCapacity.validate());
     for(int64_t i = 0, sz = putResults().size(); i < sz; ++i) {
-        const util::Result<Optional<Row>, Error>& res = putResults()[i].get();
+        const util::Result<Optional<Row>, OTSError>& res = putResults()[i].get();
         if (res.ok() && res.okValue().present()) {
             TRY(res.okValue()->validate());
         }
     }
     for(int64_t i = 0, sz = updateResults().size(); i < sz; ++i) {
-        const util::Result<Optional<Row>, Error>& res = updateResults()[i].get();
+        const util::Result<Optional<Row>, OTSError>& res = updateResults()[i].get();
         if (res.ok() && res.okValue().present()) {
             TRY(res.okValue()->validate());
         }
     }
     for(int64_t i = 0, sz = deleteResults().size(); i < sz; ++i) {
-        const util::Result<Optional<Row>, Error>& res = deleteResults()[i].get();
+        const util::Result<Optional<Row>, OTSError>& res = deleteResults()[i].get();
         if (res.ok() && res.okValue().present()) {
             TRY(res.okValue()->validate());
         }
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 

@@ -67,12 +67,12 @@ template<Action kAction>
 void go(
     AsyncClientBase& base,
     typename ApiTraits<kAction>::ApiRequest& req,
-    const function<void(Optional<Error>&, 
+    const function<void(Optional<OTSError>&, 
         typename ApiTraits<kAction>::ApiResponse&)>& cb)
 {
     Tracker tracker(Tracker::create());
     auto_ptr<Context<kAction> > ctx(new Context<kAction>(base, tracker, req));
-    Optional<Error> err = ctx->build(ctx->mApiRequest, cb);
+    Optional<OTSError> err = ctx->build(ctx->mApiRequest, cb);
     if (err.present()) {
         typename ApiTraits<kAction>::ApiResponse resp;
         cb(err, resp);
@@ -93,91 +93,91 @@ AsyncClient::AsyncClient(SyncClient& client)
 
 void AsyncClient::createTable(
     CreateTableRequest& req,
-    const function<void(Optional<Error>&, CreateTableResponse&)>& cb)
+    const function<void(Optional<OTSError>&, CreateTableResponse&)>& cb)
 {
     go<kApi_CreateTable>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::deleteTable(
     DeleteTableRequest& req,
-    const function<void(Optional<Error>&, DeleteTableResponse&)>& cb)
+    const function<void(Optional<OTSError>&, DeleteTableResponse&)>& cb)
 {
     go<kApi_DeleteTable>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::listTable(
     ListTableRequest& req,
-    const function<void(Optional<Error>&, ListTableResponse&)>& cb)
+    const function<void(Optional<OTSError>&, ListTableResponse&)>& cb)
 {
     go<kApi_ListTable>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::describeTable(
     DescribeTableRequest& req,
-    const function<void(Optional<Error>&, DescribeTableResponse&)>& cb)
+    const function<void(Optional<OTSError>&, DescribeTableResponse&)>& cb)
 {
     go<kApi_DescribeTable>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::updateTable(
     UpdateTableRequest& req,
-    const function<void(Optional<Error>&, UpdateTableResponse&)>& cb)
+    const function<void(Optional<OTSError>&, UpdateTableResponse&)>& cb)
 {
     go<kApi_UpdateTable>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::getRange(
     GetRangeRequest& req,
-    const function<void(Optional<Error>&, GetRangeResponse&)>& cb)
+    const function<void(Optional<OTSError>&, GetRangeResponse&)>& cb)
 {
     go<kApi_GetRange>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::putRow(
     PutRowRequest& req,
-    const function<void(Optional<Error>&, PutRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, PutRowResponse&)>& cb)
 {
     go<kApi_PutRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::getRow(
     GetRowRequest& req,
-    const function<void(Optional<Error>&, GetRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, GetRowResponse&)>& cb)
 {
     go<kApi_GetRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::updateRow(
     UpdateRowRequest& req,
-    const function<void(Optional<Error>&, UpdateRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, UpdateRowResponse&)>& cb)
 {
     go<kApi_UpdateRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::deleteRow(
     DeleteRowRequest& req,
-    const function<void(Optional<Error>&, DeleteRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, DeleteRowResponse&)>& cb)
 {
     go<kApi_DeleteRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::batchGetRow(
     BatchGetRowRequest& req,
-    const function<void(Optional<Error>&, BatchGetRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, BatchGetRowResponse&)>& cb)
 {
     go<kApi_BatchGetRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::batchWriteRow(
     BatchWriteRowRequest& req,
-    const function<void(Optional<Error>&, BatchWriteRowResponse&)>& cb)
+    const function<void(Optional<OTSError>&, BatchWriteRowResponse&)>& cb)
 {
     go<kApi_BatchWriteRow>(*mAsyncClient, req, cb);
 }
 
 void AsyncClient::computeSplitsBySize(
     ComputeSplitsBySizeRequest& req,
-    const function<void(Optional<Error>&, ComputeSplitsBySizeResponse&)>& cb)
+    const function<void(Optional<OTSError>&, ComputeSplitsBySizeResponse&)>& cb)
 {
     go<kApi_ComputeSplitsBySize>(*mAsyncClient, req, cb);
 }

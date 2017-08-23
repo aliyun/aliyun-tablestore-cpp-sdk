@@ -56,7 +56,7 @@ namespace tablestore {
 namespace core {
 namespace impl {
 
-Optional<Error> AsyncClientBase::create(
+Optional<OTSError> AsyncClientBase::create(
     AsyncClientBase*& result,
     Endpoint& ep, Credential& cr, ClientOptions& opts)
 {
@@ -67,15 +67,15 @@ Optional<Error> AsyncClientBase::create(
     {
         Optional<string> err = http::Endpoint::parse(hep, ep.endpoint());
         if (err.present()) {
-            Error e(Error::kPredefined_OTSParameterInvalid);
+            OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = *err;
-            return Optional<Error>(util::move(e));
+            return Optional<OTSError>(util::move(e));
         }
     }
 
     result = new AsyncClientBase(hep, ep.instanceName(), cr, opts);
     
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 namespace {
@@ -218,14 +218,14 @@ string AsyncClientBase::sign(
     return b64.base64().to<string>();
 }
 
-Optional<Error> AsyncClientBase::validateResponse(
+Optional<OTSError> AsyncClientBase::validateResponse(
     const Tracker& tracker,
     const http::InplaceHeaders& headers,
     const deque<MemPiece>& body)
 {
     http::InplaceHeaders::const_iterator it = headers.find(MemPiece::from(kOTSContentMD5));
     if (it == headers.end()) {
-        return Optional<Error>();
+        return Optional<OTSError>();
     }
 
     MemPiece expect = it->second;
@@ -236,15 +236,15 @@ Optional<Error> AsyncClientBase::validateResponse(
             ("Expect", expect)
             ("Real", real)
             .what("AsyncClient: response digest mismatches.");
-        Error e(Error::kPredefined_CorruptedResponse);
+        OTSError e(OTSError::kPredefined_CorruptedResponse);
         string msg = "response digest mismatches: expect=";
         msg.append((char*) expect.data(), expect.length());
         msg.append(", real=");
         msg.append(real);
         e.mutableMessage() = msg;
-        return Optional<Error>(util::move(e));
+        return Optional<OTSError>(util::move(e));
     }
-    return Optional<Error>();
+    return Optional<OTSError>();
 }
 
 } // namespace impl
