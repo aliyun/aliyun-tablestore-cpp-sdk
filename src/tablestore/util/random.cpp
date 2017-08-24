@@ -52,7 +52,7 @@ namespace random {
 
 namespace {
 
-class Default : public IRandom
+class Default : public Random
 {
 public:
     explicit Default(unsigned int seed)
@@ -94,27 +94,27 @@ private:
 
 } // namespace
 
-IRandom* newDefault()
+Random* newDefault()
 {
     return new Default();
 }
 
-IRandom* newDefault(uint64_t seed)
+Random* newDefault(uint64_t seed)
 {
     return new Default(seed);
 }
 
-int64_t nextInt(IRandom* rnd, int64_t exclusiveUpper)
+int64_t nextInt(Random& rng, int64_t exclusiveUpper)
 {
     OTS_ASSERT(exclusiveUpper > 0)(exclusiveUpper);
-    return rnd->next() % exclusiveUpper;
+    return rng.next() % exclusiveUpper;
 }
 
-int64_t nextInt(IRandom* rnd, int64_t inclusiveLower, int64_t exclusiveUpper)
+int64_t nextInt(Random& rng, int64_t inclusiveLower, int64_t exclusiveUpper)
 {
-    int64_t rng = exclusiveUpper - inclusiveLower;
-    OTS_ASSERT(rng > 0)(rng);
-    return inclusiveLower + rnd->next() % rng;
+    int64_t range = exclusiveUpper - inclusiveLower;
+    OTS_ASSERT(range > 0)(range);
+    return inclusiveLower + rng.next() % range;
 }
 
 } // namespace random

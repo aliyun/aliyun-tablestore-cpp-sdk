@@ -134,128 +134,13 @@ makeBuildDir()
 cleanBuildDir()
 cloneWorkSpace()
 
-
-# for clojure
-
-def cloneInto(dstDir, srcs):
-    for x in srcs:
-        if x.isdir():
-            dstRt = op.join(dstDir, op.basename(x.path))
-            if not op.exists(dstRt):
-                os.mkdir(dstRt)
-            for rt, dirs, files in os.walk(x.path):
-                for d in dirs:
-                    d = x.rel_path(env.Dir(rt).Dir(d))
-                    d = op.join(dstRt, d)
-                    if not op.exists(d):
-                        os.mkdir(d)
-                for f in files:
-                    g = x.rel_path(env.Dir(rt).File(f))
-                    g = op.join(dstRt, g)
-                    symlink(op.join(rt, f), g)
-        else:
-            symlink(x.path, op.join(dstDir, op.basename(x.path)))
-
-def writeManifest(workdir, kws):
-    if 'MANIFEST' not in kws:
-        return None
-    items = kws['MANIFEST']
-    fn = op.join(workdir, 'manifest')
-    with open(fn, 'w') as f:
-        for k, v in items.items():
-            f.write('%s: %s\n' % (k, v))
-    return fn
-
-def jar(env, target, source, **kwargs):
-    def _jar(target, source, env):
-        assert len(target) == 1
-        dstJar = env.File(target[0])
-        
-        srcs = env.Flatten([source])
-        for x in srcs:
-            assert x.exists()
-
-        workdir = env.newTmpDir('jar').path
-        
-        cloneInto(workdir, srcs)
-        manifest = writeManifest(workdir, kwargs)
-
-        tmpJar = op.join(workdir, op.basename(dstJar.path))
-        if manifest:
-            sp.check_call(['jar', 'cfm', tmpJar, manifest, '-C', workdir, '.'])
-        else:
-            sp.check_call(['jar', 'cf', tmpJar, '-C', workdir, '.'])
-        sp.check_call(['jar', 'i', tmpJar])
-        os.link(tmpJar, dstJar.path)
-    env.Command(target, source, _jar)
-    target = env.File(target)
-    for x in source:
-        if x.isdir():
-            for rt, _, files in os.walk(x.abspath):
-                for f in files:
-                    env.Depends(target, env.File(op.join(rt, f)))
-        else:
-            env.Depends(target, x)
-    return target
-
-env.AddMethod(jar)
-
-def _javac(target, source, env):
-    target = target[0]
-    source = source[0]
-    tdir = env.newTmpDir('javac')
-    srcs = []
-    for rt, _, files in os.walk(source.path):
-        for f in files:
-            if f.endswith('.java'):
-                srcs.append(op.join(rt, f))
-    if '_JAVAC_CLASSPATH' in env:
-        sp.check_call(['javac', '-sourcepath', source.path, '-d', tdir.path, '-cp', env['_JAVAC_CLASSPATH']] + srcs)
-    else:
-        sp.check_call(['javac', '-sourcepath', source.path, '-d', tdir.path] + srcs)
-    for rt, _, files in os.walk(source.path):
-        for f in files:
-            if not f.endswith('.java'):
-                from_ = op.join(rt, f)
-                to = op.join(tdir.path, op.relpath(rt, source.path), f)
-                symlink(from_, to)
-    manifest = writeManifest(tdir.path, env)
-
-    tmpJar = op.join(tdir.path, op.basename(target.path))
-    if manifest:
-        sp.check_call(['jar', 'cfm', tmpJar, manifest, '-C', tdir.path, '.'])
-    else:
-        sp.check_call(['jar', 'cf', tmpJar, '-C', tdir.path, '.'])
-    sp.check_call(['jar', 'i', tmpJar])
-    os.link(tmpJar, target.path)
-
-def javac(env, target, source, **kwargs):
-    tenv = env
-    if 'LIBS' in kwargs:
-        cp = ':'.join(x.path for x in env.Flatten(kwargs['LIBS']))
-        tenv = env.Clone()
-        tenv['_JAVAC_CLASSPATH'] = cp
-    if 'MANIFEST' in kwargs:
-        if tenv == env:
-            tenv = env.Clone()
-        tenv['MANIFEST'] = kwargs['MANIFEST']
-    target = env.File(target)
-    source = env.Dir(source)
-    tenv.Command(target, source, _javac)
-    target = env.File(target)
-    for rt, _, files in os.walk(source.abspath):
-        for f in files:
-            env.Depends(target, env.File(op.join(rt, f)))
-    
-
-env.AddMethod(javac)
-
 def zipper(target, source, env):
     assert len(target) == 1
     target = target[0]
-    with zipfile.ZipFile(target.abspath, 'w') as zf:
-        for x in source:
-            zf.write(x.abspath, op.basename(x.path))
+    zf = zipfile.ZipFile(target.abspath, 'w')
+    for x in source:
+        zf.write(x.abspath, op.basename(x.path))
+    zf.close()
 
 env.Append(BUILDERS={'zip': Builder(action=zipper, suffix='.zip')})
 
@@ -271,8 +156,9 @@ def extract(env, target, source):
     tt = target
     ss = source
     def _extract(target, source, env):
-        with zipfile.ZipFile(ss.abspath, 'r') as zf:
-            zf.extractall(op.dirname(ss.abspath), tt)
+        zf = zipfile.ZipFile(ss.abspath, 'r')
+        zf.extractall(op.dirname(ss.abspath), tt)
+        zf.close()
     _target = env.Command(target, source, _extract)
     env.Depends(_target, source)
     return _target
@@ -285,15 +171,33 @@ flags = {
     'CFLAGS': [],
     'CXXFLAGS': [],
     'CCFLAGS': ['-Wall', '-pthread', '-fPIC', '-g',
-                '-Wno-float-equal', '-fno-strict-overflow',
-                '-I%s' % env['HEADER_DIR'].path],
-    'LINKFLAGS': ['-pthread', '-rdynamic', '-L' + env.Dir('$LIB_DIR').path]}
+                '-Wno-float-equal', '-fwrapv'],
+    'LINKFLAGS': ['-pthread', '-rdynamic', '-L%s' % env['LIB_DIR'].path]}
 if mode == 'debug':
-    flags['CCFLAGS'] += ['-O0']
-    flags['LINKFLAGS'] += []
+    flags['CCFLAGS'] += ['-O0', '--coverage']
+    flags['LINKFLAGS'] += ['--coverage']
 elif mode == 'release':
     flags['CCFLAGS'] += ['-O2', '-Werror', '-DNDEBUG']
+
+def detect_compiler():
+    out = sp.check_output(['g++', '--version'])
+    gcc = re.compile('^g[+]{2} [(].*[)] (\d+)[.](\d+)[.](\d+)')
+    m = gcc.match(out)
+    if m:
+        return 'g++', [int(x) for x in m.groups()]
+
+compiler, version = detect_compiler()
+if compiler == 'g++':
+    flags['CXXFLAGS'].append('--std=gnu++03')
+    if version >= [4, 9, 0]:
+        flags['CCFLAGS'].extend(['-fsanitize=address', '-fvar-tracking-assignments'])
+        flags['LINKFLAGS'].extend(['-fsanitize=address'])
+else:
+    print compiler, version
+    assert False, 'unsupport compiler'
+
 env.MergeFlags(flags)
+env.AppendUnique(CPPPATH=[env['BUILD_DIR'], env['HEADER_DIR']])
 
 _extLibs = set()
 _libDeps = {}
@@ -405,8 +309,9 @@ def calcAuxDigest(tex, pdfDir):
     aux = os.path.join(pdfDir, os.path.splitext(os.path.basename(tex))[0] + '.aux')
     if os.path.exists(aux):
         digest = hashlib.md5()
-        with open(aux) as f:
-            digest.update(f.read())
+        f = open(aux)
+        digest.update(f.read())
+        f.close()
         return digest.digest()
     else:
         return ''
@@ -449,8 +354,9 @@ def dockerize(env, target, source, **kwargs):
         sp.check_call(['sudo', 'docker', 'tag', image, registry])
         sp.check_call(['sudo', 'docker', 'push', registry])
 
-        with open(target.path, 'w') as fp:
-            fp.write(image)
+        fp = open(target.path, 'w')
+        fp.write(image)
+        fp.close()
         
     env.Command(target, source, _dockerize)
     return target
@@ -463,9 +369,10 @@ def _tarball(target, source, env):
     import tarfile
     target = target[0]
     xs = env['__ext']
-    with tarfile.open(env.File(target).abspath, 'w:gz') as fp:
-        for x, y in xs:
-            fp.add(y, x)
+    fp = tarfile.open(env.File(target).abspath, 'w:gz')
+    for x, y in xs:
+        fp.add(y, x)
+    fp.close()
 
 env.Append(BUILDERS={'_tarball': Builder(action=_tarball, suffix='.tar.gz')})
 

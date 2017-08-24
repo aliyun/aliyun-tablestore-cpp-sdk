@@ -43,80 +43,80 @@ using namespace std::tr1;
 namespace pp {
 namespace impl {
 
-void SignedInteger::prettyPrint(string* out, int64_t x)
+void SignedInteger::prettyPrint(string& out, int64_t x)
 {
     ostringstream os;
     os << x;
-    out->append(os.str());
+    out.append(os.str());
 }
 
-void UnsignedInteger::prettyPrint(string* out, uint64_t x)
+void UnsignedInteger::prettyPrint(string& out, uint64_t x)
 {
     ostringstream os;
     os << x;
-    out->append(os.str());
+    out.append(os.str());
 }
 
-void Boolean::prettyPrint(string* out, bool x)
+void Boolean::prettyPrint(string& out, bool x)
 {
     static const char kTrue[] = "true";
     static const char kFalse[] = "false";
     if (x) {
-        out->append(kTrue, sizeof(kTrue) - 1);
+        out.append(kTrue, sizeof(kTrue) - 1);
     } else {
-        out->append(kFalse, sizeof(kFalse) - 1);
+        out.append(kFalse, sizeof(kFalse) - 1);
     }
 }
 
 namespace {
 
-void toHex(string* out, uint8_t x)
+void toHex(string& out, uint8_t x)
 {
     static const char kAlphabet[] = "0123456789ABCDEF";
     if (x > 15) {
         abort();
     }
-    out->push_back(kAlphabet[x]);
+    out.push_back(kAlphabet[x]);
 }
 
 } // namespace
 
-void Character::prettyPrint(string* out, char x)
+void Character::prettyPrint(string& out, char x)
 {
     uint8_t xx = x;
     if (xx >= 32 && xx <= 127) {
         if (x == '\'') {
-            out->push_back('\\');
-            out->push_back('\'');
+            out.push_back('\\');
+            out.push_back('\'');
         } else if (x == '"') {
-            out->push_back('\\');
-            out->push_back('"');
+            out.push_back('\\');
+            out.push_back('"');
         } else {
-            out->push_back(x);
+            out.push_back(x);
         }
     } else {
-        out->push_back('\\');
-        out->push_back('x');
+        out.push_back('\\');
+        out.push_back('x');
         toHex(out, xx >> 4);
         toHex(out, xx & 0xF);
     }
 }
 
-void PrettyPrinter<StlStr, string>::operator()(string* out, const string& x) const
+void PrettyPrinter<StlStr, string>::operator()(string& out, const string& x) const
 {
-    out->push_back('\"');
+    out.push_back('\"');
     for(string::const_iterator i = x.begin(); i != x.end(); ++i) {
         Character::prettyPrint(out, *i);
     }
-    out->push_back('\"');
+    out.push_back('\"');
 }
 
-void Floating::prettyPrint(string* out, double x)
+void Floating::prettyPrint(string& out, double x)
 {
     ostringstream oss;
     oss.setf(ios_base::fixed);
     oss << setprecision(4) << x;
-    out->append(oss.str());
+    out.append(oss.str());
 }
 
 } // namespace impl

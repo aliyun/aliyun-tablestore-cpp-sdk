@@ -30,6 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "mempiece.hpp"
+#include "tablestore/util/assert.hpp"
 #include "tablestore/util/prettyprint.hpp"
 
 using namespace std;
@@ -38,20 +39,90 @@ namespace aliyun {
 namespace tablestore {
 namespace util {
 
-void MemPiece::prettyPrint(string* out) const
+void MemPiece::prettyPrint(string& out) const
 {
     if (data() == NULL) {
-        out->append("b\"\"");
+        out.append("b\"\"");
         return;
     }
-    out->append("b\"");
+    out.append("b\"");
     const uint8_t* b = data();
     const uint8_t* e = b + length();
     for(; b < e; ++b) {
         pp::impl::Character::prettyPrint(out, static_cast<char>(*b));
     }
-    out->append("\"");
+    out.append("\"");
 }
+
+namespace {
+
+inline bool digit(uint8_t c)
+{
+    return c >= '0' && c <= '9';
+}
+
+} // namespace
+
+namespace impl {
+
+Optional<string> FromMemPiece<int64_t, void>::operator()(
+    int64_t& out,
+    const MemPiece& mp) const
+{
+    if (mp.length() == 0) {
+        return Optional<string>(string("Empty piece of memory."));
+    }
+    const uint8_t* b = mp.data();
+    const uint8_t* e = b + mp.length();
+    bool positive = true;
+    if (*b == '-') {
+        positive = false;
+        ++b;
+    }
+    int64_t x = 0;
+    if (positive) {
+        for(; b < e; ++b) {
+            if (!digit(*b)) {
+                return Optional<string>(string("Nondigital."));
+            }
+            x = x * 10 + (*b - '0');
+            if (x < 0) {
+                return Optional<string>(string("Overflow."));
+            }
+        }
+        out = x;
+    } else {
+        if (b == e) {
+            return Optional<string>(string("A single '-'."));
+        }
+        for(; b < e; ++b) {
+            if (!digit(*b)) {
+                return Optional<string>(string("Nondigital."));
+            }
+            x = x * 10 - (*b - '0');
+            if (x >= 0) {
+                return Optional<string>(string("Underflow."));
+            }
+        }
+        out = x;
+    }
+    return Optional<string>();
+}
+
+Optional<string> FromMemPiece<string, void>::operator()(
+    string& out,
+    const MemPiece& mp) const
+{
+    if (out.size() + mp.length() + 1 > out.capacity()) {
+        out.reserve(out.size() + mp.length() + 1);
+    }
+    out.append(
+        static_cast<const char*>(static_cast<const void*>(mp.data())),
+        mp.length());
+    return Optional<string>();
+}
+
+} // namespace impl
 
 } // namespace util
 } // namespace tablestore

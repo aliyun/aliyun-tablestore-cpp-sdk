@@ -51,7 +51,7 @@ struct IteratorTraits<T, typename mp::EnableIf<std::tr1::is_const<typename std::
 {
     typedef typename std::tr1::remove_cv<typename std::tr1::remove_reference<T>::type>::type ContainerType;
     typedef typename ContainerType::const_iterator IteratorType;
-    typedef const typename ContainerType::value_type  & ElemType;
+    typedef const typename ContainerType::value_type& ElemType;
 };
 
 } // namespace impl

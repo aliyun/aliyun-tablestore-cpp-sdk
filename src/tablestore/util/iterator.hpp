@@ -38,6 +38,26 @@ namespace aliyun {
 namespace tablestore {
 namespace util {
 
+/**
+ * An interface to iterators.
+ * Usually, its usage is like:
+ *
+ * auto_ptr<Iterator<T, Err> > iter(...);
+ * for(;;) {
+ *     Optional<Err> err = iter->moveNext();
+ *     if (err.present()) {
+ *         // moveNext() is possibly backboned by IO
+ *         // So it may fail.
+ *         break;
+ *     }
+ *     if (!iter->valid()) {
+ *         // meets the end of this iteration
+ *         break;
+ *     }
+ *     const T& val = iter->get();
+ *     // do something with val
+ * }
+ */
 template<class T, class Err>
 class Iterator
 {
@@ -51,8 +71,7 @@ public:
     /**
      * Move to next valid element if exists.
      * If any error occurs on the way, wraps it into an Optional and returns;
-     * otherwise, returns absent Optional.
-     *
+     * otherwise, returns an absent Optional.
      */
     virtual Optional<Err> moveNext() =0;
 };

@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,45 +30,21 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
-
+#include "tablestore/util/optional.hpp"
+#include "tablestore/util/mempiece.hpp"
 #include <string>
-#include <list>
 #include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace util {
+class MemPiece;
 
-// timing
-class TimeRecord
-{
-public:
+Optional<std::string> toUint64(uint64_t&, const MemPiece&, int64_t radix);
+void format(std::string&, uint64_t num, int64_t radix);
+void hex(std::string&, const MemPiece&);
 
-    std::string mRecordState;
-    int64_t mTimeInUsec;
-};
-
-class Profiling
-{
-public:
-
-    Profiling();
-
-    void KeepTime();
-
-    void KeepTimeWithState(const std::string& recState);
-
-    int64_t GetTotalTime() const;
-
-    const std::list<TimeRecord>& GetRecordList() const;
-
-    std::string GetProfilingInfo() const; 
-
-private:
-
-    std::list<TimeRecord> mRecordList;
-};
-
-} // end of tablestore
-} // end of aliyun
+} // namespace util
+} // namespace tablestore
+} // namespace aliyun
 

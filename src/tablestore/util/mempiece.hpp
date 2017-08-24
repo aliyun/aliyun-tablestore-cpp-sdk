@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/move.hpp"
 #include "tablestore/util/assert.hpp"
+#include "tablestore/util/optional.hpp"
+#include "tablestore/util/foreach.hpp"
 #include <string>
 #include <algorithm>
 #include <cstring>
@@ -45,6 +47,9 @@ namespace impl {
 
 template<class T, class Enable = void>
 struct ToMemPiece {};
+
+template<class T, class Enable = void>
+struct FromMemPiece {};
 
 } // namspace impl
 
@@ -82,7 +87,23 @@ public:
         impl::ToMemPiece<T> p;
         return p(x);
     }
-    
+
+    template<class T>
+    Optional<std::string> to(T& out) const
+    {
+        impl::FromMemPiece<T> f;
+        return f(out, *this);
+    }
+
+    template<class T>
+    T to() const
+    {
+        T res;
+        Optional<std::string> err = to(res);
+        OTS_ASSERT(!err.present())(*err);
+        return res;
+    }
+
     const uint8_t* data() const throw()
     {
         return mData;
@@ -124,22 +145,7 @@ public:
         return data()[idx];
     }
 
-    void toStr(std::string* out) const
-    {
-        out->append(
-            static_cast<const char*>(static_cast<const void*>(data())),
-            length());
-    }
-
-    std::string toStr() const
-    {
-        std::string res;
-        res.reserve(length() + 1);
-        toStr(&res);
-        return res;
-    }
-
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
 
     bool startsWith(const MemPiece& b) const throw()
     {
@@ -174,6 +180,96 @@ public:
 private:
     const uint8_t* mData;
     int64_t mLen;
+};
+
+class MutableMemPiece
+{
+public:
+    explicit MutableMemPiece()
+      : mBegin(NULL),
+        mEnd(NULL)
+    {}
+
+    explicit MutableMemPiece(void* data, int64_t len)
+      : mBegin(static_cast<uint8_t*>(data)),
+        mEnd(mBegin + len)
+    {}
+
+    explicit MutableMemPiece(void* begin, void* end)
+      : mBegin(static_cast<uint8_t*>(begin)),
+        mEnd(static_cast<uint8_t*>(end))
+    {}
+
+    explicit MutableMemPiece(
+        const MoveHolder<MutableMemPiece>& a)
+    {
+        *this = a;
+    }
+
+    MutableMemPiece& operator=(
+        const MoveHolder<MutableMemPiece>& a)
+    {
+        mBegin = a->begin();
+        mEnd = a->end();
+        a->reset();
+        return *this;
+    }
+
+    void reset()
+    {
+        mBegin = NULL;
+        mEnd = NULL;
+    }
+
+    uint8_t* begin() const throw()
+    {
+        return mBegin;
+    }
+
+    uint8_t* end() const throw()
+    {
+        return mEnd;
+    }
+
+    int64_t length() const throw()
+    {
+        return mEnd - mBegin;
+    }
+
+    MutableMemPiece subpiece(void* begin) const
+    {
+        OTS_ASSERT(mBegin <= begin && begin <= mEnd)
+            ((uintptr_t) begin)
+            ((uintptr_t) mBegin)
+            ((uintptr_t) mEnd);
+        return MutableMemPiece(begin, mEnd);
+    }
+
+    MutableMemPiece subpiece(void* begin, void* end) const
+    {
+        OTS_ASSERT(mBegin <= begin && begin <= end && end <= mEnd)
+            ((uintptr_t) begin)
+            ((uintptr_t) end)
+            ((uintptr_t) mBegin)
+            ((uintptr_t) mEnd);
+        return MutableMemPiece(begin, end);
+    }
+
+    uint8_t get(int64_t idx) const
+    {
+        OTS_ASSERT(idx < length())
+            (idx)(length());
+        return begin()[idx];
+    }
+
+    void prettyPrint(std::string& out) const
+    {
+        MemPiece::from(*this).prettyPrint(out);
+    }
+
+private:
+    uint8_t* mBegin;
+    uint8_t* mEnd;
 };
 
 inline int lexicographicOrder(const MemPiece& a, const MemPiece& b)
@@ -227,6 +323,16 @@ inline bool operator==(const MemPiece& a, const MemPiece& b)
 inline bool operator!=(const MemPiece& a, const MemPiece& b)
 {
     return quasilexicographicOrder(a, b) != 0;
+}
+
+template<class T>
+int64_t totalLength(const T& xs)
+{
+    int64_t cnt = 0;
+    FOREACH_ITER(i, xs) {
+        cnt += i->length();
+    }
+    return cnt;
 }
 
 

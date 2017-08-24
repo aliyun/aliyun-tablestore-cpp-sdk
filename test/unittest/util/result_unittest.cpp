@@ -41,12 +41,12 @@ namespace tablestore {
 void Result(const string&)
 {
     util::Result<int, string> res;
-    *res.mutableErrValue() = "this is an error";
+    res.mutableErrValue() = "this is an error";
     TESTA_ASSERT(!res.ok())
         (res.okValue()).issue();
     TESTA_ASSERT(res.errValue() == "this is an error")
         (res.errValue()).issue();
-    *res.mutableOkValue() = 1;
+    res.mutableOkValue() = 1;
     TESTA_ASSERT(res.ok())
         (res.errValue()).issue();
     TESTA_ASSERT(res.okValue() == 1)

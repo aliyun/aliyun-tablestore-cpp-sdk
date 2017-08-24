@@ -62,7 +62,7 @@ public:
       : mPresent(true),
         mValue()
     {
-        *this = v;
+        moveAssign(mValue, v);
     }
     explicit Optional(const MoveHolder<Optional<T> >& a)
       : mPresent(a.get().mPresent),
@@ -82,23 +82,11 @@ public:
         }
         return *this;
     }
-    Optional<T>& operator=(const T& v)
-    {
-        mPresent = true;
-        mValue = v;
-        return *this;
-    }
-    Optional<T>& operator=(const MoveHolder<T>& v)
-    {
-        mPresent = true;
-        moveAssign(&mValue, v);
-        return *this;
-    }
     Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
     {
         if (v->present()) {
             mPresent = true;
-            moveAssign(&mValue, util::move(v->mValue));
+            moveAssign(mValue, util::move(v->mValue));
         } else {
             reset();
         }
@@ -114,7 +102,19 @@ public:
     {
         mPresent = false;
         T v = T();
-        moveAssign(&mValue, util::move(v));
+        moveAssign(mValue, util::move(v));
+    }
+
+    void reset(const T& v)
+    {
+        mPresent = true;
+        mValue = v;
+    }
+
+    void reset(const MoveHolder<T>& v)
+    {
+        mPresent = true;
+        moveAssign(mValue, v);
     }
 
     const T& operator*() const throw()
@@ -141,13 +141,6 @@ public:
         return &mValue;
     }
    
-    const MoveHolder<T>& transfer()
-    {
-        OTS_ASSERT(present());
-        mPresent = false;
-        return util::move(mValue);
-    }
-    
     template<class U, class V>
     Optional<U> apply(const std::tr1::function<U(V)>& fn) const
     {

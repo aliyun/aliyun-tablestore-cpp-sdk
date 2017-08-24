@@ -41,41 +41,154 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-void Error::prettyPrint(string* out) const
+const string OTSError::kErrorCode_CouldntResolveHost("OTSCouldntResolveHost");
+const string OTSError::kErrorCode_CouldntConnect("OTSCouldntConnect");
+const string OTSError::kErrorCode_WriteRequestFail("OTSWriteRequestFail");
+const string OTSError::kErrorCode_CorruptedResponse("OTSCorruptedResponse");
+const string OTSError::kErrorCode_NoAvailableConnection("OTSNoAvailableConnection");
+const string OTSError::kErrorCode_SslHandshakeFail("OTSSslHandshakeFail");
+
+const string OTSError::kErrorCode_OTSOutOfColumnCountLimit("OTSOutOfColumnCountLimit");
+const string OTSError::kErrorCode_OTSObjectNotExist("OTSObjectNotExist");
+const string OTSError::kErrorCode_OTSServerBusy("OTSServerBusy");
+const string OTSError::kErrorCode_OTSCapacityUnitExhausted("OTSCapacityUnitExhausted");
+const string OTSError::kErrorCode_OTSTooFrequentReservedThroughputAdjustment(
+    "OTSTooFrequentReservedThroughputAdjustment");
+const string OTSError::kErrorCode_OTSInternalServerError("OTSInternalServerError");
+const string OTSError::kErrorCode_OTSQuotaExhausted("OTSQuotaExhausted");
+const string OTSError::kErrorCode_OTSRequestBodyTooLarge("OTSRequestBodyTooLarge");
+const string OTSError::kErrorCode_OTSTimeout("OTSTimeout");
+const string OTSError::kErrorCode_OTSObjectAlreadyExist("OTSObjectAlreadyExist");
+const string OTSError::kErrorCode_OTSTableNotReady("OTSTableNotReady");
+const string OTSError::kErrorCode_OTSConditionCheckFail("OTSConditionCheckFail");
+const string OTSError::kErrorCode_OTSOutOfRowSizeLimit("OTSOutOfRowSizeLimit");
+const string OTSError::kErrorCode_OTSInvalidPK("OTSInvalidPK");
+const string OTSError::kErrorCode_OTSRequestTimeout("OTSRequestTimeout");
+const string OTSError::kErrorCode_OTSMethodNotAllowed("OTSMethodNotAllowed");
+const string OTSError::kErrorCode_OTSAuthFailed("OTSAuthFailed");
+const string OTSError::kErrorCode_OTSServerUnavailable("OTSServerUnavailable");
+const string OTSError::kErrorCode_OTSParameterInvalid("OTSParameterInvalid");
+const string OTSError::kErrorCode_OTSRowOperationConflict("OTSRowOperationConflict");
+const string OTSError::kErrorCode_OTSPartitionUnavailable("OTSPartitionUnavailable");
+
+OTSError::OTSError(Predefined def)
 {
-    out->append("{\"HttpStatus\": ");
+    switch(def) {
+    case kPredefined_CouldntResoveHost:
+        init(kHttpStatus_CouldntResolveHost, kErrorCode_CouldntResolveHost);
+        break;
+    case kPredefined_CouldntConnect:
+        init(kHttpStatus_CouldntConnect, kErrorCode_CouldntConnect);
+        break;
+    case kPredefined_OperationTimeout:
+        init(kHttpStatus_OperationTimeout, kErrorCode_OTSRequestTimeout);
+        break;
+    case kPredefined_WriteRequestFail:
+        init(kHttpStatus_WriteRequestFail, kErrorCode_WriteRequestFail);
+        break;
+    case kPredefined_CorruptedResponse:
+        init(kHttpStatus_CorruptedResponse, kErrorCode_CorruptedResponse);
+        break;
+    case kPredefined_NoConnectionAvailable:
+        init(kHttpStatus_NoAvailableConnection, kErrorCode_NoAvailableConnection);
+        break;
+    case kPredefined_OTSOutOfColumnCountLimit:
+        init(400, kErrorCode_OTSOutOfColumnCountLimit);
+        break;
+    case kPredefined_OTSObjectNotExist:
+        init(404, kErrorCode_OTSObjectNotExist);
+        break;
+    case kPredefined_OTSServerBusy:
+        init(503, kErrorCode_OTSServerBusy);
+        break;
+    case kPredefined_OTSCapacityUnitExhausted:
+        init(403, kErrorCode_OTSCapacityUnitExhausted);
+        break;
+    case kPredefined_OTSTooFrequentReservedThroughputAdjustment:
+        init(403, kErrorCode_OTSTooFrequentReservedThroughputAdjustment);
+        break;
+    case kPredefined_OTSInternalServerError:
+        init(500, kErrorCode_OTSInternalServerError);
+        break;
+    case kPredefined_OTSQuotaExhausted:
+        init(403, kErrorCode_OTSQuotaExhausted);
+        break;
+    case kPredefined_OTSRequestBodyTooLarge:
+        init(413, kErrorCode_OTSRequestBodyTooLarge);
+        break;
+    case kPredefined_OTSTimeout:
+        init(503, kErrorCode_OTSTimeout);
+        break;
+    case kPredefined_OTSObjectAlreadyExist:
+        init(409, kErrorCode_OTSObjectAlreadyExist);
+        break;
+    case kPredefined_OTSTableNotReady:
+        init(404, kErrorCode_OTSTableNotReady);
+        break;
+    case kPredefined_OTSConditionCheckFail:
+        init(403, kErrorCode_OTSConditionCheckFail);
+        break;
+    case kPredefined_OTSOutOfRowSizeLimit:
+        init(400, kErrorCode_OTSOutOfRowSizeLimit);
+        break;
+    case kPredefined_OTSInvalidPK:
+        init(400, kErrorCode_OTSInvalidPK);
+        break;
+    case kPredefined_OTSMethodNotAllowed:
+        init(405, kErrorCode_OTSMethodNotAllowed);
+        break;
+    case kPredefined_OTSAuthFailed:
+        init(403, kErrorCode_OTSAuthFailed);
+        break;
+    case kPredefined_OTSServerUnavailable:
+        init(503, kErrorCode_OTSServerUnavailable);
+        break;
+    case kPredefined_OTSParameterInvalid:
+        init(400, kErrorCode_OTSParameterInvalid);
+        break;
+    case kPredefined_OTSRowOperationConflict:
+        init(409, kErrorCode_OTSRowOperationConflict);
+        break;
+    case kPredefined_OTSPartitionUnavailable:
+        init(503, kErrorCode_OTSPartitionUnavailable);
+        break;
+    case kPredefined_SslHandshakeFail:
+        init(kHttpStatus_SslHandshakeFail, kErrorCode_SslHandshakeFail);
+        break;
+    }
+}
+
+void OTSError::init(int64_t hs, const string& ec)
+{
+    mHttpStatus = hs;
+    mErrorCode = ec;
+}
+
+void OTSError::prettyPrint(string& out) const
+{
+    out.append("{\"HttpStatus\": ");
     pp::prettyPrint(out, mHttpStatus);
-    out->append(", \"ErrorCode\": \"");
-    out->append(mErrorCode);
-    out->append("\", \"Message\": \"");
-    out->append(mMessage);
+    out.append(", \"ErrorCode\": \"");
+    out.append(mErrorCode);
+    out.append("\", \"Message\": \"");
+    out.append(mMessage);
     if (!mRequestId.empty()) {
-        out->append("\", \"RequestId\": \"");
-        out->append(mRequestId);
+        out.append("\", \"RequestId\": \"");
+        out.append(mRequestId);
     }
     if (!mTraceId.empty()) {
-        out->append("\", \"TraceId\": \"");
-        out->append(mTraceId);
+        out.append("\", \"TraceId\": \"");
+        out.append(mTraceId);
     }
-    out->append("\"}");
+    out.append("\"}");
 }
 
-bool isOk(const Error& err)
-{
-    return err.httpStatus() >= 200 && err.httpStatus() <= 299;
-}
-
-bool isCurlError(const Error& err)
+bool isCurlError(const OTSError& err)
 {
     return err.httpStatus() > 0 && err.httpStatus() <= 99;
 }
 
-bool isSdkError(const Error& err)
-{
-    return err.httpStatus() < 0;
-}
-
-bool isTemporary(const Error& err)
+bool isTemporary(const OTSError& err)
 {
     if (err.httpStatus() >= 500 && err.httpStatus() <= 599) {
         return true;
@@ -99,17 +212,12 @@ bool isTemporary(const Error& err)
     }
     if (isCurlError(err)) {
         switch(err.httpStatus()) {
-        case 5: // CURLE_COULDNT_RESOLVE_PROXY
-        case 6: // CURLE_COULDNT_RESOLVE_HOST
-        case 7: // CURLE_COULDNT_CONNECT
-        case 28: // CURLE_OPERATION_TIMEDOUT
-        case 35: // CURLE_SSL_CONNECT_ERROR
-        case 51: // CURLE_PEER_FAILED_VERIFICATION
-        case 52: // CURLE_GOT_NOTHING
-        case 55: // CURLE_SEND_ERROR
-        case 56: // CURLE_RECV_ERROR
-        case 70: // CURLE_REMOTE_DISK_FULL
-        case 81: // CURLE_AGAIN
+        case OTSError::kHttpStatus_CouldntResolveHost:
+        case OTSError::kHttpStatus_CouldntConnect:
+        case OTSError::kHttpStatus_OperationTimeout:
+        case OTSError::kHttpStatus_WriteRequestFail:
+        case OTSError::kHttpStatus_CorruptedResponse:
+        case OTSError::kHttpStatus_NoAvailableConnection:
             return true;
         default:
             break;

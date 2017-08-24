@@ -29,44 +29,43 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "screen_logger.hpp"
-#include "tablestore/util/foreach.hpp"
-#include <cstdio>
+#include "tablestore/util/threading.hpp"
+#include "testa/testa.hpp"
+#include <tr1/functional>
+#include <string>
 
 using namespace std;
+using namespace std::tr1;
 
-ScreenLogger::ScreenLogger(LogLevel lvl)
-  : mLevel(lvl)
-{}
+namespace aliyun {
+namespace tablestore {
 
-ScreenLogger::~ScreenLogger()
+namespace {
+
+void scene(string* out, const string& act)
 {
-    FOREACH_ITER(it, mSubs) {
-        delete it->second;
-    }
-    mSubs.clear();
+    out->append(act);
 }
 
-ScreenLogger::LogLevel ScreenLogger::level() const
+void final(util::Semaphore* sem)
 {
-    return mLevel;
+    sem->post();
 }
 
-void ScreenLogger::record(LogLevel lvl, const string& msg)
+void Actor(const string&)
 {
-    printf("%s\n", msg.c_str());
+    util::Semaphore sem(0);
+    string log;
+    util::Actor actor;
+    actor.pushBack(bind(scene, &log, "hello "));
+    actor.pushBack(bind(scene, &log, "world"));
+    actor.pushBack(bind(final, &sem));
+    sem.wait();
+    TESTA_ASSERT(log == "hello world")
+        (log).issue();
 }
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(Actor);
 
-void ScreenLogger::flush()
-{}
-
-aliyun::tablestore::util::Logger* ScreenLogger::spawn(const string& key)
-{
-    map<string, Logger*>::iterator it = mSubs.find(key);
-    if (it != mSubs.end()) {
-        return it->second;
-    }
-    Logger* sub = new ScreenLogger(level());
-    mSubs.insert(make_pair(key, sub));
-    return sub;
-}
+} // namespace tablestore
+} // namespace aliyun

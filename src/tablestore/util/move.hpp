@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,8 +30,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-#pragma once
 
 /**
  * This is emulation of a part of C++11 move semantics, say, move assignment.
@@ -130,7 +129,7 @@ struct MoveCategory
 } // namespace impl
 
 template<class T>
-void moveAssign(T* to, const MoveHolder<T>& from) throw()
+void moveAssign(T& to, const MoveHolder<T>& from) throw()
 {
     typedef typename impl::MoveCategory<T>::Category Category;
     impl::MoveAssignment<Category, T> f;

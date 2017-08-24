@@ -44,129 +44,75 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace util {
+class Actor;
+class Logger;
 namespace random {
-class IRandom;
+class Random;
 } // namespace random
 } // namespace util
 
 namespace core {
 
-class IRetryStrategy;
+class RetryStrategy;
 
 enum Action
 {
-    API_CREATE_TABLE,
-    API_LIST_TABLE,
-    API_DESCRIBE_TABLE,
-    API_DELETE_TABLE,
-    API_UPDATE_TABLE,
-    API_GET_ROW,
-    API_PUT_ROW,
-    API_UPDATE_ROW,
-    API_DELETE_ROW,
-    API_BATCH_GET_ROW,
-    API_BATCH_WRITE_ROW,
-    API_GET_RANGE,
-    API_COMPUTE_SPLIT_POINTS_BY_SIZE,
+    kApi_CreateTable,
+    kApi_ListTable,
+    kApi_DescribeTable,
+    kApi_DeleteTable,
+    kApi_UpdateTable,
+    kApi_GetRow,
+    kApi_PutRow,
+    kApi_UpdateRow,
+    kApi_DeleteRow,
+    kApi_BatchGetRow,
+    kApi_BatchWriteRow,
+    kApi_GetRange,
+    kApi_ComputeSplitsBySize,
 };
 
-template<class T>
-void collectActions(T* xs)
-{
-    xs->push_back(API_CREATE_TABLE);
-    xs->push_back(API_LIST_TABLE);
-    xs->push_back(API_DESCRIBE_TABLE);
-    xs->push_back(API_DELETE_TABLE);
-    xs->push_back(API_UPDATE_TABLE);
-    xs->push_back(API_GET_ROW);
-    xs->push_back(API_PUT_ROW);
-    xs->push_back(API_UPDATE_ROW);
-    xs->push_back(API_DELETE_ROW);
-    xs->push_back(API_BATCH_GET_ROW);
-    xs->push_back(API_BATCH_WRITE_ROW);
-    xs->push_back(API_GET_RANGE);
-    xs->push_back(API_COMPUTE_SPLIT_POINTS_BY_SIZE);
-}
+void collectEnum(std::deque<Action>&);
 
 /**
  * Types of primary key
  */
 enum PrimaryKeyType
 {
-    PKT_INTEGER = 1,
-    PKT_STRING,
-    PKT_BINARY,
+    kPKT_Integer,
+    kPKT_String,
+    kPKT_Binary,
 };
 
-template<class T>
-void collectPrimaryKeyTypes(T* xs)
-{
-    xs->push_back(PKT_INTEGER);
-    xs->push_back(PKT_STRING);
-    xs->push_back(PKT_BINARY);
-}
-
 /**
- * Options of primary key
- */
-enum PrimaryKeyOption
-{
-    PKO_NONE = 0,
-    PKO_AUTO_INCREMENT,
-};
-
-template<class T>
-void collectPrimaryKeyOptions(T* xs)
-{
-    xs->push_back(PKO_NONE);
-    xs->push_back(PKO_AUTO_INCREMENT);
-}
-
-/**
- * for internal usage. use it wisely.
+ * For internal usage only. Do NOT use it.
  */
 enum BloomFilterType
 {
-    BFT_NONE = 1,
-    BFT_CELL,
-    BFT_ROW,
+    kBFT_None = 1,
+    kBFT_Cell,
+    kBFT_Row,
 };
 
-template<class T>
-void collectBloomFilterType(T* xs)
-{
-    xs->push_back(BFT_NONE);
-    xs->push_back(BFT_CELL);
-    xs->push_back(BFT_ROW);
-}
-
+void collectEnum(std::deque<BloomFilterType>&);
 
 enum TableStatus
 {
-    ACTIVE = 1,
-    INACTIVE,
-    LOADING,
-    UNLOADING,
-    UPDATING,
+    kTS_Active = 1,
+    kTS_Inactive,
+    kTS_Loading,
+    kTS_Unloading,
+    kTS_Updating,
 };
 
-template<class T>
-void collectTableStatuses(T* xs)
-{
-    xs->push_back(ACTIVE);
-    xs->push_back(INACTIVE);
-    xs->push_back(LOADING);
-    xs->push_back(UNLOADING);
-    xs->push_back(UPDATING);
-}
-
+void collectEnum(std::deque<TableStatus>& xs);
 
 enum CompareResult
 {
-    UNCOMPARABLE,
-    EQUAL_TO,
-    LESS_THAN,
-    GREATER_THAN,
+    kCR_Uncomparable,
+    kCR_Equivalent,
+    kCR_Smaller,
+    kCR_Larger,
 };
 
 
@@ -178,19 +124,19 @@ public:
 
     virtual ~IVector() {}
 
-    virtual void prettyPrint(std::string* out) const
+    virtual void prettyPrint(std::string& out) const
     {
         if (size() == 0) {
-            out->append("[]");
+            out.append("[]");
             return;
         }
-        out->push_back('[');
+        out.push_back('[');
         pp::prettyPrint(out, (*this)[0]);
         for(int64_t i = 1, sz = size(); i < sz; ++i) {
-            out->push_back(',');
+            out.push_back(',');
             pp::prettyPrint(out, (*this)[i]);
         }
-        out->push_back(']');
+        out.push_back(']');
     }
 
     virtual int64_t size() const =0;
@@ -218,7 +164,7 @@ public:
     DequeBasedVector<ElemType>& operator=(
         const util::MoveHolder<DequeBasedVector<ElemType> >& a)
     {
-        util::moveAssign(&mElems, util::move(a->mElems));
+        util::moveAssign(mElems, util::move(a->mElems));
         return *this;
     }
 
@@ -273,8 +219,8 @@ public:
     explicit Endpoint(const util::MoveHolder<Endpoint>& a);
     Endpoint& operator=(const util::MoveHolder<Endpoint>& a);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& endpoint() const
@@ -282,9 +228,9 @@ public:
         return mEndpoint;
     }
 
-    std::string* mutableEndpoint()
+    std::string& mutableEndpoint()
     {
-        return &mEndpoint;
+        return mEndpoint;
     }
 
     const std::string& instanceName() const
@@ -292,9 +238,9 @@ public:
         return mInstanceName;
     }
 
-    std::string* mutableInstanceName()
+    std::string& mutableInstanceName()
     {
-        return &mInstanceName;
+        return mInstanceName;
     }
 
 private:
@@ -325,8 +271,8 @@ public:
 
     Credential& operator=(const util::MoveHolder<Credential>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& accessKeyId() const
@@ -334,9 +280,9 @@ public:
         return mAccessKeyId;
     }
 
-    std::string* mutableAccessKeyId()
+    std::string& mutableAccessKeyId()
     {
-        return &mAccessKeyId;
+        return mAccessKeyId;
     }
 
     const std::string& accessKeySecret() const
@@ -344,9 +290,9 @@ public:
         return mAccessKeySecret;
     }
 
-    std::string* mutableAccessKeySecret()
+    std::string& mutableAccessKeySecret()
     {
-        return &mAccessKeySecret;
+        return mAccessKeySecret;
     }
 
     const std::string& securityToken() const
@@ -354,15 +300,59 @@ public:
         return mSecurityToken;
     }
 
-    std::string* mutableSecurityToken()
+    std::string& mutableSecurityToken()
     {
-        return &mSecurityToken;
+        return mSecurityToken;
     }
 
 private:
     std::string mAccessKeyId;
     std::string mAccessKeySecret;
     std::string mSecurityToken;
+};
+
+class Tracker
+{
+public:
+    explicit Tracker()
+      : mTraceHash(0)
+    {}
+
+    explicit Tracker(const std::string& traceId)
+      : mTraceId(traceId),
+        mTraceHash(0)
+    {
+        calculateHash();
+    }
+
+    explicit Tracker(const util::MoveHolder<Tracker>& a)
+    {
+        *this = a;
+    }
+
+    Tracker& operator=(const util::MoveHolder<Tracker>& a);
+
+    static Tracker create();
+
+    util::Optional<OTSError> validate() const;
+    void prettyPrint(std::string&) const;
+
+    const std::string& traceId() const
+    {
+        return mTraceId;
+    }
+
+    uint64_t traceHash() const
+    {
+        return mTraceHash;
+    }
+
+private:
+    void calculateHash();
+
+private:
+    std::string mTraceId;
+    uint64_t mTraceHash;
 };
 
 class ClientOptions
@@ -373,8 +363,8 @@ public:
 
     ClientOptions& operator=(const util::MoveHolder<ClientOptions>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     int64_t maxConnections() const
@@ -382,9 +372,9 @@ public:
         return mMaxConnections;
     }
 
-    int64_t* mutableMaxConnections()
+    int64_t& mutableMaxConnections()
     {
-        return &mMaxConnections;
+        return mMaxConnections;
     }
 
     const util::Duration& connectTimeout() const
@@ -392,9 +382,9 @@ public:
         return mConnectTimeout;
     }
 
-    util::Duration* mutableConnectTimeout()
+    util::Duration& mutableConnectTimeout()
     {
-        return &mConnectTimeout;
+        return mConnectTimeout;
     }
 
     const util::Duration& requestTimeout() const
@@ -402,50 +392,39 @@ public:
         return mRequestTimeout;
     }
 
-    util::Duration* mutableRequestTimeout()
+    util::Duration& mutableRequestTimeout()
     {
-        return &mRequestTimeout;
+        return mRequestTimeout;
     }
 
-    const util::Duration& traceThreshold() const
+    void resetRetryStrategy(RetryStrategy*);
+    RetryStrategy* releaseRetryStrategy();
+
+    util::Logger& mutableLogger()
     {
-        return mTraceThreshold;
+        return *mLogger;
     }
 
-    util::Duration* mutableTraceThreshold()
+    void resetLogger(util::Logger*);
+    util::Logger* releaseLogger();
+
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const
     {
-        return &mTraceThreshold;
+        return mActors;
     }
 
-    bool checkResponseDigest() const
+    std::deque<std::tr1::shared_ptr<util::Actor> >& mutableActors()
     {
-        return mCheckResponseDigest;
-    }
-
-    bool* mutableCheckResponseDigest()
-    {
-        return &mCheckResponseDigest;
-    }
-
-    const std::tr1::shared_ptr<IRetryStrategy> retryStrategy() const
-    {
-        return mRetryStrategy;
-    }
-
-    std::tr1::shared_ptr<IRetryStrategy>* mutableRetryStrategy()
-    {
-        return &mRetryStrategy;
+        return mActors;
     }
 
 private:
-    std::tr1::shared_ptr<util::random::IRandom> mRandom;
-    
     int64_t mMaxConnections;
     util::Duration mConnectTimeout;
     util::Duration mRequestTimeout;
-    util::Duration mTraceThreshold;
-    bool mCheckResponseDigest;
-    std::tr1::shared_ptr<IRetryStrategy> mRetryStrategy;
+    std::auto_ptr<RetryStrategy> mRetryStrategy;
+    std::auto_ptr<util::Logger> mLogger;
+    std::deque<std::tr1::shared_ptr<util::Actor> > mActors;
 };
 
 /**
@@ -454,19 +433,22 @@ private:
 class PrimaryKeyColumnSchema
 {
 public:
+    enum Option
+    {
+        AutoIncrement,
+    };
+
     explicit PrimaryKeyColumnSchema()
-      : mType(PKT_INTEGER),
-        mOption(PKO_NONE)
+      : mType(kPKT_Integer)
     {}
 
     explicit PrimaryKeyColumnSchema(const std::string& name, PrimaryKeyType type)
       : mName(name),
-        mType(type),
-        mOption(PKO_NONE)
+        mType(type)
     {}
 
     explicit PrimaryKeyColumnSchema(
-        const std::string& name, PrimaryKeyType type, PrimaryKeyOption opt)
+        const std::string& name, PrimaryKeyType type, Option opt)
       : mName(name),
         mType(type),
         mOption(opt)
@@ -474,29 +456,22 @@ public:
 
     explicit PrimaryKeyColumnSchema(
         const util::MoveHolder<PrimaryKeyColumnSchema>& a)
-      : mType(a->mType),
-        mOption(a->mOption)
     {
-        util::moveAssign(&mName, util::move(a->mName));
+        operator=(a);
     }
 
     PrimaryKeyColumnSchema& operator=(
-        const util::MoveHolder<PrimaryKeyColumnSchema>& a)
-    {
-        mType = a->mType;
-        mOption = a->mOption;
-        util::moveAssign(&mName, util::move(a->mName));
-        return *this;
-    }
+        const util::MoveHolder<PrimaryKeyColumnSchema>& a);
+    
 
     const std::string& name() const
     {
         return mName;
     }
 
-    std::string* mutableName()
+    std::string& mutableName()
     {
-        return &mName;
+        return mName;
     }
 
     PrimaryKeyType type() const
@@ -504,29 +479,29 @@ public:
         return mType;
     }
 
-    PrimaryKeyType* mutableType()
+    PrimaryKeyType& mutableType()
     {
-        return &mType;
+        return mType;
     }
 
-    PrimaryKeyOption option() const
+    const util::Optional<Option>& option() const
     {
         return mOption;
     }
 
-    PrimaryKeyOption* mutableOption()
+    util::Optional<Option>& mutableOption()
     {
-        return &mOption;
+        return mOption;
     }
     
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
     std::string mName;
     PrimaryKeyType mType;
-    PrimaryKeyOption mOption;
+    util::Optional<Option> mOption;
 };
 
 class Schema: public IVector<PrimaryKeyColumnSchema>
@@ -536,12 +511,12 @@ public:
 
     explicit Schema(const util::MoveHolder<Schema>& a)
     {
-        util::moveAssign(&mColumns, util::move(a->mColumns));
+        util::moveAssign(mColumns, util::move(a->mColumns));
     }
 
     Schema& operator=(const util::MoveHolder<Schema>& a)
     {
-        util::moveAssign(&mColumns, util::move(a->mColumns));
+        util::moveAssign(mColumns, util::move(a->mColumns));
         return *this;
     }
 
@@ -580,8 +555,8 @@ public:
         return mColumns.reset();
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
 
 private:
     DequeBasedVector<PrimaryKeyColumnSchema> mColumns;
@@ -592,13 +567,13 @@ class PrimaryKeyValue
 public:
     enum Category
     {
-        NONE,
-        INF_MIN,
-        INF_MAX,
-        AUTO_INCR,
-        INTEGER,
-        STRING,
-        BINARY,
+        kNone,
+        kInfMin,
+        kInfMax,
+        kAutoIncr,
+        kInteger,
+        kString,
+        kBinary,
     };
 
     static PrimaryKeyType toPrimaryKeyType(Category);
@@ -607,9 +582,12 @@ private:
     class InfMin {};
     class InfMax {};
     class AutoIncrement {};
+    class Str {};
+    class Bin {};
 
     explicit PrimaryKeyValue(int64_t);
-    explicit PrimaryKeyValue(PrimaryKeyType, const util::MemPiece&);
+    explicit PrimaryKeyValue(Str, const std::string&);
+    explicit PrimaryKeyValue(Bin, const std::string&);
     explicit PrimaryKeyValue(InfMin);
     explicit PrimaryKeyValue(InfMax);
     explicit PrimaryKeyValue(AutoIncrement);
@@ -620,17 +598,17 @@ public:
     PrimaryKeyValue& operator=(const util::MoveHolder<PrimaryKeyValue>&);
 
     Category category() const;
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     CompareResult compare(const PrimaryKeyValue&) const;
 
     bool isReal() const
     {
         switch(category()) {
-        case NONE: case INF_MIN: case INF_MAX: case AUTO_INCR:
+        case kNone: case kInfMin: case kInfMax: case kAutoIncr:
             return false;
-        case INTEGER: case STRING: case BINARY:
+        case kInteger: case kString: case kBinary:
             return true;
         }
         return false;
@@ -639,9 +617,9 @@ public:
     bool isInfinity() const
     {
         switch(category()) {
-        case INF_MIN: case INF_MAX:
+        case kInfMin: case kInfMax:
             return true;
-        case NONE: case AUTO_INCR: case INTEGER: case STRING: case BINARY:
+        case kNone: case kAutoIncr: case kInteger: case kString: case kBinary:
             return false;
         }
         return false;
@@ -651,7 +629,7 @@ public:
     // for integers
     static PrimaryKeyValue toInteger(int64_t);
     int64_t integer() const;
-    int64_t* mutableInteger();
+    int64_t& mutableInteger();
 
 public:
     // for string
@@ -659,9 +637,9 @@ public:
      * PrimaryKeyValue does not own underlying piece of memory of the string.
      * So, make sure it lives longer than the PrimaryKeyValue.
      */
-    static PrimaryKeyValue toStr(const util::MemPiece&);
-    const util::MemPiece& str() const;
-    util::MemPiece* mutableStr();
+    static PrimaryKeyValue toStr(const std::string&);
+    const std::string& str() const;
+    std::string& mutableStr();
 
 public:
     // for blob
@@ -669,9 +647,9 @@ public:
      * PrimaryKeyValue does not own underlying piece of memory of the blob.
      * So, make sure it lives longer than the PrimaryKeyValue.
      */
-    static PrimaryKeyValue toBlob(const util::MemPiece&);
-    const util::MemPiece& blob() const;
-    util::MemPiece* mutableBlob();
+    static PrimaryKeyValue toBlob(const std::string&);
+    const std::string& blob() const;
+    std::string& mutableBlob();
 
 public:
     // for +inf
@@ -694,7 +672,7 @@ public:
 private:
     Category mCategory;
     int64_t mIntValue;
-    util::MemPiece mStrBlobValue;
+    std::string mStrBlobValue;
 };
 
 /**
@@ -717,9 +695,9 @@ public:
         return mName;
     }
 
-    std::string* mutableName()
+    std::string& mutableName()
     {
-        return &mName;
+        return mName;
     }
 
     const PrimaryKeyValue& value() const
@@ -727,13 +705,13 @@ public:
         return mValue;
     }
 
-    PrimaryKeyValue* mutableValue()
+    PrimaryKeyValue& mutableValue()
     {
-        return &mValue;
+        return mValue;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
@@ -752,7 +730,7 @@ public:
 
     PrimaryKey& operator=(const util::MoveHolder<PrimaryKey>& a)
     {
-        util::moveAssign(&mColumns, util::move(a->mColumns));
+        util::moveAssign(mColumns, util::move(a->mColumns));
         return *this;
     }
 
@@ -791,8 +769,8 @@ public:
         return mColumns.reset();
     }
 
-    void prettyPrint(std::string* out) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string& out) const;
+    util::Optional<OTSError> validate() const;
     CompareResult compare(const PrimaryKey& a) const;
 
 private:
@@ -819,8 +797,8 @@ public:
 
     TableMeta& operator=(const util::MoveHolder<TableMeta>& a)
     {
-        util::moveAssign(&mTableName, util::move(a->mTableName));
-        util::moveAssign(&mSchema, util::move(a->mSchema));
+        util::moveAssign(mTableName, util::move(a->mTableName));
+        util::moveAssign(mSchema, util::move(a->mSchema));
         return *this;
     }
 
@@ -829,9 +807,9 @@ public:
         return mTableName;
     }
 
-    std::string* mutableTableName()
+    std::string& mutableTableName()
     {
-        return &mTableName;
+        return mTableName;
     }
 
     const Schema& schema() const
@@ -839,13 +817,13 @@ public:
         return mSchema;
     }
 
-    Schema* mutableSchema()
+    Schema& mutableSchema()
     {
-        return &mSchema;
+        return mSchema;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
 private:
@@ -868,21 +846,16 @@ public:
         *this = a;
     }
 
-    CapacityUnit& operator=(const util::MoveHolder<CapacityUnit>& a)
-    {
-        util::moveAssign(&mRead, util::move(a->mRead));
-        util::moveAssign(&mWrite, util::move(a->mWrite));
-        return *this;
-    }
+    CapacityUnit& operator=(const util::MoveHolder<CapacityUnit>& a);
     
     const util::Optional<int64_t> read() const
     {
         return mRead;
     }
 
-    util::Optional<int64_t>* mutableRead()
+    util::Optional<int64_t>& mutableRead()
     {
-        return &mRead;
+        return mRead;
     }
 
     const util::Optional<int64_t>& write() const
@@ -890,13 +863,13 @@ public:
         return mWrite;
     }
 
-    util::Optional<int64_t>* mutableWrite()
+    util::Optional<int64_t>& mutableWrite()
     {
-        return &mWrite;
+        return mWrite;
     }
 
-    util::Optional<Error> validate() const;
-    void prettyPrint(std::string*) const;
+    util::Optional<OTSError> validate() const;
+    void prettyPrint(std::string&) const;
     void reset();
 
 private:
@@ -919,8 +892,8 @@ public:
 
     TableOptions& operator=(const util::MoveHolder<TableOptions>& a);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const util::Optional<util::Duration>& timeToLive() const
@@ -928,9 +901,9 @@ public:
         return mTimeToLive;
     }
 
-    util::Optional<util::Duration>* mutableTimeToLive()
+    util::Optional<util::Duration>& mutableTimeToLive()
     {
-        return &mTimeToLive;
+        return mTimeToLive;
     }
 
     const util::Optional<int64_t> maxVersions() const
@@ -938,9 +911,9 @@ public:
         return mMaxVersions;
     }
 
-    util::Optional<int64_t>* mutableMaxVersions()
+    util::Optional<int64_t>& mutableMaxVersions()
     {
-        return &mMaxVersions;
+        return mMaxVersions;
     }
 
     const util::Optional<BloomFilterType> bloomFilterType() const
@@ -948,9 +921,9 @@ public:
         return mBloomFilterType;
     }
 
-    util::Optional<BloomFilterType>* mutableBloomFilterType()
+    util::Optional<BloomFilterType>& mutableBloomFilterType()
     {
-        return &mBloomFilterType;
+        return mBloomFilterType;
     }
 
     const util::Optional<int64_t> blockSize() const
@@ -958,9 +931,9 @@ public:
         return mBlockSize;
     }
 
-    util::Optional<int64_t>* mutableBlockSize()
+    util::Optional<int64_t>& mutableBlockSize()
     {
-        return &mBlockSize;
+        return mBlockSize;
     }
 
     const util::Optional<util::Duration>& maxTimeDeviation() const
@@ -968,9 +941,9 @@ public:
         return mMaxTimeDeviation;
     }
 
-    util::Optional<util::Duration>* mutableMaxTimeDeviation()
+    util::Optional<util::Duration>& mutableMaxTimeDeviation()
     {
-        return &mMaxTimeDeviation;
+        return mMaxTimeDeviation;
     }
 
     const util::Optional<CapacityUnit>& reservedThroughput() const
@@ -978,9 +951,9 @@ public:
         return mReservedThroughput;
     }
 
-    util::Optional<CapacityUnit>* mutableReservedThroughput()
+    util::Optional<CapacityUnit>& mutableReservedThroughput()
     {
-        return &mReservedThroughput;
+        return mReservedThroughput;
     }
     
 private:
@@ -997,17 +970,21 @@ class AttributeValue
 public:
     enum Category
     {
-        NONE,
-        STRING,
-        INTEGER,
-        BINARY,
-        BOOLEAN,
-        FLOATING_POINT,
+        kNone,
+        kString,
+        kInteger,
+        kBinary,
+        kBoolean,
+        kFloatPoint,
     };
 
 private:
+    class Str {};
+    class Blob {};
+
     explicit AttributeValue(int64_t);
-    explicit AttributeValue(Category, const util::MemPiece&);
+    explicit AttributeValue(Str, const std::string&);
+    explicit AttributeValue(Blob, const std::string&);
     explicit AttributeValue(bool);
     explicit AttributeValue(double);
 
@@ -1024,20 +1001,20 @@ public:
         return mCategory;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     CompareResult compare(const AttributeValue&) const;
-    
+
 public:
     // for strings
     /**
      * AttributeValue does not own underlying piece of memory of the string.
      * So, make sure it lives longer than the AttributeValue.
      */
-    static AttributeValue toStr(const util::MemPiece&);
-    const util::MemPiece& str() const;
-    util::MemPiece* mutableStr();
+    static AttributeValue toStr(const std::string&);
+    const std::string& str() const;
+    std::string& mutableStr();
 
 public:
     // for blob
@@ -1045,32 +1022,32 @@ public:
      * AttributeValue does not own underlying piece of memory of the blob.
      * So, make sure it lives longer than the AttributeValue.
      */
-    static AttributeValue toBlob(const util::MemPiece&);
-    const util::MemPiece& blob() const;
-    util::MemPiece* mutableBlob();
+    static AttributeValue toBlob(const std::string&);
+    const std::string& blob() const;
+    std::string& mutableBlob();
 
 public:
     // for integers
     static AttributeValue toInteger(int64_t);
     int64_t integer() const;
-    int64_t* mutableInteger();
+    int64_t& mutableInteger();
 
 public:
     // for floating point numbers
     static AttributeValue toFloatPoint(double);
     double floatPoint() const;
-    double* mutableFloatPoint();
+    double& mutableFloatPoint();
 
 public:
     // for booleans
     static AttributeValue toBoolean(bool);
     bool boolean() const;
-    bool* mutableBoolean();
+    bool& mutableBoolean();
 
 private:
     Category mCategory;
     int64_t mIntValue;
-    util::MemPiece mStrBlobValue;
+    std::string mStrBlobValue;
     bool mBoolValue;
     double mFloatingValue;
 };
@@ -1090,8 +1067,8 @@ public:
 
     Attribute& operator=(const util::MoveHolder<Attribute>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const std::string& name() const
@@ -1099,9 +1076,9 @@ public:
         return mName;
     }
 
-    std::string* mutableName()
+    std::string& mutableName()
     {
-        return &mName;
+        return mName;
     }
 
     const AttributeValue& value() const
@@ -1109,9 +1086,9 @@ public:
         return mValue;
     }
 
-    AttributeValue* mutableValue()
+    AttributeValue& mutableValue()
     {
-        return &mValue;
+        return mValue;
     }
 
     const util::Optional<util::UtcTime>& timestamp() const
@@ -1119,9 +1096,9 @@ public:
         return mTimestamp;
     }
 
-    util::Optional<util::UtcTime>* mutableTimestamp()
+    util::Optional<util::UtcTime>& mutableTimestamp()
     {
-        return &mTimestamp;
+        return mTimestamp;
     }
     
 private:
@@ -1141,8 +1118,8 @@ public:
 
     Row& operator=(const util::MoveHolder<Row>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PrimaryKey& primaryKey() const
@@ -1150,9 +1127,9 @@ public:
         return mPkey;
     }
 
-    PrimaryKey* mutablePrimaryKey()
+    PrimaryKey& mutablePrimaryKey()
     {
-        return &mPkey;
+        return mPkey;
     }
 
     const IVector<Attribute>& attributes() const
@@ -1160,9 +1137,9 @@ public:
         return mAttrs;
     }
 
-    IVector<Attribute>* mutableAttributes()
+    IVector<Attribute>& mutableAttributes()
     {
-        return &mAttrs;
+        return mAttrs;
     }
 
 private:
@@ -1190,8 +1167,8 @@ public:
 
     TimeRange& operator=(const util::MoveHolder<TimeRange>& a);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     util::UtcTime start() const
@@ -1199,9 +1176,9 @@ public:
         return mStart;
     }
 
-    util::UtcTime* mutableStart()
+    util::UtcTime& mutableStart()
     {
-        return &mStart;
+        return mStart;
     }
 
     util::UtcTime end() const
@@ -1209,9 +1186,9 @@ public:
         return mEnd;
     }
 
-    util::UtcTime* mutableEnd()
+    util::UtcTime& mutableEnd()
     {
-        return &mEnd;
+        return mEnd;
     }
 
 private:
@@ -1231,8 +1208,8 @@ public:
 
     Split& operator=(const util::MoveHolder<Split>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     /**
@@ -1243,9 +1220,9 @@ public:
         return mLowerBound;
     }
 
-    std::tr1::shared_ptr<PrimaryKey>* mutableLowerBound()
+    std::tr1::shared_ptr<PrimaryKey>& mutableLowerBound()
     {
-        return &mLowerBound;
+        return mLowerBound;
     }
 
     /**
@@ -1256,9 +1233,9 @@ public:
         return mUpperBound;
     }
 
-    std::tr1::shared_ptr<PrimaryKey>* mutableUpperBound()
+    std::tr1::shared_ptr<PrimaryKey>& mutableUpperBound()
     {
-        return &mUpperBound;
+        return mUpperBound;
     }
 
     /**
@@ -1270,9 +1247,9 @@ public:
         return mLocation;
     }
 
-    std::string* mutableLocation()
+    std::string& mutableLocation()
     {
-        return &mLocation;
+        return mLocation;
     }
     
 private:
@@ -1288,14 +1265,14 @@ class ColumnCondition
 {
 public:
     enum Type {
-        SINGLE = 1,
-        COMPOSITE
+        kSingle,
+        kComposite
     };
 
     virtual ~ColumnCondition() {}
     virtual Type type() const =0;
-    virtual void prettyPrint(std::string*) const =0;
-    virtual util::Optional<Error> validate() const =0;
+    virtual void prettyPrint(std::string&) const =0;
+    virtual util::Optional<OTSError> validate() const =0;
     virtual void reset() =0;
 };
 
@@ -1303,17 +1280,17 @@ class SingleColumnCondition : public ColumnCondition
 {
 public:
     enum Relation {
-        EQUAL = 1, 
-        NOT_EQUAL,
-        GREATER_THAN,
-        GREATER_EQUAL,
-        LESS_THAN, 
-        LESS_EQUAL,
+        kEqual, 
+        kNotEqual,
+        kLarger,
+        kLargerEqual,
+        kSmaller, 
+        kSmallerEqual,
     };
 
 public:
     explicit SingleColumnCondition()
-      : mRelation(EQUAL),
+      : mRelation(kEqual),
         mPassIfMissing(false),
         mLatestVersionOnly(true)
     {}
@@ -1340,11 +1317,11 @@ public:
 
     ColumnCondition::Type type() const
     {
-        return ColumnCondition::SINGLE;
+        return ColumnCondition::kSingle;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& columnName() const
@@ -1352,9 +1329,9 @@ public:
         return mColumnName;
     }
 
-    std::string* mutableColumnName()
+    std::string& mutableColumnName()
     {
-        return &mColumnName;
+        return mColumnName;
     }
 
     Relation relation() const
@@ -1362,9 +1339,9 @@ public:
         return mRelation;
     }
 
-    Relation* mutableRelation()
+    Relation& mutableRelation()
     {
-        return &mRelation;
+        return mRelation;
     }
 
     const AttributeValue& columnValue() const
@@ -1372,9 +1349,9 @@ public:
         return mColumnValue;
     }
 
-    AttributeValue* mutableAttributeValue()
+    AttributeValue& mutableAttributeValue()
     {
-        return &mColumnValue;
+        return mColumnValue;
     }
 
     bool passIfMissing() const
@@ -1382,9 +1359,9 @@ public:
         return mPassIfMissing;
     }
 
-    bool* mutablePassIfMissing()
+    bool& mutablePassIfMissing()
     {
-        return &mPassIfMissing;
+        return mPassIfMissing;
     }
 
     bool latestVersionOnly() const
@@ -1392,9 +1369,9 @@ public:
         return mLatestVersionOnly;
     }
 
-    bool* mutableLatestVersionOnly()
+    bool& mutableLatestVersionOnly()
     {
-        return &mLatestVersionOnly;
+        return mLatestVersionOnly;
     }
 
 private:
@@ -1409,14 +1386,14 @@ class CompositeColumnCondition : public ColumnCondition
 {
 public:
     enum Operator {
-        NOT = 1,
-        AND = 2, 
-        OR  = 3
+        kNot,
+        kAnd, 
+        kOr,
     };
 
 public:
     explicit CompositeColumnCondition()
-      : mOperator(AND)
+      : mOperator(kAnd)
     {}
 
     explicit CompositeColumnCondition(
@@ -1430,11 +1407,11 @@ public:
     
     Type type() const
     {
-        return COMPOSITE;
+        return kComposite;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     Operator op() const
@@ -1442,9 +1419,9 @@ public:
         return mOperator;
     }
 
-    Operator* mutableOp()
+    Operator& mutableOp()
     {
-        return &mOperator;
+        return mOperator;
     }
 
     const IVector<std::tr1::shared_ptr<ColumnCondition> >& children() const
@@ -1452,9 +1429,9 @@ public:
         return mChildren;
     }
 
-    IVector<std::tr1::shared_ptr<ColumnCondition> >* mutableChildren()
+    IVector<std::tr1::shared_ptr<ColumnCondition> >& mutableChildren()
     {
-        return &mChildren;
+        return mChildren;
     }
 
 private:
@@ -1467,14 +1444,14 @@ class Condition
 public:
     enum RowExistenceExpectation
     {
-        IGNORE = 0,
-        EXPECT_EXIST,
-        EXPECT_NOT_EXIST,
+        kIgnore = 0,
+        kExpectExist,
+        kExpectNotExist,
     };
 
 public:
     explicit Condition()
-      : mRowCondition(IGNORE)
+      : mRowCondition(kIgnore)
     {}
 
     explicit Condition(const util::MoveHolder<Condition>& a)
@@ -1484,8 +1461,8 @@ public:
 
     Condition& operator=(const util::MoveHolder<Condition>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     RowExistenceExpectation rowCondition() const
@@ -1520,21 +1497,21 @@ class RowChange
 public:
     enum ReturnType
     {
-        RT_NONE,
-        RT_PRIMARY_KEY,
+        kRT_None,
+        kRT_PrimaryKey,
     };
     
 protected:
     explicit RowChange()
-      : mReturnType(RT_NONE)
+      : mReturnType(kRT_None)
     {}
 
     void move(RowChange& a);
-    virtual void prettyPrint(std::string*) const;
+    virtual void prettyPrint(std::string&) const;
     
 public:
     virtual ~RowChange() {}
-    virtual util::Optional<Error> validate() const;
+    virtual util::Optional<OTSError> validate() const;
     virtual void reset();
 
     const std::string& table() const
@@ -1542,9 +1519,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
     const PrimaryKey& primaryKey() const
@@ -1552,9 +1529,9 @@ public:
         return mPrimaryKey;
     }
 
-    PrimaryKey* mutablePrimaryKey()
+    PrimaryKey& mutablePrimaryKey()
     {
-        return &mPrimaryKey;
+        return mPrimaryKey;
     }
 
     const Condition& condition() const
@@ -1562,9 +1539,9 @@ public:
         return mCondition;
     }
 
-    Condition* mutableCondition()
+    Condition& mutableCondition()
     {
-        return &mCondition;
+        return mCondition;
     }
 
     ReturnType returnType() const
@@ -1572,9 +1549,9 @@ public:
         return mReturnType;
     }
 
-    ReturnType* mutableReturnType()
+    ReturnType& mutableReturnType()
     {
-        return &mReturnType;
+        return mReturnType;
     }
 
 private:
@@ -1595,8 +1572,8 @@ public:
 
     RowPutChange& operator=(const util::MoveHolder<RowPutChange>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const IVector<Attribute>& attributes() const
@@ -1604,9 +1581,9 @@ public:
         return mAttrs;
     }
 
-    IVector<Attribute>* mutableAttributes()
+    IVector<Attribute>& mutableAttributes()
     {
-        return &mAttrs;
+        return mAttrs;
     }
 
 private:
@@ -1625,20 +1602,20 @@ public:
              * Overwrites a cell with a specific timestamp.
              * If the cell does not previously exist, insert it.
              */
-            PUT,
+            kPut,
             /**
              * Deletes a single cell with a specific timestamp.
              */
-            DELETE,
+            kDelete,
             /**
              * Deletes all cells of a column
              */
-            DELETE_ALL,
+            kDeleteAll,
         };
 
     public:
         explicit Update()
-          : mType(PUT)
+          : mType(kPut)
         {}
 
         explicit Update(const util::MoveHolder<Update>& a)
@@ -1647,17 +1624,17 @@ public:
         }
 
         Update& operator=(const util::MoveHolder<Update>&);
-        void prettyPrint(std::string*) const;
-        util::Optional<Error> validate() const;
+        void prettyPrint(std::string&) const;
+        util::Optional<OTSError> validate() const;
 
         Type type() const
         {
             return mType;
         }
 
-        Type* mutableType()
+        Type& mutableType()
         {
-            return &mType;
+            return mType;
         }
 
         const std::string& attrName() const
@@ -1665,9 +1642,9 @@ public:
             return mAttrName;
         }
 
-        std::string* mutableAttrName()
+        std::string& mutableAttrName()
         {
-            return &mAttrName;
+            return mAttrName;
         }
 
         const util::Optional<AttributeValue>& attrValue() const
@@ -1675,9 +1652,9 @@ public:
             return mAttrValue;
         }
 
-        util::Optional<AttributeValue>* mutableAttrValue()
+        util::Optional<AttributeValue>& mutableAttrValue()
         {
-            return &mAttrValue;
+            return mAttrValue;
         }
 
         const util::Optional<util::UtcTime>& timestamp() const
@@ -1685,9 +1662,9 @@ public:
             return mTimestamp;
         }
 
-        util::Optional<util::UtcTime>* mutableTimestamp()
+        util::Optional<util::UtcTime>& mutableTimestamp()
         {
-            return &mTimestamp;
+            return mTimestamp;
         }
 
     private:
@@ -1696,7 +1673,7 @@ public:
         util::Optional<AttributeValue> mAttrValue;
         util::Optional<util::UtcTime> mTimestamp;
     };
-    
+
 public:
     explicit RowUpdateChange() {}
 
@@ -1706,8 +1683,8 @@ public:
     }
 
     RowUpdateChange& operator=(const util::MoveHolder<RowUpdateChange>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<Update>& updates() const
@@ -1715,9 +1692,9 @@ public:
         return mUpdates;
     }
 
-    IVector<Update>* mutableUpdates()
+    IVector<Update>& mutableUpdates()
     {
-        return &mUpdates;
+        return mUpdates;
     }
 
 private:
@@ -1740,8 +1717,8 @@ public:
         return *this;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -1767,12 +1744,12 @@ public:
     PairWithUserData<T>& operator=(
         const util::MoveHolder<PairWithUserData<T> >& a)
     {
-        util::moveAssign(&mData, util::move(a->mData));
+        util::moveAssign(mData, util::move(a->mData));
         mUserData = a->mUserData;
         return *this;
     }
 
-    void prettyPrint(std::string* out) const
+    void prettyPrint(std::string& out) const
     {
         pp::prettyPrint(out, get());
     }
@@ -1782,9 +1759,9 @@ public:
         return mData;
     }
 
-    T* mutableGet()
+    T& mutableGet()
     {
-        return &mData;
+        return mData;
     }
 
     const void* userData() const
@@ -1792,9 +1769,9 @@ public:
         return mUserData;
     }
 
-    void const** mutableUserData()
+    void const*& mutableUserData()
     {
-        return &mUserData;
+        return mUserData;
     }
 
 private:
@@ -1812,8 +1789,8 @@ protected:
 
 public:
     virtual ~QueryCriterion() {}
-    virtual void prettyPrint(std::string*) const;
-    virtual util::Optional<Error> validate() const;
+    virtual void prettyPrint(std::string&) const;
+    virtual util::Optional<OTSError> validate() const;
     virtual void reset();
     
     const std::string& table() const
@@ -1821,9 +1798,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
     const IVector<std::string>& columnsToGet() const
@@ -1831,9 +1808,9 @@ public:
         return mColumnsToGet;
     }
 
-    IVector<std::string>* mutableColumnsToGet()
+    IVector<std::string>& mutableColumnsToGet()
     {
-        return &mColumnsToGet;
+        return mColumnsToGet;
     }
 
     const util::Optional<int64_t>& maxVersions() const
@@ -1841,9 +1818,9 @@ public:
         return mMaxVersions;
     }
 
-    util::Optional<int64_t>* mutableMaxVersions()
+    util::Optional<int64_t>& mutableMaxVersions()
     {
-        return &mMaxVersions;
+        return mMaxVersions;
     }
 
     const util::Optional<TimeRange>& timeRange() const
@@ -1851,9 +1828,9 @@ public:
         return mTimeRange;
     }
 
-    util::Optional<TimeRange>* mutableTimeRange()
+    util::Optional<TimeRange>& mutableTimeRange()
     {
-        return &mTimeRange;
+        return mTimeRange;
     }
 
     const util::Optional<bool>& cacheBlocks() const
@@ -1861,9 +1838,9 @@ public:
         return mCacheBlocks;
     }
 
-    util::Optional<bool>* mutableCacheBlocks()
+    util::Optional<bool>& mutableCacheBlocks()
     {
-        return &mCacheBlocks;
+        return mCacheBlocks;
     }
 
     const std::tr1::shared_ptr<ColumnCondition>& filter() const
@@ -1871,9 +1848,9 @@ public:
         return mFilter;
     }
 
-    std::tr1::shared_ptr<ColumnCondition>* mutableFilter()
+    std::tr1::shared_ptr<ColumnCondition>& mutableFilter()
     {
-        return &mFilter;
+        return mFilter;
     }
 
 private:
@@ -1898,8 +1875,8 @@ public:
 
     PointQueryCriterion& operator=(const util::MoveHolder<PointQueryCriterion>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PrimaryKey& primaryKey() const
@@ -1907,9 +1884,9 @@ public:
         return mPrimaryKey;
     }
 
-    PrimaryKey* mutablePrimaryKey()
+    PrimaryKey& mutablePrimaryKey()
     {
-        return &mPrimaryKey;
+        return mPrimaryKey;
     }
 
 private:
@@ -1936,8 +1913,8 @@ public:
     }
 
     RangeQueryCriterion& operator=(const util::MoveHolder<RangeQueryCriterion>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     Direction direction() const
@@ -1945,9 +1922,9 @@ public:
         return mDirection;
     }
 
-    Direction* mutableDirection()
+    Direction& mutableDirection()
     {
-        return &mDirection;
+        return mDirection;
     }
 
     const PrimaryKey& inclusiveStart() const
@@ -1955,9 +1932,9 @@ public:
         return mInclusiveStart;
     }
 
-    PrimaryKey* mutableInclusiveStart()
+    PrimaryKey& mutableInclusiveStart()
     {
-        return &mInclusiveStart;
+        return mInclusiveStart;
     }
 
     const PrimaryKey& exclusiveEnd() const
@@ -1965,9 +1942,9 @@ public:
         return mExclusiveEnd;
     }
 
-    PrimaryKey* mutableExclusiveEnd()
+    PrimaryKey& mutableExclusiveEnd()
     {
-        return &mExclusiveEnd;
+        return mExclusiveEnd;
     }
 
     const util::Optional<int64_t>& limit() const
@@ -1975,9 +1952,9 @@ public:
         return mLimit;
     }
 
-    util::Optional<int64_t>* mutableLimit()
+    util::Optional<int64_t>& mutableLimit()
     {
-        return &mLimit;
+        return mLimit;
     }
 
 private:
@@ -1999,8 +1976,8 @@ public:
         const util::MoveHolder<MultiPointQueryCriterion>&);
     MultiPointQueryCriterion& operator=(
         const util::MoveHolder<MultiPointQueryCriterion>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<RowKey>& rowKeys() const
@@ -2008,9 +1985,9 @@ public:
         return mRowKeys;
     }
 
-    IVector<RowKey>* mutableRowKeys()
+    IVector<RowKey>& mutableRowKeys()
     {
-        return &mRowKeys;
+        return mRowKeys;
     }
     
 private:
@@ -2023,7 +2000,7 @@ class Response
 {
 protected:
     Response& operator=(const util::MoveHolder<Response>&);
-    void prettyPrint(std::string*) const;
+    void prettyPrint(std::string&) const;
     void reset();
 
 public:
@@ -2032,9 +2009,9 @@ public:
         return mRequestId;
     }
 
-    std::string* mutableRequestId()
+    std::string& mutableRequestId()
     {
-        return &mRequestId;
+        return mRequestId;
     }
 
     const std::string& traceId() const
@@ -2042,24 +2019,14 @@ public:
         return mTraceId;
     }
 
-    std::string* mutableTraceId()
+    std::string& mutableTraceId()
     {
-        return &mTraceId;
+        return mTraceId;
     }
 
-    
-    /**
-     * for internal usage only
-     */
-    IVector<std::string>* mutableMemHolder()
-    {
-        return &mMemHolder;
-    }
-    
 private:
     std::string mRequestId;
     std::string mTraceId;
-    DequeBasedVector<std::string> mMemHolder;
 };
 
 class CreateTableRequest
@@ -2073,8 +2040,8 @@ public:
 
     CreateTableRequest& operator=(const util::MoveHolder<CreateTableRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const TableMeta& meta() const
@@ -2082,9 +2049,9 @@ public:
         return mMeta;
     }
 
-    TableMeta* mutableMeta()
+    TableMeta& mutableMeta()
     {
-        return &mMeta;
+        return mMeta;
     }
 
     const TableOptions& options() const
@@ -2092,9 +2059,9 @@ public:
         return mOptions;
     }
 
-    TableOptions* mutableOptions()
+    TableOptions& mutableOptions()
     {
-        return &mOptions;
+        return mOptions;
     }
 
     /**
@@ -2106,9 +2073,9 @@ public:
         return mShardSplitPoints;
     }
 
-    IVector<PrimaryKey>* mutableShardSplitPoints()
+    IVector<PrimaryKey>& mutableShardSplitPoints()
     {
-        return &mShardSplitPoints;
+        return mShardSplitPoints;
     }
 
 private:
@@ -2128,8 +2095,8 @@ public:
 
     CreateTableResponse& operator=(const util::MoveHolder<CreateTableResponse>& a);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2145,8 +2112,8 @@ public:
         return *this;
     }
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2157,8 +2124,8 @@ public:
     explicit ListTableResponse(const util::MoveHolder<ListTableResponse>&);
     ListTableResponse& operator=(const util::MoveHolder<ListTableResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const IVector<std::string>& tables() const
@@ -2166,9 +2133,9 @@ public:
         return mTables;
     }
 
-    IVector<std::string>* mutableTables()
+    IVector<std::string>& mutableTables()
     {
-        return &mTables;
+        return mTables;
     }
     
 private:
@@ -2184,8 +2151,8 @@ public:
 
     DeleteTableRequest& operator=(const util::MoveHolder<DeleteTableRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2193,9 +2160,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
 private:
@@ -2209,8 +2176,8 @@ public:
     explicit DeleteTableResponse(const util::MoveHolder<DeleteTableResponse>&);
     DeleteTableResponse& operator=(const util::MoveHolder<DeleteTableResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2221,8 +2188,8 @@ public:
     explicit DescribeTableRequest(const util::MoveHolder<DescribeTableRequest>&);
     DescribeTableRequest& operator=(const util::MoveHolder<DescribeTableRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2230,9 +2197,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
 private:
@@ -2243,13 +2210,13 @@ class DescribeTableResponse: public Response
 {
 public:
     explicit DescribeTableResponse()
-      : mStatus(ACTIVE)
+      : mStatus(kTS_Active)
     {}
     explicit DescribeTableResponse(const util::MoveHolder<DescribeTableResponse>&);
     DescribeTableResponse& operator=(const util::MoveHolder<DescribeTableResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const TableMeta& meta() const
@@ -2257,9 +2224,9 @@ public:
         return mMeta;
     }
 
-    TableMeta* mutableMeta()
+    TableMeta& mutableMeta()
     {
-        return &mMeta;
+        return mMeta;
     }
 
     const TableOptions& options() const
@@ -2267,9 +2234,9 @@ public:
         return mOptions;
     }
 
-    TableOptions* mutableOptions()
+    TableOptions& mutableOptions()
     {
-        return &mOptions;
+        return mOptions;
     }
 
     TableStatus status() const
@@ -2277,9 +2244,9 @@ public:
         return mStatus;
     }
 
-    TableStatus* mutableStatus()
+    TableStatus& mutableStatus()
     {
-        return &mStatus;
+        return mStatus;
     }
 
     const IVector<PrimaryKey>& shardSplitPoints() const
@@ -2287,9 +2254,9 @@ public:
         return mShardSplitPoints;
     }
 
-    IVector<PrimaryKey>* mutableShardSplitPoints()
+    IVector<PrimaryKey>& mutableShardSplitPoints()
     {
-        return &mShardSplitPoints;
+        return mShardSplitPoints;
     }
 
 private:
@@ -2306,8 +2273,8 @@ public:
     explicit UpdateTableRequest(const util::MoveHolder<UpdateTableRequest>&);
     UpdateTableRequest& operator=(const util::MoveHolder<UpdateTableRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2315,9 +2282,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
     const TableOptions& options() const
@@ -2325,9 +2292,9 @@ public:
         return mOptions;
     }
 
-    TableOptions* mutableOptions()
+    TableOptions& mutableOptions()
     {
-        return &mOptions;
+        return mOptions;
     }
     
 private:
@@ -2342,8 +2309,8 @@ public:
     explicit UpdateTableResponse(const util::MoveHolder<UpdateTableResponse>&);
     UpdateTableResponse& operator=(const util::MoveHolder<UpdateTableResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 };
 
@@ -2359,8 +2326,8 @@ public:
     explicit ComputeSplitsBySizeRequest(const util::MoveHolder<ComputeSplitsBySizeRequest>&);
     ComputeSplitsBySizeRequest& operator=(const util::MoveHolder<ComputeSplitsBySizeRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const std::string& table() const
@@ -2368,9 +2335,9 @@ public:
         return mTable;
     }
 
-    std::string* mutableTable()
+    std::string& mutableTable()
     {
-        return &mTable;
+        return mTable;
     }
 
     int64_t splitSize() const
@@ -2378,9 +2345,9 @@ public:
         return mSplitSize;
     }
 
-    int64_t* mutableSplitSize()
+    int64_t& mutableSplitSize()
     {
-        return &mSplitSize;
+        return mSplitSize;
     }
 
 private:
@@ -2397,8 +2364,8 @@ public:
     ComputeSplitsBySizeResponse& operator=(
         const util::MoveHolder<ComputeSplitsBySizeResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2406,9 +2373,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const Schema& schema() const
@@ -2416,9 +2383,9 @@ public:
         return mSchema;
     }
 
-    Schema* mutableSchema()
+    Schema& mutableSchema()
     {
-        return &mSchema;
+        return mSchema;
     }
 
     const IVector<Split>& splits() const
@@ -2426,9 +2393,9 @@ public:
         return mSplits;
     }
 
-    IVector<Split>* mutableSplits()
+    IVector<Split>& mutableSplits()
     {
-        return &mSplits;
+        return mSplits;
     }
 
 private:
@@ -2448,8 +2415,8 @@ public:
 
     PutRowRequest& operator=(const util::MoveHolder<PutRowRequest>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowPutChange& rowChange() const
@@ -2457,9 +2424,9 @@ public:
         return mRowChange;
     }
 
-    RowPutChange* mutableRowChange()
+    RowPutChange& mutableRowChange()
     {
-        return &mRowChange;
+        return mRowChange;
     }
     
 private:
@@ -2477,8 +2444,8 @@ public:
 
     PutRowResponse& operator=(const util::MoveHolder<PutRowResponse>&);
 
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
     
     const CapacityUnit& consumedCapacity() const
@@ -2486,9 +2453,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const util::Optional<Row>& row() const
@@ -2496,9 +2463,9 @@ public:
         return mRow;
     }
 
-    util::Optional<Row>* mutableRow()
+    util::Optional<Row>& mutableRow()
     {
-        return &mRow;
+        return mRow;
     }
 
 private:
@@ -2517,8 +2484,8 @@ public:
     }
 
     GetRowRequest& operator=(const util::MoveHolder<GetRowRequest>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const PointQueryCriterion& queryCriterion() const
@@ -2526,9 +2493,9 @@ public:
         return mQueryCriterion;
     }
 
-    PointQueryCriterion* mutableQueryCriterion()
+    PointQueryCriterion& mutableQueryCriterion()
     {
-        return &mQueryCriterion;
+        return mQueryCriterion;
     }
 
 private:
@@ -2546,8 +2513,8 @@ public:
     }
 
     GetRowResponse& operator=(const util::MoveHolder<GetRowResponse>& a);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2555,9 +2522,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const util::Optional<Row>& row() const
@@ -2565,9 +2532,9 @@ public:
         return mRow;
     }
 
-    util::Optional<Row>* mutableRow()
+    util::Optional<Row>& mutableRow()
     {
-        return &mRow;
+        return mRow;
     }
 
 private:
@@ -2586,8 +2553,8 @@ public:
     }
 
     GetRangeRequest& operator=(const util::MoveHolder<GetRangeRequest>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RangeQueryCriterion& queryCriterion() const
@@ -2595,9 +2562,9 @@ public:
         return mQueryCriterion;
     }
 
-    RangeQueryCriterion* mutableQueryCriterion()
+    RangeQueryCriterion& mutableQueryCriterion()
     {
-        return &mQueryCriterion;
+        return mQueryCriterion;
     }
     
 private:
@@ -2615,8 +2582,8 @@ public:
     }
 
     GetRangeResponse& operator=(const util::MoveHolder<GetRangeResponse>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2624,9 +2591,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const IVector<Row>& rows() const
@@ -2634,9 +2601,9 @@ public:
         return mRows;
     }
 
-    IVector<Row>* mutableRows()
+    IVector<Row>& mutableRows()
     {
-        return &mRows;
+        return mRows;
     }
 
     const util::Optional<PrimaryKey>& nextStart() const
@@ -2644,9 +2611,9 @@ public:
         return mNextStart;
     }
 
-    util::Optional<PrimaryKey>* mutableNextStart()
+    util::Optional<PrimaryKey>& mutableNextStart()
     {
-        return &mNextStart;
+        return mNextStart;
     }
 
 private:
@@ -2666,8 +2633,8 @@ public:
     }
 
     UpdateRowRequest& operator=(const util::MoveHolder<UpdateRowRequest>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowUpdateChange& rowChange() const
@@ -2675,9 +2642,9 @@ public:
         return mRowChange;
     }
 
-    RowUpdateChange* mutableRowChange()
+    RowUpdateChange& mutableRowChange()
     {
-        return &mRowChange;
+        return mRowChange;
     }
 
 private:
@@ -2695,8 +2662,8 @@ public:
     }
 
     UpdateRowResponse& operator=(const util::MoveHolder<UpdateRowResponse>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2704,9 +2671,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const util::Optional<Row>& row() const
@@ -2714,9 +2681,9 @@ public:
         return mRow;
     }
 
-    util::Optional<Row>* mutableRow()
+    util::Optional<Row>& mutableRow()
     {
-        return &mRow;
+        return mRow;
     }
 
 private:
@@ -2735,8 +2702,8 @@ public:
     }
 
     DeleteRowRequest& operator=(const util::MoveHolder<DeleteRowRequest>& a);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const RowDeleteChange& rowChange() const
@@ -2744,9 +2711,9 @@ public:
         return mRowChange;
     }
 
-    RowDeleteChange* mutableRowChange()
+    RowDeleteChange& mutableRowChange()
     {
-        return &mRowChange;
+        return mRowChange;
     }
 
 private:
@@ -2764,8 +2731,8 @@ public:
     }
 
     DeleteRowResponse& operator=(const util::MoveHolder<DeleteRowResponse>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2773,9 +2740,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const util::Optional<Row>& row() const
@@ -2783,9 +2750,9 @@ public:
         return mRow;
     }
 
-    util::Optional<Row>* mutableRow()
+    util::Optional<Row>& mutableRow()
     {
-        return &mRow;
+        return mRow;
     }
 
 private:
@@ -2799,8 +2766,8 @@ public:
     explicit BatchGetRowRequest() {}
     explicit BatchGetRowRequest(const util::MoveHolder<BatchGetRowRequest>&);
     BatchGetRowRequest& operator=(const util::MoveHolder<BatchGetRowRequest>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<MultiPointQueryCriterion>& criteria() const
@@ -2808,9 +2775,9 @@ public:
         return mCriteria;
     }
 
-    IVector<MultiPointQueryCriterion>* mutableCriteria()
+    IVector<MultiPointQueryCriterion>& mutableCriteria()
     {
-        return &mCriteria;
+        return mCriteria;
     }
 
 private:
@@ -2820,7 +2787,7 @@ private:
 class BatchGetRowResponse : public Response
 {
 public:
-    typedef PairWithUserData<util::Result<util::Optional<Row>, Error> > Result;
+    typedef PairWithUserData<util::Result<util::Optional<Row>, OTSError> > Result;
 
 public:
     explicit BatchGetRowResponse() {}
@@ -2830,8 +2797,8 @@ public:
     }
 
     BatchGetRowResponse& operator=(const util::MoveHolder<BatchGetRowResponse>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2839,9 +2806,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
     
     const IVector<Result>& results() const
@@ -2849,9 +2816,9 @@ public:
         return mResults;
     }
 
-    IVector<Result>* mutableResults()
+    IVector<Result>& mutableResults()
     {
-        return &mResults;
+        return mResults;
     }
 
 private:
@@ -2872,8 +2839,8 @@ public:
         const util::MoveHolder<BatchWriteRowRequest>&);
     BatchWriteRowRequest& operator=(
         const util::MoveHolder<BatchWriteRowRequest>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const IVector<Put>& puts() const
@@ -2881,9 +2848,9 @@ public:
         return mPuts;
     }
 
-    IVector<Put>* mutablePuts()
+    IVector<Put>& mutablePuts()
     {
-        return &mPuts;
+        return mPuts;
     }
 
     const IVector<Update>& updates() const
@@ -2891,9 +2858,9 @@ public:
         return mUpdates;
     }
 
-    IVector<Update>* mutableUpdates()
+    IVector<Update>& mutableUpdates()
     {
-        return &mUpdates;
+        return mUpdates;
     }
 
     const IVector<Delete>& deletes() const
@@ -2901,9 +2868,9 @@ public:
         return mDeletes;
     }
 
-    IVector<Delete>* mutableDeletes()
+    IVector<Delete>& mutableDeletes()
     {
-        return &mDeletes;
+        return mDeletes;
     }
 
 private:
@@ -2915,7 +2882,7 @@ private:
 class BatchWriteRowResponse: public Response
 {
 public:
-    typedef PairWithUserData<util::Result<util::Optional<Row>, Error> > Result;
+    typedef PairWithUserData<util::Result<util::Optional<Row>, OTSError> > Result;
 
 public:
     explicit BatchWriteRowResponse() {}
@@ -2923,8 +2890,8 @@ public:
         const util::MoveHolder<BatchWriteRowResponse>&);
     BatchWriteRowResponse& operator=(
         const util::MoveHolder<BatchWriteRowResponse>&);
-    void prettyPrint(std::string*) const;
-    util::Optional<Error> validate() const;
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
     void reset();
 
     const CapacityUnit& consumedCapacity() const
@@ -2932,9 +2899,9 @@ public:
         return mConsumedCapacity;
     }
 
-    CapacityUnit* mutableConsumedCapacity()
+    CapacityUnit& mutableConsumedCapacity()
     {
-        return &mConsumedCapacity;
+        return mConsumedCapacity;
     }
 
     const IVector<Result>& putResults() const
@@ -2942,9 +2909,9 @@ public:
         return mPutResults;
     }
 
-    IVector<Result>* mutablePutResults()
+    IVector<Result>& mutablePutResults()
     {
-        return &mPutResults;
+        return mPutResults;
     }
 
     const IVector<Result>& updateResults() const
@@ -2952,9 +2919,9 @@ public:
         return mUpdateResults;
     }
 
-    IVector<Result>* mutableUpdateResults()
+    IVector<Result>& mutableUpdateResults()
     {
-        return &mUpdateResults;
+        return mUpdateResults;
     }
 
     const IVector<Result>& deleteResults() const
@@ -2962,9 +2929,9 @@ public:
         return mDeleteResults;
     }
 
-    IVector<Result>* mutableDeleteResults()
+    IVector<Result>& mutableDeleteResults()
     {
-        return &mDeleteResults;
+        return mDeleteResults;
     }
 
 private:
@@ -2990,7 +2957,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::Action, aliyun::tablestore::core::Action>
 {
-    void operator()(std::string*, aliyun::tablestore::core::Action) const;
+    void operator()(std::string&, aliyun::tablestore::core::Action) const;
 };
 
 template<class T>
@@ -3002,19 +2969,29 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyType, aliyun::tablestore::core::PrimaryKeyType>
 {
-    void operator()(std::string*, aliyun::tablestore::core::PrimaryKeyType) const;
+    void operator()(std::string&, aliyun::tablestore::core::PrimaryKeyType) const;
 };
 
 template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::PrimaryKeyOption>::value, void>::Type>
+struct PrettyPrinterCategory<
+    T,
+    typename mp::EnableIf<
+        std::tr1::is_same<
+            T,
+            aliyun::tablestore::core::PrimaryKeyColumnSchema::Option>::value,
+        void>::Type>
 {
-    typedef aliyun::tablestore::core::PrimaryKeyOption Category;
+    typedef aliyun::tablestore::core::PrimaryKeyColumnSchema::Option Category;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyOption, aliyun::tablestore::core::PrimaryKeyOption>
+struct PrettyPrinter<
+    aliyun::tablestore::core::PrimaryKeyColumnSchema::Option,
+    aliyun::tablestore::core::PrimaryKeyColumnSchema::Option>
 {
-    void operator()(std::string*, aliyun::tablestore::core::PrimaryKeyOption) const;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::PrimaryKeyColumnSchema::Option) const;
 };
 
 template<class T>
@@ -3026,7 +3003,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::BloomFilterType, aliyun::tablestore::core::BloomFilterType>
 {
-    void operator()(std::string*, aliyun::tablestore::core::BloomFilterType) const;
+    void operator()(std::string&, aliyun::tablestore::core::BloomFilterType) const;
 };
 
 template<class T>
@@ -3038,7 +3015,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyValue::Category, aliyun::tablestore::core::PrimaryKeyValue::Category>
 {
-    void operator()(std::string*, aliyun::tablestore::core::PrimaryKeyValue::Category) const;
+    void operator()(std::string&, aliyun::tablestore::core::PrimaryKeyValue::Category) const;
 };
 
 template<class T>
@@ -3050,7 +3027,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::CompareResult, aliyun::tablestore::core::CompareResult>
 {
-    void operator()(std::string*, aliyun::tablestore::core::CompareResult) const;
+    void operator()(std::string&, aliyun::tablestore::core::CompareResult) const;
 };
 
 template<class T>
@@ -3062,7 +3039,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::TableStatus, aliyun::tablestore::core::TableStatus>
 {
-    void operator()(std::string*, aliyun::tablestore::core::TableStatus) const;
+    void operator()(std::string&, aliyun::tablestore::core::TableStatus) const;
 };
 
 template<class T>
@@ -3074,7 +3051,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::RowChange::ReturnType, aliyun::tablestore::core::RowChange::ReturnType>
 {
-    void operator()(std::string*, aliyun::tablestore::core::RowChange::ReturnType) const;
+    void operator()(std::string&, aliyun::tablestore::core::RowChange::ReturnType) const;
 };
 
 template<class T>
@@ -3086,7 +3063,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::AttributeValue::Category, aliyun::tablestore::core::AttributeValue::Category>
 {
-    void operator()(std::string*, aliyun::tablestore::core::AttributeValue::Category) const;
+    void operator()(std::string&, aliyun::tablestore::core::AttributeValue::Category) const;
 };
 
 template<class T>
@@ -3098,7 +3075,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::Condition::RowExistenceExpectation, aliyun::tablestore::core::Condition::RowExistenceExpectation>
 {
-    void operator()(std::string*, aliyun::tablestore::core::Condition::RowExistenceExpectation) const;
+    void operator()(std::string&, aliyun::tablestore::core::Condition::RowExistenceExpectation) const;
 };
 
 template<class T>
@@ -3110,7 +3087,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::SingleColumnCondition::Relation, aliyun::tablestore::core::SingleColumnCondition::Relation>
 {
-    void operator()(std::string*, aliyun::tablestore::core::SingleColumnCondition::Relation) const;
+    void operator()(std::string&, aliyun::tablestore::core::SingleColumnCondition::Relation) const;
 };
 
 template<class T>
@@ -3122,7 +3099,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::CompositeColumnCondition::Operator, aliyun::tablestore::core::CompositeColumnCondition::Operator>
 {
-    void operator()(std::string*, aliyun::tablestore::core::CompositeColumnCondition::Operator) const;
+    void operator()(std::string&, aliyun::tablestore::core::CompositeColumnCondition::Operator) const;
 };
 
 template<class T>
@@ -3134,7 +3111,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::ColumnCondition::Type, aliyun::tablestore::core::ColumnCondition::Type>
 {
-    void operator()(std::string*, aliyun::tablestore::core::ColumnCondition::Type) const;
+    void operator()(std::string&, aliyun::tablestore::core::ColumnCondition::Type) const;
 };
 
 template<class T>
@@ -3146,7 +3123,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::RangeQueryCriterion::Direction, aliyun::tablestore::core::RangeQueryCriterion::Direction>
 {
-    void operator()(std::string*, aliyun::tablestore::core::RangeQueryCriterion::Direction) const;
+    void operator()(std::string&, aliyun::tablestore::core::RangeQueryCriterion::Direction) const;
 };
 
 template<class T>
@@ -3158,7 +3135,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyu
 template<>
 struct PrettyPrinter<aliyun::tablestore::core::RowUpdateChange::Update::Type, aliyun::tablestore::core::RowUpdateChange::Update::Type>
 {
-    void operator()(std::string*, aliyun::tablestore::core::RowUpdateChange::Update::Type) const;
+    void operator()(std::string&, aliyun::tablestore::core::RowUpdateChange::Update::Type) const;
 };
 
 template<class T>
@@ -3169,28 +3146,28 @@ struct PrettyPrinterCategory<
             T,
             aliyun::tablestore::util::Result<
                 aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-                aliyun::tablestore::core::Error> >::value,
+                aliyun::tablestore::core::OTSError> >::value,
         void>::Type>
 {
     typedef typename aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error> Category;
+        aliyun::tablestore::core::OTSError> Category;
 };
 
 template<>
 struct PrettyPrinter<
     aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error>,
+        aliyun::tablestore::core::OTSError>,
     aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::Error> >
+        aliyun::tablestore::core::OTSError> >
 {
     void operator()(
-        std::string*,
+        std::string&,
         const aliyun::tablestore::util::Result<
           aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-          aliyun::tablestore::core::Error>&) const;
+          aliyun::tablestore::core::OTSError>&) const;
 };
 
 } // namespace impl

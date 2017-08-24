@@ -74,7 +74,7 @@ void sleepUntil(const MonotonicTime& target)
 
 namespace {
 
-void fill(string* out, int64_t val, int64_t width)
+void fill(string& out, int64_t val, int64_t width)
 {
     deque<char> digits;
     int64_t i = 0;
@@ -86,31 +86,31 @@ void fill(string* out, int64_t val, int64_t width)
     }
 
     for(; !digits.empty(); digits.pop_back()) {
-        out->push_back(digits.back());
+        out.push_back(digits.back());
     }
 }
 
 } // namespace
 
-void Duration::prettyPrint(string* out) const
+void Duration::prettyPrint(string& out) const
 {
     pp::prettyPrint(out, mValue / kUsecPerHour);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, (mValue % kUsecPerHour) / kUsecPerMin, 2);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, (mValue % kUsecPerMin) / kUsecPerSec, 2);
-    out->push_back('.');
+    out.push_back('.');
     fill(out, mValue % kUsecPerSec, 6);
 }
 
-void MonotonicTime::prettyPrint(string* out) const
+void MonotonicTime::prettyPrint(string& out) const
 {
     pp::prettyPrint(out, mValue / kUsecPerHour);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, (mValue % kUsecPerHour) / kUsecPerMin, 2);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, (mValue % kUsecPerMin) / kUsecPerSec, 2);
-    out->push_back('.');
+    out.push_back('.');
     fill(out, mValue % kUsecPerSec, 6);
 }
 
@@ -163,38 +163,38 @@ TimeComponent decompose(const UtcTime& tm)
 
 } // namespace
 
-void UtcTime::toIso8601(string* out) const
+void UtcTime::toIso8601(string& out) const
 {
     const TimeComponent& tc = decompose(*this);
     fill(out, tc.mYear, 4);
-    out->push_back('-');
+    out.push_back('-');
     fill(out, tc.mMonth, 2);
-    out->push_back('-');
+    out.push_back('-');
     fill(out, tc.mDay, 2);
-    out->push_back('T');
+    out.push_back('T');
     fill(out, tc.mHour, 2);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, tc.mMinute, 2);
-    out->push_back(':');
+    out.push_back(':');
     fill(out, tc.mSec, 2);
-    out->push_back('.');
+    out.push_back('.');
     fill(out, tc.mUsec, 6);
-    out->push_back('Z');
+    out.push_back('Z');
 }
 
 string UtcTime::toIso8601() const
 {
     string res;
     res.reserve(sizeof("1970-01-01T00:00:00.000000Z"));
-    toIso8601(&res);
+    toIso8601(res);
     return res;
 }
 
-void UtcTime::prettyPrint(string* out) const
+void UtcTime::prettyPrint(string& out) const
 {
-    out->push_back('"');
+    out.push_back('"');
     toIso8601(out);
-    out->push_back('"');
+    out.push_back('"');
 }
 
 UtcTime UtcTime::now()

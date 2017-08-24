@@ -58,16 +58,13 @@ public:
     int32_t GetLastTag();
     int32_t ReadHeader();
 
-    void ReadPrimaryKeyValue(
-        IVector<std::string>* holder, PrimaryKeyValue*, int8_t* cellChecksum);
-    void ReadColumnValue(
-        IVector<std::string>* holder, AttributeValue*, int8_t* cellChecksum);
-    void ReadPrimaryKeyColumn(
-        IVector<std::string>* holder, PrimaryKeyColumn*, int8_t* rowChecksum);
-    void ReadColumn(IVector<std::string>* holder, Attribute*, int8_t* rowChecksum);
-    void ReadRowWithoutHeader(IVector<std::string>* holder, Row*);
-    void ReadRow(IVector<std::string>* holder, Row*);
-    void ReadRows(IVector<std::string>* holder, IVector<Row>*);
+    void ReadPrimaryKeyValue(PrimaryKeyValue*, int8_t* cellChecksum);
+    void ReadColumnValue(AttributeValue*, int8_t* cellChecksum);
+    void ReadPrimaryKeyColumn(PrimaryKeyColumn*, int8_t* rowChecksum);
+    void ReadColumn(Attribute*, int8_t* rowChecksum);
+    void ReadRowWithoutHeader(Row*);
+    void ReadRow(Row*);
+    void ReadRows(IVector<Row>*);
 
 private:
     PlainBufferInputStream* mInputStream;

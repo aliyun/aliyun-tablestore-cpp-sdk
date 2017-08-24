@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,77 +30,75 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
-
-#include "http_code.hpp"
-#include "http_connection.hpp"
-#include <list>
-#include <pthread.h>
+#include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/optional.hpp"
+#include <deque>
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace core {
+class Tracker;
 
-class HttpConfig
+namespace http {
+
+class BookmarkInputStream
 {
 public:
+    explicit BookmarkInputStream(const Tracker&);
 
-    HttpConfig();
+    /**
+     * Feeds a new piece of memory.
+     * Thread-unsafe.
+     */
+    void feed(const util::MemPiece&);
 
-    void SetMinConnections(int minConnections);
+    /**
+     * Returns the current byte, which is initialized at the 1st position.
+     * If it is pointed to the end, nothing will be returned.
+     * Thread-unsafe.
+     */
+    util::Optional<uint8_t> peek();
+    /**
+     * Moves to the next position and returns true if there is one;
+     * otherwise, returns false.
+     * Thread-unsafe.
+     */
+    bool moveNext();
 
-    int GetMinConnections() const;
-
-    void SetMaxConnections(int maxConnections);
-
-    int GetMaxConnections() const;
-
-    void SetConnectTimeoutInMS(int connectTimeoutInMS);
-
-    int GetConnectTimeoutInMS() const;
-
-    void SetRequestTimeoutInMS(int requestTimeoutInMS);
-
-    int GetRequestTimeoutInMS() const;
-
-    void SetEnableKeepAlive(bool enableKeepAlive);
-
-    bool GetEnableKeepAlive() const;
+    /**
+     * Pushs a bookmark to the current position.
+     * Thread-unsafe.
+     */
+    void pushBookmark();
+    /**
+     * Pops the top bookmark with buffers between it and the current position.
+     * Thread-unsafe.
+     */
+    void popBookmark(std::deque<util::MemPiece>&);
 
 private:
+    struct Location
+    {
+        std::size_t mIndex;
+        int64_t mOffset;
 
-    int mMaxConnections;
-    int mConnectTimeoutInMS;
-    int mRequestTimeoutInMS;
-    bool mEnableKeepAlive;
+        explicit Location()
+          : mIndex(0),
+            mOffset(0)
+        {}
+    };
+
+    void inc(Location&);
+
+private:
+    const Tracker& mTracker;
+    std::deque<util::MemPiece> mBuffers;
+    std::deque<Location> mBookmarks;
+    Location mCurrent;
 };
 
-class HttpClient
-{
-public:
-
-    HttpClient(const HttpConfig& httpConfig);
-
-    ~HttpClient();
-
-    HttpConnection* GetConnection();
-
-    void AddConnection(HttpConnection* httpConn);
-
-private:
-
-    HttpConnection* NewConnection();
-
-    void FreeConnection(HttpConnection* httpConn);
-
-private:
-
-    HttpConfig mHttpConfig;
-
-    pthread_mutex_t mConnectionLock;
-    std::list<HttpConnection*> mConnectionList; 
-    int mTotalConnections;
-};
-
-} // end of tablestore
-} // end of aliyun
-
+} // namespace http
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun

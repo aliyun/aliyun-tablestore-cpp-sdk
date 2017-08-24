@@ -1,3 +1,4 @@
+#pragma once
 /* 
 BSD 3-Clause License
 
@@ -29,63 +30,59 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "profiling.hpp"
-#include <sys/time.h>
-#include <sstream>
-
-using namespace std;
+#include "tablestore/core/types.hpp"
+#include "tablestore/core/error.hpp"
+#include "tablestore/util/optional.hpp"
+#include "tablestore/util/iterator.hpp"
+#include "tablestore/util/threading.hpp"
+#include <boost/atomic.hpp>
+#include <deque>
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
+namespace core {
+class AsyncClient;
 
-// Profiling
-Profiling::Profiling()
+/**
+ * An iterator on rows between a range,
+ * which wraps complicated GetRange request-response turnovers.
+ *
+ * Caveats:
+ * - Although it depends on AsyncClient for TableStore,
+ *   the iterator itself is synchronous and blocking.
+ * - See util::Iterator for its usage.
+ */
+class RangeIterator: public util::Iterator<Row&, OTSError>
 {
-    static string startState = "START";
-    KeepTimeWithState(startState);
-}
+public:
+    explicit RangeIterator(
+        AsyncClient&, RangeQueryCriterion&,
+        int64_t watermark = 10000);
+    ~RangeIterator();
 
-void Profiling::KeepTime()
-{
-    string emptyState;
-    KeepTimeWithState(emptyState);
-}
+    bool valid() const throw();
+    Row& get() throw();
+    util::Optional<OTSError> moveNext();
 
-void Profiling::KeepTimeWithState(const string& recState)
-{
-    timeval tv;
-    gettimeofday(&tv, NULL);
-    TimeRecord record;
-    record.mRecordState = recState;
-    record.mTimeInUsec = tv.tv_sec * 1000000 + tv.tv_usec;
-    mRecordList.push_back(record);
-}
+private:
+    void issue();
+    void callback(util::Optional<OTSError>&, GetRangeResponse&);
 
-int64_t Profiling::GetTotalTime() const
-{
-    if (!mRecordList.empty()) {
-        return mRecordList.back().mTimeInUsec - mRecordList.front().mTimeInUsec;
-    } else {
-        return 0;
-    }
-}
+private:
+    const int64_t mWatermark;
+    AsyncClient& mClient;
+    util::Optional<PrimaryKey> mInclusiveStart;
+    RangeQueryCriterion mRangeQuery;
+    bool mFirstMove;
 
-const list<TimeRecord>& Profiling::GetRecordList() const
-{
-    return mRecordList;
-}
+    util::Semaphore mNotify;
+    mutable util::Mutex mMutex;
+    boost::atomic<int64_t> mOngoing;
+    std::deque<Row> mBufferedRows;
+    util::Optional<OTSError> mError;
+};
 
-std::string Profiling::GetProfilingInfo() const
-{
-    stringstream ss;
-    string profilingInfo;
-    typeof(mRecordList.begin()) iter = mRecordList.begin();
-    for (; iter != mRecordList.end(); ++iter) {
-        ss << iter->mRecordState << ": " << iter->mTimeInUsec << " ";
-    }
-    ss << "TotalTime: " << GetTotalTime();
-    return ss.str();
-}
-
-} // end of tablestore
-} // end of aliyun
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun

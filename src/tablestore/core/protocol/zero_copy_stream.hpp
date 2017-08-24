@@ -30,34 +30,51 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "tablestore/util/logger.hpp"
-#include <map>
-#include <string>
+#include "tablestore/util/mempool.hpp"
+#include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/optional.hpp"
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <stdint.h>
 
-class ScreenLogger: public aliyun::tablestore::util::Logger
+namespace aliyun {
+namespace tablestore {
+namespace core {
+
+class MemPoolZeroCopyInputStream: public google::protobuf::io::ZeroCopyInputStream
 {
 public:
-    ScreenLogger(LogLevel);
-    ~ScreenLogger();
+    explicit MemPoolZeroCopyInputStream(std::deque<util::MemPiece>&);
 
-    virtual LogLevel level() const;
-
-    /**
-     * Record a piece of log
-     */
-    virtual void record(LogLevel, const std::string&);
-
-    /**
-     * Flush logs into disk
-     */
-    virtual void flush();
-
-    /**
-     * Spawn a Logger, which is owned by its root.
-     */
-    virtual Logger* spawn(const std::string& key);
+    bool Next(const void** data, int* size);
+    void BackUp(int count);
+    bool Skip(int count);
+    int64_t ByteCount() const;
 
 private:
-    const LogLevel mLevel;
-    std::map<std::string, Logger*> mSubs;
+    std::deque<util::MemPiece> mPieces;
+    util::MemPiece mLastPiece;
+    util::Optional<util::MemPiece> mBackupPiece;
+    int64_t mReadBytes;
 };
+
+class MemPoolZeroCopyOutputStream: public google::protobuf::io::ZeroCopyOutputStream
+{
+public:
+    explicit MemPoolZeroCopyOutputStream(util::MemPool* mpool);
+    ~MemPoolZeroCopyOutputStream();
+
+    bool Next(void** data, int* size);
+    void BackUp(int count);
+    int64_t ByteCount() const;
+    util::MoveHolder<std::deque<util::MemPiece> > pieces();
+
+private:
+    util::MemPool* mMemPool;
+    std::deque<util::MemPool::Block*> mBlocks;
+    std::deque<util::MemPiece> mPieces;
+    int64_t mByteCount;
+};
+
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun

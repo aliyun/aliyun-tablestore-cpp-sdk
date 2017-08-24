@@ -40,7 +40,7 @@ namespace impl {
 template<class Category, class T>
 struct PrettyPrinter
 {
-    void operator()(std::string* out, const T& x) const
+    void operator()(std::string& out, const T& x) const
     {
         x.prettyPrint(out);
     }
@@ -60,7 +60,7 @@ struct PrettyPrinterCategory
 namespace pp {
 
 template<class T>
-void prettyPrint(std::string* out, const T& x)
+void prettyPrint(std::string& out, const T& x)
 {
     typedef typename impl::PrettyPrinterCategory<T>::Category Category;
     impl::PrettyPrinter<Category, T> p;
@@ -71,7 +71,7 @@ template<class T>
 std::string prettyPrint(const T& x)
 {
     std::string res;
-    prettyPrint(&res, x);
+    prettyPrint(res, x);
     return res;
 }
 

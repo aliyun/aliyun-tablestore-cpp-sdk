@@ -1,0 +1,19 @@
+#include "ots_constants.hpp"
+
+using namespace std;
+
+namespace aliyun {
+namespace tablestore {
+namespace core {
+namespace impl {
+
+const string kSDKUserAgent("aliyun-tablestore-sdk-%(language)s/%(major)s.%(minor)s.%(revision)s(%(architecture)s;%(platform)s)");
+
+} // namespace impl
+} // namespace core
+} // namespace tablestore
+} // namespace aliyun
+
+extern "C" {
+char const * const kTableStoreBuildInfo = "aliyun-tablestore-sdk-%(language)s/%(major)s.%(minor)s.%(revision)s(%(architecture)s;%(platform)s)";
+}

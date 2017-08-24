@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "testa.ipp"
+#include "tablestore/util/logger.hpp"
 #include <stdexcept>
 #include <sstream>
 #include <cstdlib>
@@ -73,6 +74,7 @@ void CaseFailIssuer::issue()
 
 void CaseFailIssuer::issue(const string& msg)
 {
+    aliyun::tablestore::util::SinkerCenter::singleton()->flushAll();
     mIssued = true;
     if (!mTrigger) {
         return;

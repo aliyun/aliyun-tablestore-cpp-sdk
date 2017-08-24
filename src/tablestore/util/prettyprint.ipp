@@ -46,19 +46,19 @@ namespace impl {
 
 struct SignedInteger
 {
-    static void prettyPrint(std::string*, int64_t);
+    static void prettyPrint(std::string&, int64_t);
 };
 struct UnsignedInteger
 {
-    static void prettyPrint(std::string*, uint64_t);
+    static void prettyPrint(std::string&, uint64_t);
 };
 struct Boolean
 {
-    static void prettyPrint(std::string*, bool);
+    static void prettyPrint(std::string&, bool);
 };
 struct Character
 {
-    static void prettyPrint(std::string*, char);
+    static void prettyPrint(std::string&, char);
 };
 
 template<class T>
@@ -107,7 +107,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::is_integral<T>::value
 template<class T>
 struct PrettyPrinter<SignedInteger, T>
 {
-    void operator()(std::string* out, T x) const
+    void operator()(std::string& out, T x) const
     {
         SignedInteger::prettyPrint(out, x);
     }
@@ -115,7 +115,7 @@ struct PrettyPrinter<SignedInteger, T>
 template<class T>
 struct PrettyPrinter<UnsignedInteger, T>
 {
-    void operator()(std::string* out, T x) const
+    void operator()(std::string& out, T x) const
     {
         UnsignedInteger::prettyPrint(out, x);
     }
@@ -123,7 +123,7 @@ struct PrettyPrinter<UnsignedInteger, T>
 template<class T>
 struct PrettyPrinter<Boolean, T>
 {
-    void operator()(std::string* out, T x) const
+    void operator()(std::string& out, T x) const
     {
         Boolean::prettyPrint(out, x);
     }
@@ -131,18 +131,18 @@ struct PrettyPrinter<Boolean, T>
 template<class T>
 struct PrettyPrinter<Character, T>
 {
-    void operator()(std::string* out, T x) const
+    void operator()(std::string& out, T x) const
     {
-        out->push_back('\'');
+        out.push_back('\'');
         Character::prettyPrint(out, x);
-        out->push_back('\'');
+        out.push_back('\'');
     }
 };
 
 
 struct Floating
 {
-    static void prettyPrint(std::string*, double);
+    static void prettyPrint(std::string&, double);
 };
 
 template<class T>
@@ -158,7 +158,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::is_floating_point<T>:
 template<class T>
 struct PrettyPrinter<Floating, T>
 {
-    void operator()(std::string* out, T x) const
+    void operator()(std::string& out, T x) const
     {
         Floating::prettyPrint(out, x);
     }
@@ -209,20 +209,20 @@ struct PrettyPrinterCategory<T, typename mp::EnableIfExists<typename T::value_ty
 template<class T>
 struct PrettyPrinter<StlSeq, T>
 {
-    void operator()(std::string* out, const T& xs) const
+    void operator()(std::string& out, const T& xs) const
     {
         if (xs.empty()) {
-            out->append("[]");
+            out.append("[]");
             return;
         }
-        out->push_back('[');
+        out.push_back('[');
         typename T::const_iterator it = xs.begin();
         prettyPrint(out, *it);
         for(++it; it != xs.end(); ++it) {
-            out->push_back(',');
+            out.push_back(',');
             prettyPrint(out, *it);
         }
-        out->push_back(']');
+        out.push_back(']');
     }
 };
 
@@ -230,31 +230,31 @@ struct PrettyPrinter<StlSeq, T>
 template<class T>
 struct PrettyPrinter<StlMap, T>
 {
-    void operator()(std::string* out, const T& xs) const
+    void operator()(std::string& out, const T& xs) const
     {
         if (xs.empty()) {
-            out->append("{}");
+            out.append("{}");
             return;
         }
-        out->push_back('{');
+        out.push_back('{');
         typename T::const_iterator it = xs.begin();
         prettyPrint(out, it->first);
-        out->push_back(':');
+        out.push_back(':');
         prettyPrint(out, it->second);
         for(++it; it != xs.end(); ++it) {
-            out->push_back(',');
+            out.push_back(',');
             prettyPrint(out, it->first);
-            out->push_back(':');
+            out.push_back(':');
             prettyPrint(out, it->second);
         }
-        out->push_back('}');
+        out.push_back('}');
     }
 };
 
 template<>
 struct PrettyPrinter<StlStr, std::string>
 {
-    void operator()(std::string*, const std::string&) const;
+    void operator()(std::string& out, const std::string& s) const;
 };
 
 
@@ -269,10 +269,10 @@ struct PrettyPrinterCategory<T, typename mp::EnableIfExists<typename T::element_
 template<class T>
 struct PrettyPrinter<StlSmartPtr, T>
 {
-    void operator()(std::string* out, const T& ptr) const
+    void operator()(std::string& out, const T& ptr) const
     {
         if (ptr.get() == NULL) {
-            out->append("null");
+            out.append("null");
         } else {
             pp::prettyPrint(out, *ptr);
         }
@@ -298,12 +298,12 @@ struct PrettyPrinterCategory<std::tr1::tuple<>, void>
 template<class T, int idx, bool stop>
 struct TuplePrettyPrinter
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {
         if (idx > 0) {
-            out->push_back(',');
+            out.push_back(',');
         }
-        out->append(prettyPrint(std::tr1::get<idx>(tp)));
+        out.append(prettyPrint(std::tr1::get<idx>(tp)));
         TuplePrettyPrinter<T, idx + 1, idx + 1 >= std::tr1::tuple_size<T>::value> nxt;
         nxt(out, tp);
     }
@@ -312,19 +312,19 @@ struct TuplePrettyPrinter
 template<class T, int idx>
 struct TuplePrettyPrinter<T, idx, true>
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {}
 };
 
 template<class T>
 struct PrettyPrinter<StlTuple, T>
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {
-        out->push_back('[');
+        out.push_back('(');
         TuplePrettyPrinter<T, 0, 0 == std::tr1::tuple_size<T>::value> head;
         head(out, tp);
-        out->push_back(']');
+        out.push_back(')');
     }
 };
 
@@ -344,12 +344,12 @@ struct PrettyPrinterCategory<std::tuple<>, void>
 template<class T, int idx, bool stop>
 struct TuplePrettyPrinter
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {
         if (idx > 0) {
-            out->push_back(',');
+            out.push_back(',');
         }
-        out->append(prettyPrint(std::get<idx>(tp)));
+        out.append(prettyPrint(std::get<idx>(tp)));
         TuplePrettyPrinter<T, idx + 1, idx + 1 >= std::tuple_size<T>::value> nxt;
         nxt(out, tp);
     }
@@ -358,23 +358,46 @@ struct TuplePrettyPrinter
 template<class T, int idx>
 struct TuplePrettyPrinter<T, idx, true>
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {}
 };
 
 template<class T>
 struct PrettyPrinter<StlTuple, T>
 {
-    void operator()(std::string* out, const T& tp) const
+    void operator()(std::string& out, const T& tp) const
     {
-        out->push_back('[');
+        out.push_back('(');
         TuplePrettyPrinter<T, 0, 0 == std::tuple_size<T>::value> head;
         head(out, tp);
-        out->push_back(']');
+        out.push_back(')');
     }
 };
 
 #endif
+
+struct CString {};
+
+template<>
+struct PrettyPrinterCategory<const char*, void>
+{
+    typedef CString Category;
+};
+
+template<int N>
+struct PrettyPrinterCategory<const char[N], void>
+{
+    typedef CString Category;
+};
+
+template<class CStrLike>
+struct PrettyPrinter<CString, CStrLike>
+{
+    void operator()(std::string& out, const CStrLike cs) const
+    {
+        out.append(cs);
+    }
+};
 
 } // namespace impl
 } // namespace pp

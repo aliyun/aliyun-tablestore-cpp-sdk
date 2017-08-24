@@ -34,23 +34,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "logging.ipp"
 
-#define OTS_LOG_PINGPONG_A(x) OTS_LOG_PINGPONG_OP(x, B)
-#define OTS_LOG_PINGPONG_B(x) OTS_LOG_PINGPONG_OP(x, A)
-#define OTS_LOG_PINGPONG_OP(x, next) \
-    append(#x, pp::prettyPrint(x)). OTS_LOG_HELPER_##next
+#define OTS_LOG_PINGPONG_A(key, val) OTS_LOG_PINGPONG_OP(key, val, B)
+#define OTS_LOG_PINGPONG_B(key, val) OTS_LOG_PINGPONG_OP(key, val, A)
+#define OTS_LOG_PINGPONG_OP(key, val, next)                     \
+    append(key, pp::prettyPrint(val)). OTS_LOG_PINGPONG_##next
 
-#define OTS_LOG(logger, level) \
-    if ((logger)->level() > (level)) {} \
+#define OTS_LOG(logger, lvl) \
+    if ((logger).level() > (lvl)) {} \
     else aliyun::tablestore::util::impl:: \
-             LogHelper((level), logger, false, __FILE__, __LINE__, __func__). OTS_LOG_PINGPONG_A
+             LogHelper((lvl), logger, __FILE__, __LINE__, __func__). OTS_LOG_PINGPONG_A
 
 #define OTS_LOG_DEBUG(logger) \
-    OTS_LOG(logger, aliyun::tablestore::util::Logger::DEBUG)
+    OTS_LOG(logger, aliyun::tablestore::util::Logger::kDebug)
 
 #define OTS_LOG_INFO(logger) \
-    OTS_LOG(logger, aliyun::tablestore::util::Logger::INFO)
+    OTS_LOG(logger, aliyun::tablestore::util::Logger::kInfo)
 
 #define OTS_LOG_ERROR(logger) \
-    OTS_LOG(logger, aliyun::tablestore::util::Logger::ERROR)
+    OTS_LOG(logger, aliyun::tablestore::util::Logger::kError)
 
 #endif /* TABLESTORE_UTIL_LOGGING_HPP */

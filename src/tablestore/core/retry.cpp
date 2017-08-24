@@ -42,56 +42,95 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-DefaultRetryStrategy::RetryCategory DefaultRetryStrategy::retriable(const Error& err)
+RetryStrategy::RetryCategory RetryStrategy::retriable(const OTSError& err)
 {
     if (!isTemporary(err)) {
         return UNRETRIABLE;
-    } else if (isCurlError(err)) {
+    }
+    int64_t status = err.httpStatus();
+    MemPiece code = MemPiece::from(err.errorCode());
+    if (status == OTSError::kHttpStatus_CouldntResolveHost
+        || code == MemPiece::from(OTSError::kErrorCode_CouldntResolveHost))
+    {
+        return RETRIABLE;
+    }
+    if (status == OTSError::kHttpStatus_CouldntConnect
+        || code == MemPiece::from(OTSError::kErrorCode_CouldntConnect))
+    {
+        return RETRIABLE;
+    }
+    if (status == OTSError::kHttpStatus_OperationTimeout
+        || code == MemPiece::from(OTSError::kErrorCode_OTSRequestTimeout))
+    {
         return DEPENDS;
-    } else if (err.httpStatus() >= 500 && err.httpStatus() <= 599) {
-        MemPiece code = MemPiece::from(err.errorCode());
-        if (code == MemPiece::from("OTSServerBusy")) {
+    }
+    if (status == OTSError::kHttpStatus_WriteRequestFail
+        || code == MemPiece::from(OTSError::kErrorCode_WriteRequestFail))
+    {
+        return DEPENDS;
+    }
+    if (status == OTSError::kHttpStatus_CorruptedResponse
+        || code == MemPiece::from(OTSError::kErrorCode_CorruptedResponse))
+    {
+        return DEPENDS;
+    }
+    if (status == OTSError::kHttpStatus_NoAvailableConnection
+        || code == MemPiece::from(OTSError::kErrorCode_NoAvailableConnection))
+    {
+        return RETRIABLE;
+    }
+    if (status >= 500 && status <= 599) {
+        if (code == MemPiece::from(OTSError::kErrorCode_OTSServerBusy)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSPartitionUnavailable")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSPartitionUnavailable)) {
             return RETRIABLE;
         } else {
             return DEPENDS;
         }
-    } else if (err.httpStatus() >= 400 && err.httpStatus() <= 499) {
-        MemPiece code = MemPiece::from(err.errorCode());
+    }
+    if (status >= 400 && status <= 499) {
         MemPiece msg = MemPiece::from(err.message());
-        if (code == MemPiece::from("OTSQuotaExhausted") && msg == MemPiece::from("Too frequent table operations.")) {
+        if (code == MemPiece::from(OTSError::kErrorCode_OTSQuotaExhausted)
+            && msg == MemPiece::from("Too frequent table operations."))
+        {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSRowOperationConflict")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSRowOperationConflict)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSTableNotReady")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTableNotReady)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSTooFrequentReservedThroughputAdjustment")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTooFrequentReservedThroughputAdjustment)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSCapacityUnitExhausted")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSCapacityUnitExhausted)) {
             return RETRIABLE;
-        } else if (code == MemPiece::from("OTSRequestTimeout")) {
+        } else if (code == MemPiece::from(OTSError::kErrorCode_OTSTimeout)) {
             return DEPENDS;
         } else {
             return UNRETRIABLE;
         }
-    } else {
-        return UNRETRIABLE;
     }
+    return UNRETRIABLE;
 }
 
 namespace {
 
 bool idempotent(Action act)
 {
-    return act == API_LIST_TABLE || act == API_DESCRIBE_TABLE
-        || act == API_COMPUTE_SPLIT_POINTS_BY_SIZE
-        || act == API_GET_ROW || act == API_BATCH_GET_ROW || act == API_GET_RANGE;
+    switch(act) {
+    case kApi_ListTable: case kApi_DescribeTable: case kApi_DeleteTable:
+    case kApi_CreateTable: case kApi_ComputeSplitsBySize:
+    case kApi_GetRow: case kApi_BatchGetRow: case kApi_GetRange:
+    case kApi_DeleteRow:
+        return true;
+    case kApi_UpdateTable: case kApi_PutRow: case kApi_UpdateRow: case kApi_BatchWriteRow:
+        return false;
+    }
+    OTS_ASSERT(false)((int) act);
+    return false;
 }
 
 } // namespace
 
-bool DefaultRetryStrategy::retriable(Action act, const Error& err)
+bool RetryStrategy::retriable(Action act, const OTSError& err)
 {
     RetryCategory cat = retriable(err);
     if (cat == RETRIABLE) {
@@ -104,27 +143,29 @@ bool DefaultRetryStrategy::retriable(Action act, const Error& err)
 }
 
 
-const Duration DefaultRetryStrategy::kMaxPauseBase = Duration::fromMsec(400);
+const Duration DeadlineRetryStrategy::kMaxPauseBase = Duration::fromMsec(400);
 
-DefaultRetryStrategy::DefaultRetryStrategy(random::IRandom* rnd, Duration timeout)
-  : mRandom(rnd),
+DeadlineRetryStrategy::DeadlineRetryStrategy(
+    const shared_ptr<random::Random>& rng,
+    Duration timeout)
+  : mRandom(rng),
     mTimeout(timeout),
     mPauseBase(Duration::fromMsec(1)),
     mRetries(0),
     mDeadline(MonotonicTime::now() + mTimeout)
 {}
 
-DefaultRetryStrategy* DefaultRetryStrategy::clone() const
+DeadlineRetryStrategy* DeadlineRetryStrategy::clone() const
 {
-    return new DefaultRetryStrategy(mRandom, mTimeout);
+    return new DeadlineRetryStrategy(mRandom, mTimeout);
 }
 
-int64_t DefaultRetryStrategy::retries() const throw()
+int64_t DeadlineRetryStrategy::retries() const throw()
 {
     return mRetries;
 }
 
-bool DefaultRetryStrategy::shouldRetry(Action act, const Error& err) const
+bool DeadlineRetryStrategy::shouldRetry(Action act, const OTSError& err) const
 {
     if (MonotonicTime::now() >= mDeadline) {
         return false;
@@ -132,12 +173,76 @@ bool DefaultRetryStrategy::shouldRetry(Action act, const Error& err) const
     return retriable(act, err);
 }
 
-Duration DefaultRetryStrategy::nextPause()
+Duration DeadlineRetryStrategy::nextPause()
 {
     ++mRetries;
     mPauseBase = std::min(mPauseBase * 2, kMaxPauseBase);
     int64_t duration = mPauseBase.toUsec();
-    return Duration::fromUsec(random::nextInt(mRandom, duration / 2, duration));
+    return Duration::fromUsec(random::nextInt(*mRandom, duration / 2, duration));
+}
+
+
+CountingRetryStrategy::CountingRetryStrategy(
+    const shared_ptr<util::random::Random>& rng,
+    int64_t n,
+    Duration interval)
+  : mRandom(rng),
+    mInterval(interval),
+    mMaxRetries(n),
+    mRetries(0)
+{
+    OTS_ASSERT(interval >= Duration::fromUsec(100))
+        (interval);
+}
+
+CountingRetryStrategy* CountingRetryStrategy::clone() const
+{
+    return new CountingRetryStrategy(mRandom, mMaxRetries, mInterval);
+}
+
+int64_t CountingRetryStrategy::retries() const throw()
+{
+    return mRetries;
+}
+
+bool CountingRetryStrategy::shouldRetry(Action act, const OTSError& err) const
+{
+    if (mRetries >= mMaxRetries) {
+        return false;
+    }
+    return retriable(act, err);
+}
+
+Duration CountingRetryStrategy::nextPause()
+{
+    ++mRetries;
+    int64_t intv = mInterval.toUsec();
+    return Duration::fromUsec(random::nextInt(*mRandom, 100, intv + 1));
+}
+
+
+NoRetry::NoRetry()
+{}
+
+NoRetry* NoRetry::clone() const
+{
+    return new NoRetry();
+}
+
+int64_t NoRetry::retries() const throw()
+{
+    return 0;
+}
+
+bool NoRetry::shouldRetry(Action, const OTSError&) const
+{
+    return false;
+}
+
+Duration NoRetry::nextPause()
+{
+    OTS_ASSERT(false);
+    return Duration::fromMsec(10);
 }
 
 } // namespace core

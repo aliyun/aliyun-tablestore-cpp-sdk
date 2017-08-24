@@ -62,9 +62,9 @@ public:
     Result<OkType, ErrType>& operator=(
         const util::MoveHolder<Result<OkType, ErrType> >& a)
     {
-        util::moveAssign(&mResultType, util::move(a->mResultType));
-        util::moveAssign(&mOkValue, util::move(a->mOkValue));
-        util::moveAssign(&mErrValue, util::move(a->mErrValue));
+        util::moveAssign(mResultType, util::move(a->mResultType));
+        util::moveAssign(mOkValue, util::move(a->mOkValue));
+        util::moveAssign(mErrValue, util::move(a->mErrValue));
         return *this;
     }
 
@@ -73,11 +73,11 @@ public:
         mResultType = OK;
         {
             OkType empty = OkType();
-            util::moveAssign(&mOkValue, util::move(empty));
+            util::moveAssign(mOkValue, util::move(empty));
         }
         {
             ErrType empty = ErrType();
-            util::moveAssign(&mErrValue, util::move(empty));
+            util::moveAssign(mErrValue, util::move(empty));
         }
     }
 
@@ -92,14 +92,14 @@ public:
         return mOkValue;
     }
 
-    OkType* mutableOkValue()
+    OkType& mutableOkValue()
     {
         mResultType = OK;
         {
             ErrType empty = ErrType();
-            util::moveAssign(&mErrValue, util::move(empty));
+            util::moveAssign(mErrValue, util::move(empty));
         }
-        return &mOkValue;
+        return mOkValue;
     }
 
     const ErrType& errValue() const
@@ -108,14 +108,14 @@ public:
         return mErrValue;
     }
 
-    ErrType* mutableErrValue()
+    ErrType& mutableErrValue()
     {
         mResultType = ERROR;
         {
             OkType empty = OkType();
-            util::moveAssign(&mOkValue, util::move(empty));
+            util::moveAssign(mOkValue, util::move(empty));
         }
-        return &mErrValue;
+        return mErrValue;
     }
     
 private:

@@ -46,7 +46,7 @@ class LogHelper
 public:
     LogHelper(
         Logger::LogLevel lvl,
-        Logger* logger,
+        Logger& logger,
         const char* fn,
         int line,
         const char* func)
@@ -73,7 +73,7 @@ public:
 
 private:
     Logger::LogLevel mLevel;
-    Logger* mLogger;
+    Logger& mLogger;
     std::deque< std::pair< std::string, std::string> > mValues;
     std::string mWhat;
     std::string mFile;

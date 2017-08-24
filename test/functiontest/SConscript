@@ -2,7 +2,8 @@
 Import('env')
 
 ft = env.program('core_functiontest', env.Object(env.Glob('*.cpp')),
-    LIBS=['tablestore_core_static', 'testa_static'])
+    LIBS=['tablestore_core_static', 'testa_static', 'boost_thread'])
 env.Install('$BIN_DIR', 'config.toml')
 env.Depends(ft, '$BIN_DIR/config.toml')
+env.Depends('http_functiontest.os', '$BUILD_DIR/src/tablestore/core/protocol/table_store.pb.h')
 
