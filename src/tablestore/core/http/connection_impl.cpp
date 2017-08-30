@@ -557,11 +557,11 @@ void Connector::supplyConnections()
         ("Connecting", connecting)
         ("RequireMore", require)
         .what("CONN: make connections.");
+    int64_t x = mConnectingCount.fetch_add(require, boost::memory_order_acq_rel);
+    OTS_ASSERT(x >= 0)(x);
     for(int64_t i = 0; i < require; ++i) {
         connect();
     }
-    int64_t x = mConnectingCount.fetch_add(require, boost::memory_order_acq_rel);
-    OTS_ASSERT(x >= 0)(x);
 
     if (!mClosed.load(boost::memory_order_acquire)) {
         mRetryResolveTimer = &mAsio.startTimer(
