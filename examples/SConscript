@@ -1,0 +1,45 @@
+# -*- python -*-
+Import('env')
+
+env.program('sync_list_table',
+            env.Object(env.Glob('sync_list_table.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_simple_create_delete_table',
+            env.Object(env.Glob('sync_simple_create_delete_table.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_create_table_with_reserved_throughput',
+            env.Object(env.Glob('sync_create_table_with_reserved_throughput.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_update_table_with_reserved_throughput',
+            env.Object(env.Glob('sync_update_table_with_reserved_throughput.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_describe_table',
+            env.Object(env.Glob('sync_describe_table.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_write_read_single_row',
+            env.Object(env.Glob('sync_write_read_single_row.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_batch_get_row',
+            env.Object(env.Glob('sync_batch_get_row.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('get_range_iter',
+            env.Object(env.Glob('get_range_iter.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('filter',
+            env.Object(env.Glob('filter.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_delete_row',
+            env.Object(env.Glob('sync_delete_row.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_update_row',
+            env.Object(env.Glob('sync_update_row.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('sync_batch_write',
+            env.Object(env.Glob('sync_batch_write.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('auto_incr',
+            env.Object(env.Glob('auto_incr.cpp')),
+            LIBS=['tablestore_core_static'])
+env.program('async_list_table',
+            env.Object(env.Glob('async_list_table.cpp')),
+            LIBS=['tablestore_core_static'])
