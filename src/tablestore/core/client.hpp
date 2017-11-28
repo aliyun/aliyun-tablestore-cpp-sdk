@@ -256,6 +256,7 @@ public:
         UpdateTableRequest&,
         const std::tr1::function<void(
             UpdateTableRequest&, util::Optional<OTSError>&, UpdateTableResponse&)>&) =0;
+
     // point write
 
     /**

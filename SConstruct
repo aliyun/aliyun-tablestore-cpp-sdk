@@ -171,7 +171,7 @@ flags = {
     'CFLAGS': [],
     'CXXFLAGS': [],
     'CCFLAGS': ['-Wall', '-pthread', '-fPIC', '-g',
-                '-Wno-float-equal', '-fwrapv'],
+                '-fwrapv'],
     'LINKFLAGS': ['-pthread', '-rdynamic', '-L%s' % env['LIB_DIR'].path]}
 if mode == 'debug':
     flags['CCFLAGS'] += ['-O0', '--coverage']

@@ -633,20 +633,12 @@ public:
 
 public:
     // for string
-    /**
-     * PrimaryKeyValue does not own underlying piece of memory of the string.
-     * So, make sure it lives longer than the PrimaryKeyValue.
-     */
     static PrimaryKeyValue toStr(const std::string&);
     const std::string& str() const;
     std::string& mutableStr();
 
 public:
     // for blob
-    /**
-     * PrimaryKeyValue does not own underlying piece of memory of the blob.
-     * So, make sure it lives longer than the PrimaryKeyValue.
-     */
     static PrimaryKeyValue toBlob(const std::string&);
     const std::string& blob() const;
     std::string& mutableBlob();
@@ -779,7 +771,7 @@ private:
 
 /**
  * Meta of a table.
- * Once the table is created, it will never be modified.
+ * Once the table is created, these configurations will never be modified.
  */
 class TableMeta
 {
@@ -1008,20 +1000,12 @@ public:
 
 public:
     // for strings
-    /**
-     * AttributeValue does not own underlying piece of memory of the string.
-     * So, make sure it lives longer than the AttributeValue.
-     */
     static AttributeValue toStr(const std::string&);
     const std::string& str() const;
     std::string& mutableStr();
 
 public:
     // for blob
-    /**
-     * AttributeValue does not own underlying piece of memory of the blob.
-     * So, make sure it lives longer than the AttributeValue.
-     */
     static AttributeValue toBlob(const std::string&);
     const std::string& blob() const;
     std::string& mutableBlob();
