@@ -957,7 +957,7 @@ void Condition_pp(const string&)
     }
     {
         Condition c;
-        *c.mutableRowCondition() = Condition::kExpectExist;
+        c.mutableRowCondition() = Condition::kExpectExist;
         TESTA_ASSERT(pp::prettyPrint(c) == "{\"RowCondition\":kExpectExist}")
             (c).issue();
     }

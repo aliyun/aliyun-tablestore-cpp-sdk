@@ -1470,9 +1470,9 @@ public:
         return mRowCondition;
     }
 
-    RowExistenceExpectation* mutableRowCondition()
+    RowExistenceExpectation& mutableRowCondition()
     {
-        return &mRowCondition;
+        return mRowCondition;
     }
 
     const std::tr1::shared_ptr<ColumnCondition>& columnCondition() const
