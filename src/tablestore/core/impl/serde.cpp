@@ -760,6 +760,25 @@ Optional<OTSError> Serde<kApi_PutRow>::deserialize(
     PbResponse pb;
     TRY(parseBody(pb, body));
 
+    toCapacityUnit(
+        api.mutableConsumedCapacity(),
+        pb.consumed().capacity_unit());
+
+    try {
+        if (pb.has_row() && !pb.row().empty()) {
+            PlainBufferInputStream inputStream(pb.row());
+            PlainBufferCodedInputStream codedInputStream(&inputStream);
+            Row row;
+            codedInputStream.ReadRow(&row);
+            api.mutableRow().reset(util::move(row));
+        }
+    }
+    catch(const OTSClientException& ex) {
+        OTSError e(OTSError::kPredefined_CorruptedResponse);
+        e.mutableMessage() = ex.GetMessage();
+        return Optional<OTSError>(util::move(e));
+    }
+
     return Optional<OTSError>();
 }
 
