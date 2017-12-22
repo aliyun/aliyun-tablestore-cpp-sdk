@@ -210,7 +210,8 @@ public:
      */
     virtual void createTable(
         CreateTableRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, CreateTableResponse&)>&) =0;
+        const std::tr1::function<void(
+            CreateTableRequest&, util::Optional<OTSError>&, CreateTableResponse&)>&) =0;
 
     /**
      * Deletes a table.
@@ -220,7 +221,8 @@ public:
      */
     virtual void deleteTable(
         DeleteTableRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, DeleteTableResponse&)>&) =0;
+        const std::tr1::function<void(
+            DeleteTableRequest&, util::Optional<OTSError>&, DeleteTableResponse&)>&) =0;
 
     /**
      * Lists all tables under this instance.
@@ -230,7 +232,8 @@ public:
      */
     virtual void listTable(
         ListTableRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, ListTableResponse&)>&) =0;
+        const std::tr1::function<void(
+            ListTableRequest&, util::Optional<OTSError>&, ListTableResponse&)>&) =0;
 
     /**
      * Fetches meta of a table.
@@ -240,7 +243,8 @@ public:
      */
     virtual void describeTable(
         DescribeTableRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, DescribeTableResponse&)>&) =0;
+        const std::tr1::function<void(
+            DescribeTableRequest&, util::Optional<OTSError>&, DescribeTableResponse&)>&) =0;
 
     /**
      * Updates mutable fields of meta of a table.
@@ -250,7 +254,8 @@ public:
      */
     virtual void updateTable(
         UpdateTableRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, UpdateTableResponse&)>&) =0;
+        const std::tr1::function<void(
+            UpdateTableRequest&, util::Optional<OTSError>&, UpdateTableResponse&)>&) =0;
     // point write
 
     /**
@@ -263,7 +268,8 @@ public:
      */
     virtual void putRow(
         PutRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, PutRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            PutRowRequest&, util::Optional<OTSError>&, PutRowResponse&)>&) =0;
 
     /**
      * Updates a row. 
@@ -275,7 +281,8 @@ public:
      */
     virtual void updateRow(
         UpdateRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, UpdateRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            UpdateRowRequest&, util::Optional<OTSError>&, UpdateRowResponse&)>&) =0;
 
     /**
      * Deletes a row. 
@@ -286,7 +293,8 @@ public:
      */
     virtual void deleteRow(
         DeleteRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, DeleteRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            DeleteRowRequest&, util::Optional<OTSError>&, DeleteRowResponse&)>&) =0;
 
     /**
      * Writes a batch of rows.
@@ -300,7 +308,8 @@ public:
      */
     virtual void batchWriteRow(
         BatchWriteRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, BatchWriteRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            BatchWriteRowRequest&, util::Optional<OTSError>&, BatchWriteRowResponse&)>&) =0;
 
     // point query
 
@@ -315,7 +324,8 @@ public:
      */
     virtual void getRow(
         GetRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, GetRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            GetRowRequest&, util::Optional<OTSError>&, GetRowResponse&)>&) =0;
     
     /**
      * Gets a batch of rows.
@@ -331,7 +341,8 @@ public:
      */
     virtual void batchGetRow(
         BatchGetRowRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, BatchGetRowResponse&)>&) =0;
+        const std::tr1::function<void(
+            BatchGetRowRequest&, util::Optional<OTSError>&, BatchGetRowResponse&)>&) =0;
 
     // range query
 
@@ -349,7 +360,8 @@ public:
      */
     virtual void getRange(
         GetRangeRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, GetRangeResponse&)>&) =0;
+        const std::tr1::function<void(
+            GetRangeRequest&, util::Optional<OTSError>&, GetRangeResponse&)>&) =0;
 
     // Miscellaneous operations
 
@@ -363,7 +375,8 @@ public:
      */
     virtual void computeSplitsBySize(
         ComputeSplitsBySizeRequest&,
-        const std::tr1::function<void(util::Optional<OTSError>&, ComputeSplitsBySizeResponse&)>&) =0;
+        const std::tr1::function<void(
+            ComputeSplitsBySizeRequest&, util::Optional<OTSError>&, ComputeSplitsBySizeResponse&)>&) =0;
 };
 
 } // namespace core
