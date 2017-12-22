@@ -49,13 +49,13 @@ RangeIterator::RangeIterator(
     int64_t watermark)
   : mWatermark(watermark),
     mClient(client),
+    mNeedMoreRequests(true),
     mFirstMove(true),
     mNotify(0),
     mOngoing(0)
 {
     OTS_ASSERT(watermark >= 0)(watermark);
     moveAssign(mRangeQuery, util::move(cri));
-    mInclusiveStart.reset(util::move(mRangeQuery.mutableInclusiveStart()));
     issue();
 }
 
@@ -102,7 +102,7 @@ Optional<OTSError> RangeIterator::moveNext()
             if (mError.present()) {
                 return mError;
             }
-            if (!mInclusiveStart.present()) {
+            if (!mNeedMoreRequests) {
                 return Optional<OTSError>(); 
             }
         }
@@ -122,17 +122,17 @@ void RangeIterator::issue()
     }
 
     ScopedLock lock(mMutex);
-    if (!mInclusiveStart.present()) {
+    if (!mNeedMoreRequests) {
         return;
     }
     
     GetRangeRequest req;
-    req.mutableQueryCriterion() = mRangeQuery;
-    req.mutableQueryCriterion().mutableInclusiveStart() = *mInclusiveStart;
-    mClient.getRange(req, bind(&RangeIterator::callback, this, _1, _2));
+    moveAssign(req.mutableQueryCriterion(), util::move(mRangeQuery));
+    mClient.getRange(req, bind(&RangeIterator::callback, this, _1, _2, _3));
 }
 
 void RangeIterator::callback(
+    GetRangeRequest& req,
     Optional<OTSError>& err,
     GetRangeResponse& resp)
 {
@@ -147,7 +147,14 @@ void RangeIterator::callback(
                 mBufferedRows.push_back(Row());
                 moveAssign(mBufferedRows.back(), util::move(rows[i]));
             }
-            moveAssign(mInclusiveStart, util::move(resp.mutableNextStart()));
+            moveAssign(mRangeQuery, util::move(req.mutableQueryCriterion()));
+            if (resp.nextStart().present()) {
+                moveAssign(
+                    mRangeQuery.mutableInclusiveStart(),
+                    util::move(*resp.mutableNextStart()));
+            } else {
+                mNeedMoreRequests = false;
+            }
         }
         mNotify.post();
     }

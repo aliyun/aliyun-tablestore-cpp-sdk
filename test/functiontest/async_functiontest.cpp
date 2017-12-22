@@ -85,8 +85,10 @@ public:
         Optional<OTSError>&,
         const string& csname);
 
-    void operator()(Optional<OTSError>& err, CreateTableResponse& resp);
-    void operator()(Optional<OTSError>& err, DeleteTableResponse& resp);
+    void operator()(
+        CreateTableRequest&, Optional<OTSError>&, CreateTableResponse&);
+    void operator()(
+        DeleteTableRequest&, Optional<OTSError>&, DeleteTableResponse&);
 
     void asyncCreateTable();
     void asyncDeleteTable();
@@ -151,7 +153,10 @@ Testbench::Testbench(
     mClient.reset(p);
 }
 
-void Testbench::operator()(Optional<OTSError>& err, CreateTableResponse& resp)
+void Testbench::operator()(
+    CreateTableRequest& req,
+    Optional<OTSError>& err,
+    CreateTableResponse& resp)
 {
     if (err.present()) {
         OTS_LOG_DEBUG(*mRootLogger)
@@ -166,7 +171,10 @@ void Testbench::operator()(Optional<OTSError>& err, CreateTableResponse& resp)
     }
 }
 
-void Testbench::operator()(Optional<OTSError>& err, DeleteTableResponse& resp)
+void Testbench::operator()(
+    DeleteTableRequest& req,
+    Optional<OTSError>& err,
+    DeleteTableResponse& resp)
 {
     if (err.present()) {
         OTS_LOG_DEBUG(*mRootLogger)
@@ -222,7 +230,10 @@ public:
         testbench().client().listTable(req, *this);
     }
 
-    void operator()(Optional<OTSError>& err, ListTableResponse& resp)
+    void operator()(
+        ListTableRequest&,
+        Optional<OTSError>& err,
+        ListTableResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -281,7 +292,10 @@ public:
         testbench().client().describeTable(req, *this);
     }
 
-    void operator()(Optional<OTSError>& err, DescribeTableResponse& resp)
+    void operator()(
+        DescribeTableRequest& req,
+        Optional<OTSError>& err,
+        DescribeTableResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -335,7 +349,7 @@ public:
         Testbench& tb,
         Optional<OTSError>& outErr,
         DescribeTableResponse& dtResp,
-        const UpdateTableRequest& utReq)
+        UpdateTableRequest& utReq)
       : Trial(tb),
         mOutError(outErr),
         mDescribeTableResponse(dtResp),
@@ -347,8 +361,12 @@ public:
         testbench().client().updateTable(mUpdateTableRequest, *this);
     }
 
-    void operator()(Optional<OTSError>& err, UpdateTableResponse& resp)
+    void operator()(
+        UpdateTableRequest& req,
+        Optional<OTSError>& err,
+        UpdateTableResponse& resp)
     {
+        moveAssign(mUpdateTableRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -364,7 +382,10 @@ public:
         }
     }
     
-    void operator()(Optional<OTSError>& err, DescribeTableResponse& resp)
+    void operator()(
+        DescribeTableRequest& req,
+        Optional<OTSError>& err,
+        DescribeTableResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -382,7 +403,7 @@ public:
 private:
     Optional<OTSError>& mOutError;
     DescribeTableResponse& mDescribeTableResponse;
-    UpdateTableRequest mUpdateTableRequest;
+    UpdateTableRequest& mUpdateTableRequest;
 };
 
 void AsyncUpdateTable(const string& csname)
@@ -412,7 +433,7 @@ public:
         Testbench& tb,
         Optional<OTSError>& outErr,
         deque<Row>& resultRows,
-        const PutRowRequest& prReq)
+        PutRowRequest& prReq)
       : Trial(tb),
         mOutError(outErr),
         mResultRows(resultRows),
@@ -428,11 +449,15 @@ public:
     {
         testbench().client().putRow(
             mPutRowRequest,
-            bind(&PutRowTrial::putRowCallback, this, _1, _2));
+            bind(&PutRowTrial::putRowCallback, this, _1, _2, _3));
     }
 
-    void putRowCallback(Optional<OTSError>& err, PutRowResponse& resp)
+    void putRowCallback(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -481,7 +506,7 @@ public:
 private:
     Optional<OTSError>& mOutError;
     deque<Row>& mResultRows;
-    PutRowRequest mPutRowRequest;
+    PutRowRequest& mPutRowRequest;
     Thread mReadRowsThread;
 };
 
@@ -524,7 +549,7 @@ public:
         Optional<OTSError>& outErr,
         GetRowResponse& grRespHit,
         GetRowResponse& grRespMiss,
-        const PutRowRequest& prReq)
+        PutRowRequest& prReq)
       : Trial(tb),
         mOutError(outErr),
         mGetRowRespHit(grRespHit),
@@ -536,11 +561,15 @@ public:
     {
         PutRowRequest req(mPutRowRequest);
         testbench().client().putRow(req,
-            bind(&GetRowTrial::callbackPutRow, this, _1, _2));
+            bind(&GetRowTrial::callbackPutRow, this, _1, _2, _3));
     }
 
-    void callbackPutRow(Optional<OTSError>& err, PutRowResponse& resp)
+    void callbackPutRow(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -556,11 +585,14 @@ public:
             req.mutableQueryCriterion().mutablePrimaryKey() =
                 mPutRowRequest.rowChange().primaryKey();
             testbench().client().getRow(req,
-                bind(&GetRowTrial::callbackGetRowHit, this, _1, _2));
+                bind(&GetRowTrial::callbackGetRowHit, this, _1, _2, _3));
         }
     }
 
-    void callbackGetRowHit(Optional<OTSError>& err, GetRowResponse& resp)
+    void callbackGetRowHit(
+        GetRowRequest& req,
+        Optional<OTSError>& err,
+        GetRowResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -579,11 +611,14 @@ public:
             req.mutableQueryCriterion().mutablePrimaryKey().append() =
                 PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(456));
             testbench().client().getRow(req,
-                bind(&GetRowTrial::callbackGetRowMiss, this, _1, _2));
+                bind(&GetRowTrial::callbackGetRowMiss, this, _1, _2, _3));
         }
     }
 
-    void callbackGetRowMiss(Optional<OTSError>& err, GetRowResponse& resp)
+    void callbackGetRowMiss(
+        GetRowRequest& req,
+        Optional<OTSError>& err,
+        GetRowResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -603,7 +638,7 @@ private:
     Optional<OTSError>& mOutError;
     GetRowResponse& mGetRowRespHit;
     GetRowResponse& mGetRowRespMiss;
-    PutRowRequest mPutRowRequest;
+    PutRowRequest& mPutRowRequest;
 };
 
 void AsyncGetRow(const string& csname)
@@ -652,8 +687,8 @@ public:
         Testbench& tb,
         Optional<OTSError>& outErr,
         deque<Row>& resultRows,
-        const PutRowRequest& prReq,
-        const UpdateRowRequest& urReq)
+        PutRowRequest& prReq,
+        UpdateRowRequest& urReq)
       : Trial(tb),
         mOutError(outErr),
         mResultRows(resultRows),
@@ -670,11 +705,15 @@ public:
     {
         testbench().client().putRow(
             mPutRowRequest,
-            bind(&UpdateRowTrial::callbackPutRow, this, _1, _2));
+            bind(&UpdateRowTrial::callbackPutRow, this, _1, _2, _3));
     }
 
-    void callbackPutRow(Optional<OTSError>& err, PutRowResponse& resp)
+    void callbackPutRow(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -686,12 +725,16 @@ public:
                 .what("FT: row put");
             testbench().client().updateRow(
                 mUpdateRowRequest,
-                bind(&UpdateRowTrial::callbackUpdateRow, this, _1, _2));
+                bind(&UpdateRowTrial::callbackUpdateRow, this, _1, _2, _3));
         }
     }
 
-    void callbackUpdateRow(Optional<OTSError>& err, UpdateRowResponse& resp)
+    void callbackUpdateRow(
+        UpdateRowRequest& req,
+        Optional<OTSError>& err,
+        UpdateRowResponse& resp)
     {
+        moveAssign(mUpdateRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -740,8 +783,8 @@ public:
 private:
     Optional<OTSError>& mOutError;
     deque<Row>& mResultRows;
-    PutRowRequest mPutRowRequest;
-    UpdateRowRequest mUpdateRowRequest;
+    PutRowRequest& mPutRowRequest;
+    UpdateRowRequest& mUpdateRowRequest;
     Thread mReadRowsThread;
 };
 
@@ -833,7 +876,7 @@ public:
         Testbench& tb,
         Optional<OTSError>& outErr,
         deque<Row>& resultRows,
-        const PutRowRequest& prReq)
+        PutRowRequest& prReq)
       : Trial(tb),
         mOutError(outErr),
         mResultRows(resultRows),
@@ -850,11 +893,15 @@ public:
         PutRowRequest req(mPutRowRequest);
         testbench().client().putRow(
             req,
-            bind(&DeleteRowTrial::callbackPutRow, this, _1, _2));
+            bind(&DeleteRowTrial::callbackPutRow, this, _1, _2, _3));
     }
 
-    void callbackPutRow(Optional<OTSError>& err, PutRowResponse& resp)
+    void callbackPutRow(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -870,11 +917,14 @@ public:
                 mPutRowRequest.rowChange().primaryKey()[0];
             testbench().client().deleteRow(
                 req,
-                bind(&DeleteRowTrial::callbackDeleteRow, this, _1, _2));
+                bind(&DeleteRowTrial::callbackDeleteRow, this, _1, _2, _3));
         }
     }
 
-    void callbackDeleteRow(Optional<OTSError>& err, DeleteRowResponse& resp)
+    void callbackDeleteRow(
+        DeleteRowRequest& req,
+        Optional<OTSError>& err,
+        DeleteRowResponse& resp)
     {
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
@@ -924,7 +974,7 @@ public:
 private:
     Optional<OTSError>& mOutError;
     deque<Row>& mResultRows;
-    PutRowRequest mPutRowRequest;
+    PutRowRequest& mPutRowRequest;
     Thread mReadRowsThread;
 };
 
@@ -957,8 +1007,8 @@ public:
         Testbench& tb,
         Optional<OTSError>& outErr,
         BatchGetRowResponse& bgrResp,
-        const PutRowRequest& prReq,
-        const BatchGetRowRequest& bgrReq)
+        PutRowRequest& prReq,
+        BatchGetRowRequest& bgrReq)
       : Trial(tb),
         mOutError(outErr),
         mBgrResp(bgrResp),
@@ -975,11 +1025,15 @@ public:
         PutRowRequest req(mPutRowRequest);
         testbench().client().putRow(
             req,
-            bind(&BatchGetRowTrial::callbackPutRow, this, _1, _2));
+            bind(&BatchGetRowTrial::callbackPutRow, this, _1, _2, _3));
     }
 
-    void callbackPutRow(Optional<OTSError>& err, PutRowResponse& resp)
+    void callbackPutRow(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -991,12 +1045,16 @@ public:
                 .what("FT: row put");
             testbench().client().batchGetRow(
                 mBgrRequest,
-                bind(&BatchGetRowTrial::callbackBatchGetRow, this, _1, _2));
+                bind(&BatchGetRowTrial::callbackBatchGetRow, this, _1, _2, _3));
         }
     }
 
-    void callbackBatchGetRow(Optional<OTSError>& err, BatchGetRowResponse& resp)
+    void callbackBatchGetRow(
+        BatchGetRowRequest& req,
+        Optional<OTSError>& err,
+        BatchGetRowResponse& resp)
     {
+        moveAssign(mBgrRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -1014,8 +1072,8 @@ public:
 private:
     Optional<OTSError>& mOutError;
     BatchGetRowResponse& mBgrResp;
-    PutRowRequest mPutRowRequest;
-    BatchGetRowRequest mBgrRequest;
+    PutRowRequest& mPutRowRequest;
+    BatchGetRowRequest& mBgrRequest;
 };
 
 void AsyncBatchGetRow(const string& csname)
@@ -1086,8 +1144,8 @@ public:
         Optional<OTSError>& outErr,
         deque<Row>& resultRows,
         BatchWriteRowResponse& bwrResp,
-        const PutRowRequest& prReq,
-        const BatchWriteRowRequest& bwrReq)
+        PutRowRequest& prReq,
+        BatchWriteRowRequest& bwrReq)
       : Trial(tb),
         mOutError(outErr),
         mResultRows(resultRows),
@@ -1105,11 +1163,15 @@ public:
     {
         testbench().client().putRow(
             mPutRowRequest,
-            bind(&BatchWriteRowTrial::callbackPutRow, this, _1, _2));
+            bind(&BatchWriteRowTrial::callbackPutRow, this, _1, _2, _3));
     }
 
-    void callbackPutRow(Optional<OTSError>& err, PutRowResponse& resp)
+    void callbackPutRow(
+        PutRowRequest& req,
+        Optional<OTSError>& err,
+        PutRowResponse& resp)
     {
+        moveAssign(mPutRowRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -1121,12 +1183,16 @@ public:
                 .what("FT: row put");
             testbench().client().batchWriteRow(
                 mBwrRequest,
-                bind(&BatchWriteRowTrial::callbackBatchWriteRow, this, _1, _2));
+                bind(&BatchWriteRowTrial::callbackBatchWriteRow, this, _1, _2, _3));
         }
     }
 
-    void callbackBatchWriteRow(Optional<OTSError>& err, BatchWriteRowResponse& resp)
+    void callbackBatchWriteRow(
+        BatchWriteRowRequest& req,
+        Optional<OTSError>& err,
+        BatchWriteRowResponse& resp)
     {
+        moveAssign(mBwrRequest, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)
@@ -1177,8 +1243,8 @@ private:
     Optional<OTSError>& mOutError;
     deque<Row>& mResultRows;
     BatchWriteRowResponse& mBwrResponse;
-    PutRowRequest mPutRowRequest;
-    BatchWriteRowRequest mBwrRequest;
+    PutRowRequest& mPutRowRequest;
+    BatchWriteRowRequest& mBwrRequest;
     Thread mReadRowsThread;
 };
 
@@ -1299,12 +1365,15 @@ public:
     {
         testbench().client().computeSplitsBySize(mReq,
             bind(&ComputeSplitsBySizeTrial::callbackComputeSplitsBySize,
-                this, _1, _2));
+                this, _1, _2, _3));
     }
 
     void callbackComputeSplitsBySize(
-        Optional<OTSError>& err, ComputeSplitsBySizeResponse& resp)
+        ComputeSplitsBySizeRequest& req,
+        Optional<OTSError>& err,
+        ComputeSplitsBySizeResponse& resp)
     {
+        moveAssign(mReq, util::move(req));
         if (err.present()) {
             OTS_LOG_ERROR(testbench().logger())
                 ("Error", *err)

@@ -67,13 +67,13 @@ public:
 
 private:
     void issue();
-    void callback(util::Optional<OTSError>&, GetRangeResponse&);
+    void callback(GetRangeRequest&, util::Optional<OTSError>&, GetRangeResponse&);
 
 private:
     const int64_t mWatermark;
     AsyncClient& mClient;
-    util::Optional<PrimaryKey> mInclusiveStart;
     RangeQueryCriterion mRangeQuery;
+    bool mNeedMoreRequests;
     bool mFirstMove;
 
     util::Semaphore mNotify;
