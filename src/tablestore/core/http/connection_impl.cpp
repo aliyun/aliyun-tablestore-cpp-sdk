@@ -677,6 +677,7 @@ void Connector::handleConnect(
         e.mutableMessage() = err.message();
         ctx->mActor.pushBack(
             bind(ctx->mCallback, Optional<OTSError>(e), (ConnectionBase*) NULL));
+        delete conn;
     }
 }
 
@@ -711,6 +712,7 @@ void Connector::handleHandshake(
         e.mutableMessage() = err.message();
         ctx->mActor.pushBack(
             bind(ctx->mCallback, Optional<OTSError>(e), (ConnectionBase*) NULL));
+        delete conn;
     }
 }
 
@@ -791,7 +793,6 @@ void Scheduler::close()
             break;
         }
         conn->gentlyClose();
-        delete conn;
     }
 
     deque<WaitForConnection*> waits;
@@ -829,7 +830,6 @@ void Scheduler::destroy(ConnectionBase* conn)
         ("Connection", tracker)
         .what("CONN: destroy a connection");
     conn->gentlyClose();
-    delete conn;
     int64_t x = mBusyCount.fetch_sub(1, boost::memory_order_acq_rel);
     OTS_ASSERT(x >= 1)(x);
     OTS_LOG_DEBUG(mLogger)
