@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../impl/ots_helper.hpp"
 #include "tablestore/util/logging.hpp"
 #include <boost/ref.hpp>
+#include <algorithm>
 
 using namespace std;
 using namespace std::tr1;
@@ -550,6 +551,7 @@ void Connector::supplyConnections()
     int64_t connecting =
         mConnectingCount.load(boost::memory_order_acquire);
     int64_t require = mMaxConnections - (idle + busy + connecting);
+    require = std::min(require, static_cast<int64_t>(100)); // slow start, not to DoS the service
     OTS_LOG_INFO(mLogger)
         ("MaxConnections", mMaxConnections)
         ("Idle", idle)
