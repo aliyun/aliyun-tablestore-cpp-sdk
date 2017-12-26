@@ -558,6 +558,43 @@ void verifyComputeSplitsBySize(
 } // namespace
 TESTA_DEF_VERIFY_WITH_TB(ComputeSplitsBySize, Table_tb, verifyComputeSplitsBySize, computeSplitsBySize);
 
+namespace {
+PutRowResponse putRow_Issue6(const tuple<SyncClient*, string>& in)
+{
+    PutRowRequest req;
+    req.mutableRowChange().mutableTable() = get<1>(in);
+    req.mutableRowChange().mutableReturnType() = RowChange::kRT_PrimaryKey;
+    req.mutableRowChange().mutablePrimaryKey().append() =
+        PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
+    req.mutableRowChange().mutableAttributes().append() =
+        Attribute("attr", AttributeValue::toStr("abc"));
+    PutRowResponse resp;
+    Optional<OTSError> err = get<0>(in)->putRow(resp, req);
+    TESTA_ASSERT(!err.present())
+        (req)(*err).issue();
+    return resp;
+}
+
+void verifyPutRow_Issue6(
+    const PutRowResponse& resp,
+    const tuple<SyncClient*, string>& in)
+{
+    const CapacityUnit& cu = resp.consumedCapacity();
+    TESTA_ASSERT(cu.read().present() && *cu.read() == 0)
+        (resp).issue();
+    TESTA_ASSERT(cu.write().present() && *cu.write() == 1)
+        (resp).issue();
+    const Optional<Row>& row = resp.row();
+    TESTA_ASSERT(row.present())
+        (resp).issue();
+    TESTA_ASSERT(pp::prettyPrint(row->primaryKey()) == "{\"pkey\":123}")
+        (resp).issue();
+    TESTA_ASSERT(row->attributes().size() == 0)
+        (resp).issue();
+}
+} // namespace
+TESTA_DEF_VERIFY_WITH_TB(PutRow_Issue6, Table_tb, verifyPutRow_Issue6, putRow_Issue6);
+
 
 } // namespace core
 } // namespace tablestore
