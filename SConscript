@@ -1,4 +1,8 @@
 # -*- python -*-
+Import('env')
+
+# build info & packaging
+
 import platform
 architecture = platform.machine()
 system = platform.system()
@@ -15,9 +19,6 @@ else:
     raise Exception('unsupported system: ' + system)
 
 from ConfigParser import ConfigParser
-Import('env')
-
-# build info & packaging
 
 cfg = ConfigParser()
 cfg.read('version.ini')
@@ -53,4 +54,5 @@ env.addExtLib(['protobuf-lite', 'protobuf',
                'boost_system', 'boost_thread', 'boost_chrono'])
 env.subDir('test')
 env.subDir('src')
+env.subDir('examples')
 
