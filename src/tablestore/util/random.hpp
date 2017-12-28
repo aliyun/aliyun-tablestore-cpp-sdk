@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -30,6 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
+#ifndef TABLESTORE_UTIL_RANDOM_HPP
+#define TABLESTORE_UTIL_RANDOM_HPP
 
 #include <algorithm>
 #include <stdint.h>
@@ -70,3 +72,4 @@ void shuffle(Random& rng, T& xs)
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

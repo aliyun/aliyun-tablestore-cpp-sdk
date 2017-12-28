@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_TIMER_IMPL_HPP
+#define TABLESTORE_CORE_HTTP_TIMER_IMPL_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -69,7 +71,7 @@ public:
 
 private:
     void handleTimeout(const boost::system::error_code&);
-    
+
 private:
     util::Logger& mLogger;
     util::Actor& mActor;
@@ -118,7 +120,7 @@ private:
             }
         }
     };
-    
+
 private:
     void ticktock();
     void cleaner(const boost::system::error_code&);
@@ -143,3 +145,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

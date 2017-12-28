@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -459,7 +459,7 @@ void TestBench::asyncFeedResponsePiece(
     const Optional<OTSError>& err)
 {
     MutableMemPiece mmp1 = write(buf, content);
-    function<bool()> fn = bind(mConn->mRespHandler, 
+    function<bool()> fn = bind(mConn->mRespHandler,
         buf.length() - mmp1.length(), err, &newPiece);
     mInvoker->pushBack(
         bind(&returnWrapper<bool>,

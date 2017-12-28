@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_SECURITY_HPP
+#define TABLESTORE_UTIL_SECURITY_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -53,7 +55,7 @@ public:
 
     void update(const MemPiece&);
     void finalize(const MutableMemPiece&);
-   
+
 private:
     std::auto_ptr<Md5Ctx> mCtx;
     bool mFinalized;
@@ -73,7 +75,7 @@ public:
 
     void update(const MemPiece&);
     void finalize(const MutableMemPiece&);
-    
+
 private:
     std::auto_ptr<Sha1Ctx> mCtx;
     bool mFinalized;
@@ -179,3 +181,4 @@ inline void crc8MemPiece(uint8_t& out, const MemPiece& in)
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

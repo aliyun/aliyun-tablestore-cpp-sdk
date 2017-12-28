@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_BUILDER_HPP
+#define TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_BUILDER_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -55,12 +57,13 @@ struct PlainBufferBuilder
     static std::string SerializePrimaryKeyValue(const PrimaryKeyValue& value);
     static std::string SerializeColumnValue(const AttributeValue& value);
     static std::string SerializePrimaryKey(const PrimaryKey& primaryKey);
-    static std::string SerializeForRow(const RowPutChange& rowChange); 
-    static std::string SerializeForRow(const RowUpdateChange& rowChange); 
-    static std::string SerializeForRow(const RowDeleteChange& rowChange); 
+    static std::string SerializeForRow(const RowPutChange& rowChange);
+    static std::string SerializeForRow(const RowUpdateChange& rowChange);
+    static std::string SerializeForRow(const RowDeleteChange& rowChange);
 };
 
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -30,6 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
+#ifndef TABLESTORE_UTIL_RESULT_HPP
+#define TABLESTORE_UTIL_RESULT_HPP
 
 #include "tablestore/util/assert.hpp"
 #include "tablestore/util/move.hpp"
@@ -117,7 +119,7 @@ public:
         }
         return mErrValue;
     }
-    
+
 private:
     ResultType mResultType;
     OkType mOkValue;
@@ -127,3 +129,4 @@ private:
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_RESPONSE_READER_HPP
+#define TABLESTORE_CORE_HTTP_RESPONSE_READER_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -78,7 +80,7 @@ public:
     {
         return mBody;
     }
-    
+
     InplaceHeaders& mutableHeaders()
     {
         return mHeaders;
@@ -113,3 +115,4 @@ private:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

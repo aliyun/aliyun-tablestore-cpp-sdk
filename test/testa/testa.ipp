@@ -64,7 +64,7 @@ public:
     CaseFailIssuer& append(const std::string& key, const std::string& value);
     void issue(const std::string& msg);
     void issue();
-    
+
 private:
 #if __cplusplus < 201103L
     typedef std::tr1::tuple<std::string, std::string> KV;
@@ -108,10 +108,10 @@ public:
             oracleFn,
 #if __cplusplus < 201103L
             std::tr1::placeholders::_1);
-        (*testa::getCaseMap())[caseName] = std::tr1::bind(tb, caseName, cs); 
+        (*testa::getCaseMap())[caseName] = std::tr1::bind(tb, caseName, cs);
 #else
             std::placeholders::_1);
-        (*testa::getCaseMap())[caseName] = std::bind(tb, caseName, cs); 
+        (*testa::getCaseMap())[caseName] = std::bind(tb, caseName, cs);
 #endif
     }
 

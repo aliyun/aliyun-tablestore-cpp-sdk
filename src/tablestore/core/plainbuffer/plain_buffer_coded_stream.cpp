@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -271,7 +271,7 @@ void PlainBufferCodedInputStream::ReadColumn(
         int64_t timestamp = mInputStream->ReadInt64();
         tmpColumn.mutableTimestamp().reset(UtcTime::fromMsec(timestamp));
         cellChecksum = PlainBufferCrc8::CrcInt64(cellChecksum, timestamp);
-        ReadTag(); 
+        ReadTag();
     }
 
     if (GetLastTag() == TAG_CELL_CHECKSUM) {
@@ -416,7 +416,7 @@ void PlainBufferCodedOutputStream::WritePrimaryKeyValue(
         mOutputStream->WriteRawByte(VT_AUTO_INCREMENT);
         *cellChecksum = PlainBufferCrc8::CrcInt8(*cellChecksum, VT_AUTO_INCREMENT);
         break;
-    case PrimaryKeyValue::kInteger: 
+    case PrimaryKeyValue::kInteger:
         mOutputStream->WriteRawLittleEndian32(1 + LITTLE_ENDIAN_64_SIZE);
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
@@ -554,7 +554,7 @@ void PlainBufferCodedOutputStream::WriteColumnValue(const AttributeValue& value)
     case AttributeValue::kNone:
         OTS_ASSERT(false)(value);
         break;
-    case AttributeValue::kInteger: 
+    case AttributeValue::kInteger:
         mOutputStream->WriteRawByte(VT_INTEGER);
         mOutputStream->WriteRawLittleEndian64(value.integer());
         break;

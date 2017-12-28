@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -100,7 +100,7 @@ public:
         asyncCreateTable();
         mSem->wait();
     }
-    
+
     AsyncClient& client()
     {
         return *mClient;
@@ -115,7 +115,7 @@ public:
     {
         return *mRootLogger;
     }
-    
+
 private:
     Trial* mTrial;
     Optional<OTSError>& mOutError;
@@ -381,7 +381,7 @@ public:
             testbench().client().describeTable(req, *this);
         }
     }
-    
+
     void operator()(
         DescribeTableRequest& req,
         Optional<OTSError>& err,
@@ -444,7 +444,7 @@ public:
     {
         mReadRowsThread.join();
     }
-    
+
     void asyncDo()
     {
         testbench().client().putRow(
@@ -700,7 +700,7 @@ public:
     {
         mReadRowsThread.join();
     }
-    
+
     void asyncDo()
     {
         testbench().client().putRow(
@@ -887,7 +887,7 @@ public:
     {
         mReadRowsThread.join();
     }
-    
+
     void asyncDo()
     {
         PutRowRequest req(mPutRowRequest);
@@ -1019,7 +1019,7 @@ public:
     void close()
     {
     }
-    
+
     void asyncDo()
     {
         PutRowRequest req(mPutRowRequest);
@@ -1158,7 +1158,7 @@ public:
     {
         mReadRowsThread.join();
     }
-    
+
     void asyncDo()
     {
         testbench().client().putRow(
@@ -1270,7 +1270,7 @@ void AsyncBatchWriteRow(const string& csname)
         put.mutableGet().mutablePrimaryKey().append() =
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(1));
         put.mutableGet().mutableReturnType() = RowChange::kRT_PrimaryKey;
-        
+
         Row& res = oracle.append();
         res.mutablePrimaryKey() = put.get().primaryKey();
     }

@@ -100,7 +100,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIf<std::is_integral<T>::value
     {
         typedef Character Category;
     };
-    
+
     typedef typename Tester<T>::Category Category;
 };
 
@@ -203,7 +203,7 @@ struct PrettyPrinterCategory<T, typename mp::EnableIfExists<typename T::value_ty
         typedef StlStr Category;
     };
 
-    typedef typename SeqMap<T>::Category Category; 
+    typedef typename SeqMap<T>::Category Category;
 };
 
 template<class T>

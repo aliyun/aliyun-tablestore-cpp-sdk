@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_TYPES_HPP
+#define TABLESTORE_CORE_TYPES_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -194,7 +196,7 @@ public:
         OTS_ASSERT(size() > 0);
         return mElems.back();
     }
-    
+
     Elem& append()
     {
         mElems.push_back(Elem());
@@ -205,7 +207,7 @@ public:
     {
         mElems.clear();
     }
-    
+
 private:
     std::deque<Elem> mElems;
 };
@@ -462,7 +464,7 @@ public:
 
     PrimaryKeyColumnSchema& operator=(
         const util::MoveHolder<PrimaryKeyColumnSchema>& a);
-    
+
 
     const std::string& name() const
     {
@@ -493,7 +495,7 @@ public:
     {
         return mOption;
     }
-    
+
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
@@ -656,7 +658,7 @@ public:
     static PrimaryKeyValue toInfMax();
     bool isInfMax() const;
     void setInfMax();
-    
+
 public:
     // for -inf
     static PrimaryKeyValue toInfMin();
@@ -847,7 +849,7 @@ public:
     }
 
     CapacityUnit& operator=(const util::MoveHolder<CapacityUnit>& a);
-    
+
     const util::Optional<int64_t> read() const
     {
         return mRead;
@@ -955,7 +957,7 @@ public:
     {
         return mReservedThroughput;
     }
-    
+
 private:
     util::Optional<CapacityUnit> mReservedThroughput;
     util::Optional<util::Duration> mTimeToLive;
@@ -1070,7 +1072,7 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
-    
+
     const std::string& name() const
     {
         return mName;
@@ -1100,7 +1102,7 @@ public:
     {
         return mTimestamp;
     }
-    
+
 private:
     std::string mName;
     AttributeValue mValue;
@@ -1170,7 +1172,7 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
-    
+
     util::UtcTime start() const
     {
         return mStart;
@@ -1251,7 +1253,7 @@ public:
     {
         return mLocation;
     }
-    
+
 private:
     std::tr1::shared_ptr<PrimaryKey> mLowerBound;
     std::tr1::shared_ptr<PrimaryKey> mUpperBound;
@@ -1280,11 +1282,11 @@ class SingleColumnCondition : public ColumnCondition
 {
 public:
     enum Relation {
-        kEqual, 
+        kEqual,
         kNotEqual,
         kLarger,
         kLargerEqual,
-        kSmaller, 
+        kSmaller,
         kSmallerEqual,
     };
 
@@ -1294,7 +1296,7 @@ public:
         mPassIfMissing(false),
         mLatestVersionOnly(true)
     {}
-    
+
     explicit SingleColumnCondition(
         const std::string& columnName,
         Relation rel,
@@ -1387,7 +1389,7 @@ class CompositeColumnCondition : public ColumnCondition
 public:
     enum Operator {
         kNot,
-        kAnd, 
+        kAnd,
         kOr,
     };
 
@@ -1404,7 +1406,7 @@ public:
 
     CompositeColumnCondition& operator=(
         const util::MoveHolder<CompositeColumnCondition>&);
-    
+
     Type type() const
     {
         return kComposite;
@@ -1500,7 +1502,7 @@ public:
         kRT_None,
         kRT_PrimaryKey,
     };
-    
+
 protected:
     explicit RowChange()
       : mReturnType(kRT_None)
@@ -1508,7 +1510,7 @@ protected:
 
     void move(RowChange& a);
     virtual void prettyPrint(std::string&) const;
-    
+
 public:
     virtual ~RowChange() {}
     virtual util::Optional<OTSError> validate() const;
@@ -1575,7 +1577,7 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
-    
+
     const IVector<Attribute>& attributes() const
     {
         return mAttrs;
@@ -1792,7 +1794,7 @@ public:
     virtual void prettyPrint(std::string&) const;
     virtual util::Optional<OTSError> validate() const;
     virtual void reset();
-    
+
     const std::string& table() const
     {
         return mTable;
@@ -1989,7 +1991,7 @@ public:
     {
         return mRowKeys;
     }
-    
+
 private:
     DequeBasedVector<RowKey> mRowKeys;
 };
@@ -2065,7 +2067,7 @@ public:
     }
 
     /**
-     * For now, each shard split point must contains exactly one primary 
+     * For now, each shard split point must contains exactly one primary
      * key column which conforms to the table schema.
      */
     const IVector<PrimaryKey>& shardSplitPoints() const
@@ -2127,7 +2129,7 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
-    
+
     const IVector<std::string>& tables() const
     {
         return mTables;
@@ -2137,7 +2139,7 @@ public:
     {
         return mTables;
     }
-    
+
 private:
     DequeBasedVector<std::string> mTables;
 };
@@ -2296,7 +2298,7 @@ public:
     {
         return mOptions;
     }
-    
+
 private:
     std::string mTable;
     TableOptions mOptions;
@@ -2428,7 +2430,7 @@ public:
     {
         return mRowChange;
     }
-    
+
 private:
     RowPutChange mRowChange;
 };
@@ -2447,7 +2449,7 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
-    
+
     const CapacityUnit& consumedCapacity() const
     {
         return mConsumedCapacity;
@@ -2566,7 +2568,7 @@ public:
     {
         return mQueryCriterion;
     }
-    
+
 private:
     RangeQueryCriterion mQueryCriterion;
 };
@@ -2810,7 +2812,7 @@ public:
     {
         return mConsumedCapacity;
     }
-    
+
     const IVector<Result>& results() const
     {
         return mResults;
@@ -2822,7 +2824,7 @@ public:
     }
 
 private:
-    CapacityUnit mConsumedCapacity; 
+    CapacityUnit mConsumedCapacity;
     DequeBasedVector<Result> mResults;
 };
 
@@ -2935,7 +2937,7 @@ public:
     }
 
 private:
-    CapacityUnit mConsumedCapacity; 
+    CapacityUnit mConsumedCapacity;
     DequeBasedVector<Result> mPutResults;
     DequeBasedVector<Result> mUpdateResults;
     DequeBasedVector<Result> mDeleteResults;
@@ -3172,3 +3174,4 @@ struct PrettyPrinter<
 
 } // namespace impl
 } // namespace pp
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_ERROR_HPP
+#define TABLESTORE_CORE_ERROR_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -51,7 +53,7 @@ public:
     static const int64_t kHttpStatus_CorruptedResponse = 56;
     static const int64_t kHttpStatus_NoAvailableConnection = 89;
     static const int64_t kHttpStatus_SslHandshakeFail = 35;
-    
+
     /*
      * Error codes that indicate SDK errors.
      */
@@ -118,7 +120,7 @@ public:
         kPredefined_OTSRowOperationConflict,
         kPredefined_OTSPartitionUnavailable,
     };
-    
+
     explicit OTSError()
       : mHttpStatus(200)
     {}
@@ -162,7 +164,7 @@ public:
     {
         return mMessage;
     }
-    
+
 
     const std::string& requestId() const throw()
     {
@@ -173,7 +175,7 @@ public:
     {
         return mRequestId;
     }
-    
+
 
     const std::string& traceId() const throw()
     {
@@ -184,7 +186,7 @@ public:
     {
         return mTraceId;
     }
-    
+
     int64_t httpStatus() const throw()
     {
         return mHttpStatus;
@@ -194,7 +196,7 @@ public:
     {
         return mHttpStatus;
     }
-    
+
     void prettyPrint(std::string&) const;
 
 private:
@@ -216,3 +218,4 @@ bool isTemporary(const OTSError&);
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

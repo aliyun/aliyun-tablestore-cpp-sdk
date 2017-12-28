@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -103,7 +103,7 @@ Optional<OTSError> RangeIterator::moveNext()
                 return mError;
             }
             if (!mNeedMoreRequests) {
-                return Optional<OTSError>(); 
+                return Optional<OTSError>();
             }
         }
         if (size <= mWatermark) {
@@ -125,7 +125,7 @@ void RangeIterator::issue()
     if (!mNeedMoreRequests) {
         return;
     }
-    
+
     GetRangeRequest req;
     moveAssign(req.mutableQueryCriterion(), util::move(mRangeQuery));
     mClient.getRange(req, bind(&RangeIterator::callback, this, _1, _2, _3));

@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
+#ifndef TABLESTORE_UTIL_METAPROGRAMMING_HPP
+#define TABLESTORE_UTIL_METAPROGRAMMING_HPP
 
 namespace mp {
 
@@ -50,3 +52,4 @@ struct EnableIf<true, T>
 };
 
 } // namespace mp
+#endif

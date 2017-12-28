@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -80,7 +80,7 @@ void AsioImpl::close()
         .what("ASIO: close Asio.");
     mConnector.close();
     mTimerCenter.close();
-    
+
     // stop the event loop
     mIoService.stop();
     mLoopThread.join();

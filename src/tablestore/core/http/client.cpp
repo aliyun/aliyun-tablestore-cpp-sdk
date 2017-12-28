@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -95,7 +95,7 @@ private:
         ResponseCallback mRespCb;
         auto_ptr<ResponseReader> mResponseReader;
         Connection* mConnection;
-        
+
         explicit Context(Logger&, Actor&, boost::atomic<int64_t>& ongoing);
         ~Context();
     };

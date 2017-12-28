@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -124,7 +124,7 @@ bool retriable(
     const string errorCode = error.errorCode();
     const string errorMessage = error.message();
     if (errorCode == "OTSRowOperationConflict" ||
-        errorCode == "OTSNotEnoughCapacityUnit" || 
+        errorCode == "OTSNotEnoughCapacityUnit" ||
         errorCode == "OTSTableNotReady" ||
         errorCode == "OTSPartitionUnavailable" ||
         errorCode == "OTSServerBusy" ||
@@ -134,7 +134,7 @@ bool retriable(
         return true;
     }
     bool isServerError = (httpStatus >= 500 && httpStatus <= 599);
-    if (idempotent && 
+    if (idempotent &&
         (errorCode == "OTSTimeout" ||
          errorCode == "OTSInternalServerError" ||
          errorCode == "OTSServerUnavailable" ||

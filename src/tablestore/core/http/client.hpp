@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_CLIENT_HPP
+#define TABLESTORE_CORE_HTTP_CLIENT_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -77,7 +79,7 @@ public:
      *    In this case, HTTP status except 2xx will be filled in the error
      *    field of the callback.
      * 2. Error occurs in sending request or receiving response.
-     *    Then, NoConnectionAvailable, CouldntResolveHost, CouldntConnect, 
+     *    Then, NoConnectionAvailable, CouldntResolveHost, CouldntConnect,
      *    WriteRequestFail, or CorruptedResponse will be filled in the error
      *    field of the callback.
      * 3. Timeout. In this case, OperationTimeout/OTSRequestTimeout will be
@@ -104,3 +106,4 @@ public:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

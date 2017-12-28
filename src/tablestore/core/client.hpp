@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_CLIENT_HPP
+#define TABLESTORE_CORE_CLIENT_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -50,9 +52,9 @@ public:
 
     /**
      * Creates a synchronous client for production use.
-     * 
+     *
      * If no error is detected during creation, @p result will be set to
-     * the client; otherwise, the error will be returned and 
+     * the client; otherwise, the error will be returned and
      * @p result keep untouched.
      */
     static util::Optional<OTSError> create(
@@ -64,7 +66,7 @@ public:
      * Both share the same backbone implementation.
      */
     static SyncClient* create(AsyncClient&);
-    
+
     // table operations
 
     /**
@@ -100,21 +102,21 @@ public:
     // point write
 
     /**
-     * Puts a row. 
+     * Puts a row.
      * When the row already exists, it will be overwritten if the row condition
      * in the request is ignore or expect-exist.
      */
     virtual util::Optional<OTSError> putRow(PutRowResponse&, const PutRowRequest&) =0;
 
     /**
-     * Updates a row. 
+     * Updates a row.
      * It can be used either to modify an existent row or to insert a new row.
      */
     virtual util::Optional<OTSError> updateRow(
         UpdateRowResponse&, const UpdateRowRequest&) =0;
 
     /**
-     * Deletes a row. 
+     * Deletes a row.
      */
     virtual util::Optional<OTSError> deleteRow(
         DeleteRowResponse&, const DeleteRowRequest&) =0;
@@ -132,7 +134,7 @@ public:
     // // point query
 
     /**
-     * Gets a row. 
+     * Gets a row.
      * When the row inexists, it will respond a response with absent row field,
      * rather than an error.
      */
@@ -155,7 +157,7 @@ public:
      * Backend of TableStore will possibly respond prematurely.
      * When this happens, GetRangeResponse::nextStart will be set.
      *
-     * Strongly recommend use RangeIterator instead to correctly 
+     * Strongly recommend use RangeIterator instead to correctly
      * handle this premature nature.
      */
     virtual util::Optional<OTSError> getRange(
@@ -185,9 +187,9 @@ public:
 
     /**
      * Creates an asynchronized client for production use.
-     * 
+     *
      * If no error is detected during creation, @p result will be set to
-     * the client, which must be owned by the caller; 
+     * the client, which must be owned by the caller;
      * otherwise, the error will be returned and @p result keep untouched.
      */
     static util::Optional<OTSError> create(
@@ -259,7 +261,7 @@ public:
     // point write
 
     /**
-     * Puts a row. 
+     * Puts a row.
      * When the row already exists, it will be overwritten if the row condition
      * in the request is ignore or expect-exist.
      * Caveats:
@@ -272,9 +274,9 @@ public:
             PutRowRequest&, util::Optional<OTSError>&, PutRowResponse&)>&) =0;
 
     /**
-     * Updates a row. 
+     * Updates a row.
      * It can be used either to modify an existent row or to insert a new row.
-     * 
+     *
      * Caveats:
      * - Content of the request will probably be changed.
      * - It is generally unwise to do blocking things in callback.
@@ -285,8 +287,8 @@ public:
             UpdateRowRequest&, util::Optional<OTSError>&, UpdateRowResponse&)>&) =0;
 
     /**
-     * Deletes a row. 
-     * 
+     * Deletes a row.
+     *
      * Caveats:
      * - Content of the request will probably be changed.
      * - It is generally unwise to do blocking things in callback.
@@ -298,7 +300,7 @@ public:
 
     /**
      * Writes a batch of rows.
-     * 
+     *
      * Caveats:
      * - If there occurs a request-level error, returns the error;
      * - If there are row-level errors, put them into their respective
@@ -314,7 +316,7 @@ public:
     // point query
 
     /**
-     * Gets a row. 
+     * Gets a row.
      * When the row inexists, it will respond a response with absent row field,
      * rather than an error.
      *
@@ -326,7 +328,7 @@ public:
         GetRowRequest&,
         const std::tr1::function<void(
             GetRowRequest&, util::Optional<OTSError>&, GetRowResponse&)>&) =0;
-    
+
     /**
      * Gets a batch of rows.
      * Inexistent rows will respond a response with absent row field,
@@ -382,3 +384,4 @@ public:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

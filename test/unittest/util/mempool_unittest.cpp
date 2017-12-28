@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -59,7 +59,7 @@ void IncrementalMemPool_1thread(const string&)
     for(int64_t i = 0; i < 128; ++i) {
         MemPool::BlockHolder blk(mp.borrow());
         blks.push_back(blk.transfer());
-        
+
         MemPool::Stats stats = mp.stats();
         TESTA_ASSERT(stats.mBorrowedBlocks == (int64_t) blks.size())
             (stats.mBorrowedBlocks)

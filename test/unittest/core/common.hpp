@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef UNITTEST_CORE_COMMON_HPP
+#define UNITTEST_CORE_COMMON_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -103,3 +105,4 @@ private:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

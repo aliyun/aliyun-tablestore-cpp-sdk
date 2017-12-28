@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_MEMPIECE_HPP
+#define TABLESTORE_UTIL_MEMPIECE_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -176,7 +178,7 @@ public:
         int c = ::memcmp(data() + length() - b.length(), b.data(), b.length());
         return c == 0;
     }
-    
+
 private:
     const uint8_t* mData;
     int64_t mLen;
@@ -423,3 +425,4 @@ struct QuasiLexicographicLess<const MemPiece, void>
 
 #include "mempiece.ipp"
 
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_ASIO_IMPL_HPP
+#define TABLESTORE_CORE_HTTP_ASIO_IMPL_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -73,7 +75,7 @@ public:
         const Tracker& tracker,
         util::MonotonicTime deadline,
         const BorrowConnectionHandler&);
-    
+
     Timer& startTimer(
         const Tracker& tracker,
         util::MonotonicTime deadline,
@@ -98,13 +100,13 @@ public:
     {
         return mClosed;
     }
-    
+
     util::Actor& arbitraryActor();
     util::Actor& selectedActor(const Tracker&);
 
 private:
     void loop();
-    
+
 private:
     util::Logger& mLogger;
     std::deque<std::tr1::shared_ptr<util::Actor> > mActors;
@@ -123,3 +125,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_TIMESTAMP_HPP
+#define TABLESTORE_UTIL_TIMESTAMP_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -114,7 +116,7 @@ public:
         mValue = ano->mValue;
         return *this;
     }
-    
+
     /*
      * templating, in order to support both integer and double/float.
      */
@@ -265,7 +267,7 @@ public:
         mValue = ano->mValue;
         return *this;
     }
-    
+
     static MonotonicTime now();
 
     Duration operator-(const MonotonicTime& ano) const throw()
@@ -294,7 +296,7 @@ private:
     {
         return mValue;
     }
-    
+
     friend void sleepUntil(const MonotonicTime&);
 };
 
@@ -372,7 +374,7 @@ public:
     {
         return UtcTime(hour * kUsecPerHour);
     }
-    
+
     static UtcTime now();
 
     Duration operator-(const UtcTime& ano) const throw()
@@ -444,3 +446,4 @@ inline UtcTime operator+(Duration delta, UtcTime base) throw()
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

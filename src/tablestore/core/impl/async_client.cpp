@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -80,7 +80,7 @@ void go(
     typename ApiTraits<kAction>::ApiRequest& req,
     const function<void(
         typename ApiTraits<kAction>::ApiRequest&,
-        Optional<OTSError>&, 
+        Optional<OTSError>&,
         typename ApiTraits<kAction>::ApiResponse&)>& cb)
 {
     typedef Context<kAction> Ctx;

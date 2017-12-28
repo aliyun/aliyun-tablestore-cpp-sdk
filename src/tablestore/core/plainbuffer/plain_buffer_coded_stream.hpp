@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CODED_STREAM_HPP
+#define TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CODED_STREAM_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -71,7 +73,7 @@ private:
 };
 
  // PlainBufferCodedOutputStream
- 
+
 class PlainBufferCodedOutputStream
 {
 public:
@@ -128,10 +130,11 @@ public:
     void WriteRowChecksum(int8_t rowChecksum);
 
 private:
-    PlainBufferOutputStream* mOutputStream; 
+    PlainBufferOutputStream* mOutputStream;
 };
 
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

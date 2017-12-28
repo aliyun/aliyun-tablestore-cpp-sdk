@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_THREADING_HPP
+#define TABLESTORE_UTIL_THREADING_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -159,3 +161,4 @@ struct PrettyPrinter<aliyun::tablestore::util::Semaphore::Status, aliyun::tables
 
 } // namespace impl
 } // namespace pp
+#endif

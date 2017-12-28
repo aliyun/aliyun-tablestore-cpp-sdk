@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_MOVE_HPP
+#define TABLESTORE_UTIL_MOVE_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -36,11 +38,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Here is an example. Let us swap two values:
  * template<class T> void swap(T& obja, T& objb) {
- *     T tmp = obja; 
- *     obja = objb;  
- *     objb = tmp;   
+ *     T tmp = obja;
+ *     obja = objb;
+ *     objb = tmp;
  * }
- * In this routine, we copy obja twice. It is costly if obja is a large data 
+ * In this routine, we copy obja twice. It is costly if obja is a large data
  * structure. Moreover, if T is uncopyable, i.e., holder of some resources,
  * this swap routine is not applicable.
  *
@@ -54,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * After move ctor or move assignment is invoked, the original object is on
  * a specific state which is destructive but nobody cares about, and thus
  * usually cheap to destruct.
- * 
+ *
  * Move is a placeholder in order to distinguish move ctor and move assignment
  * from copy ctor and copy assignment. As C++11, we also provides a helper
  * function Move in deducing types. Then, we can rewrite the swap routine as:
@@ -63,14 +65,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *     obja = move(objb);  // (2)
  *     objb = move(tmp);   // (3)
  * }
- * After (1), content of obja is moved into, rather than copy into, tmp, 
- * and obja is cheap to destruct in executing (2). In other words, we swap 
+ * After (1), content of obja is moved into, rather than copy into, tmp,
+ * and obja is cheap to destruct in executing (2). In other words, we swap
  * contents of obja and objb by moving into/from a thirdparty tmp.
  * No heavy copying at all.
  *
  * To be compatible with old types, we provide external move assignments.
  * If the underlying type is moveable, move assignments are invoked; otherwise,
- * or some light-weight operation complying with move semantics will be invoked 
+ * or some light-weight operation complying with move semantics will be invoked
  * if there is. With help of them, our swap routine can be in this form:
  * template<T> void swap(T& obja, T& objb) {
  *     T tmp; // must be cheap
@@ -141,3 +143,4 @@ void moveAssign(T& to, const MoveHolder<T>& from) throw()
 } // namespace aliyun
 
 #include "move.ipp"
+#endif

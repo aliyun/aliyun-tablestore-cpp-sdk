@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_PROTOCOL_ZERO_COPY_STREAM_HPP
+#define TABLESTORE_CORE_PROTOCOL_ZERO_COPY_STREAM_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -78,3 +80,4 @@ private:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

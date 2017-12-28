@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_IMPL_OTS_EXCEPTION_HPP
+#define TABLESTORE_CORE_IMPL_OTS_EXCEPTION_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -66,3 +68,4 @@ private:
 } // end of tablestore
 } // end of aliyun
 
+#endif

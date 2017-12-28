@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_OPTIONAL_HPP
+#define TABLESTORE_UTIL_OPTIONAL_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -70,7 +72,7 @@ public:
     {
         *this = a;
     }
-    
+
     Optional<T>& operator=(const Optional<T>& ano)
     {
         if (ano.present()) {
@@ -140,7 +142,7 @@ public:
         OTS_ASSERT(present());
         return &mValue;
     }
-   
+
     template<class U, class V>
     Optional<U> apply(const std::tr1::function<U(V)>& fn) const
     {
@@ -169,3 +171,4 @@ private:
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

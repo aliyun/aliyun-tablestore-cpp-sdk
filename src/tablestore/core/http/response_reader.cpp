@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -247,7 +247,7 @@ ContentLengthParser::ContentLengthParser(
     mBody(body),
     mRemainingBytes(0)
 {}
-    
+
 impl::ResponseParserState* ContentLengthParser::parse(Optional<OTSError>* err, uint8_t byte)
 {
     switch(mState) {

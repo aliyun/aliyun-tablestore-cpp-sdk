@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_TYPES_HPP
+#define TABLESTORE_CORE_HTTP_TYPES_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -84,7 +86,7 @@ struct Endpoint
     Endpoint& operator=(const util::MoveHolder<Endpoint>&);
 
     static util::Optional<std::string> parse(Endpoint&, const std::string&);
-    
+
     void prettyPrint(std::string&) const;
 
     Protocol mProtocol;
@@ -97,3 +99,4 @@ struct Endpoint
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

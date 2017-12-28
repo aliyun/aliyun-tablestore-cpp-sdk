@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -528,7 +528,7 @@ Optional<OTSError> Serde<kApi_DescribeTable>::deserialize(
     try {
         // 1. meta
         toTableMeta(api.mutableMeta(), pb.table_meta());
-    
+
         // 2. Table Options
         toTableOptions(api.mutableOptions(), pb.table_options());
 
@@ -732,7 +732,7 @@ Optional<OTSError> Serde<kApi_PutRow>::serialize(
 
         PB::ReturnContent& returnContent = *pb.mutable_return_content();
         returnContent.set_return_type(toReturnType(rc.returnType()));
-    
+
         const Condition& condition = rc.condition();
         PB::Condition& pbCondition = *pb.mutable_condition();
         pbCondition.set_row_existence(toRowExistence(condition.rowCondition()));
@@ -1258,7 +1258,7 @@ Optional<OTSError> Serde<kApi_BatchWriteRow>::serialize(
 
                 PB::ReturnContent& returnContent = *rowInRequest.mutable_return_content();
                 returnContent.set_return_type(toReturnType(row.returnType()));
-        
+
                 const Condition& condition = row.condition();
                 PB::Condition& pbCondition = *rowInRequest.mutable_condition();
                 pbCondition.set_row_existence(toRowExistence(condition.rowCondition()));
@@ -1276,7 +1276,7 @@ Optional<OTSError> Serde<kApi_BatchWriteRow>::serialize(
 
                 PB::ReturnContent& returnContent = *rowInRequest.mutable_return_content();
                 returnContent.set_return_type(toReturnType(row.returnType()));
-        
+
                 const Condition& condition = row.condition();
                 PB::Condition& pbCondition = *rowInRequest.mutable_condition();
                 pbCondition.set_row_existence(toRowExistence(condition.rowCondition()));
@@ -1294,7 +1294,7 @@ Optional<OTSError> Serde<kApi_BatchWriteRow>::serialize(
 
                 PB::ReturnContent& returnContent = *rowInRequest.mutable_return_content();
                 returnContent.set_return_type(toReturnType(row.returnType()));
-        
+
                 const Condition& condition = row.condition();
                 PB::Condition& pbCondition = *rowInRequest.mutable_condition();
                 pbCondition.set_row_existence(toRowExistence(condition.rowCondition()));

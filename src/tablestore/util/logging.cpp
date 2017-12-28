@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -61,7 +61,7 @@ int64_t calcSize(
     res += 9; // "FUNCTION:"
     res += func.size();
     res += 1; // "\t"
-    
+
     if (!what.empty()) {
         res += 5; // "what:"
         res += what.size();
@@ -69,7 +69,7 @@ int64_t calcSize(
             res += 1; // "\t"
         }
     }
-    
+
     if (!xs.empty()) {
         res += (xs.size() - 1) * 1; // "\t"
         for(int64_t i = 0, sz = xs.size(); i < sz; ++i) {
@@ -78,7 +78,7 @@ int64_t calcSize(
             res += xs[i].second.size();
         }
     }
-    
+
     if (res < 0) {
         abort();
     }
@@ -104,7 +104,7 @@ LogHelper::~LogHelper()
     res.append("FUNCTION:");
     res.append(mFunc);
     res.append(kSep);
-    
+
     if (!mWhat.empty()) {
         res.append("What:");
         res.append(mWhat);

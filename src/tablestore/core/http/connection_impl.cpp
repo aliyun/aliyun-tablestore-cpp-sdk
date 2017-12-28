@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -96,7 +96,7 @@ public:
     void asyncHandshake(
         const Endpoint&,
         const std::tr1::function<void(const boost::system::error_code&)>&);
-    
+
 private:
     boost::asio::ip::tcp::socket mSocket;
 };
@@ -114,7 +114,7 @@ public:
     void asyncHandshake(
         const Endpoint&,
         const std::tr1::function<void(const boost::system::error_code&)>&);
-    
+
 private:
     std::auto_ptr<FrontStream> mSslStream;
 };
@@ -144,7 +144,7 @@ public:
             void(const boost::system::error_code&,
               boost::asio::ip::tcp::resolver::iterator)>&);
     void gentlyClose();
-    
+
     void asyncHandshake(
         const Endpoint& ep,
         const std::tr1::function<void(const boost::system::error_code&)>& cb)
@@ -272,7 +272,7 @@ void ConnectionImpl<kProto>::asyncIssue(
         ("Connection", tracker())
         ("RequestSize", totalLength(req))
         .what("CONN: issue a request.");
-    
+
     shared_ptr<RequestContext> ctx(new RequestContext(
             mLogger, reqTracker, actor, reqCompletion, respCompletion));
     vector<boost::asio::const_buffer> buf;

@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -61,7 +61,7 @@ void StlContainerIterator(const string&)
     TESTA_ASSERT(it.get() == 2)
         (it.get())
         .issue();
-    
+
     it.moveNext();
     TESTA_ASSERT(!it.valid()).issue();
 }

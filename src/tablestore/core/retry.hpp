@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_RETRY_HPP
+#define TABLESTORE_CORE_RETRY_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -110,7 +112,7 @@ private:
     std::tr1::shared_ptr<util::random::Random> mRandom;
     util::Duration mInterval;
     const int64_t mMaxRetries;
-    
+
     // reset for cloned ones
     int64_t mRetries;
 };
@@ -130,3 +132,4 @@ public:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

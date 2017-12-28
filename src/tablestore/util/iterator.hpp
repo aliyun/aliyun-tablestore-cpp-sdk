@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_ITERATOR_HPP
+#define TABLESTORE_UTIL_ITERATOR_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -117,7 +119,7 @@ public:
         ++mIter;
         return Optional<int>();
     }
-    
+
 private:
     C& mContainer;
     IteratorType mIter;
@@ -132,3 +134,4 @@ StlContainerIterator<C> iterate(C& xs)
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

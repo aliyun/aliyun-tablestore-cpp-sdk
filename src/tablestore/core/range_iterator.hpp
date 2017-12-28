@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_RANGE_ITERATOR_HPP
+#define TABLESTORE_CORE_RANGE_ITERATOR_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -86,3 +88,4 @@ private:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_LOGGER_HPP
+#define TABLESTORE_UTIL_LOGGER_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -71,7 +73,7 @@ public:
         kInfo,
         kError,
     };
-    
+
     virtual ~Logger() {}
 
     virtual LogLevel level() const =0;
@@ -108,8 +110,8 @@ public:
      *
      * If @p key does not associate with any sinker, it returns NULL.
      * And the sinker will be assoicated with it, with ownership transfered.
-     * 
-     * If there is already a sinker already associated with @p key, 
+     *
+     * If there is already a sinker already associated with @p key,
      * it will be returned without transferring the ownership.
      * Meanwhile, the ownership of the sinker in paramater is not transfered.
      */
@@ -122,7 +124,7 @@ public:
 };
 
 /**
- * Creates a logger backboned by a thread which periodically dumps records to 
+ * Creates a logger backboned by a thread which periodically dumps records to
  * stderr.
  * It is discouraged to use this logger in production.
  */
@@ -131,3 +133,4 @@ Logger* createLogger(const std::string& loggerKey, Logger::LogLevel);
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+#endif

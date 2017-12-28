@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_CONNECTION_IMPL_HPP
+#define TABLESTORE_CORE_HTTP_CONNECTION_IMPL_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -110,7 +112,7 @@ protected:
         {}
         ~RequestContext();
     };
-    
+
 protected:
     static void handleResponse(
         const boost::system::error_code&,
@@ -258,7 +260,7 @@ private:
             const Endpoint&);
         ~Context();
     };
-    
+
 private:
     ConnectionBase* newConnection();
     void connect();
@@ -302,3 +304,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

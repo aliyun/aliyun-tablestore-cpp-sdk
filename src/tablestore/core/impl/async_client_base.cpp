@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -74,7 +74,7 @@ Optional<OTSError> AsyncClientBase::create(
     }
 
     result = new AsyncClientBase(hep, ep.instanceName(), cr, opts);
-    
+
     return Optional<OTSError>();
 }
 

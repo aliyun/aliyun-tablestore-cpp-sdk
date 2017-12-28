@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_MEMPOOL_HPP
+#define TABLESTORE_UTIL_MEMPOOL_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -48,7 +50,7 @@ class MemPool
 {
 public:
     static const int64_t kBlockSize = 1024 * 1024;
-    
+
 public:
     class Block
     {
@@ -132,7 +134,7 @@ public:
      * Returns some infomation about the pool, thread-safely.
      */
     virtual Stats stats() const =0;
-    
+
 protected:
     virtual void giveBack(Block*) =0;
 };
@@ -200,3 +202,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_IMPL_ASYNC_CLIENT_HPP
+#define TABLESTORE_CORE_IMPL_ASYNC_CLIENT_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -113,3 +115,4 @@ private:
 } // namespace aliyun
 
 
+#endif

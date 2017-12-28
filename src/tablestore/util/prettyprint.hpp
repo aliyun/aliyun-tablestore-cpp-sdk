@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
+#ifndef TABLESTORE_UTIL_PRETTYPRINT_HPP
+#define TABLESTORE_UTIL_PRETTYPRINT_HPP
 
 #include <string>
 
@@ -80,3 +82,4 @@ std::string prettyPrint(const T& x)
 #include "prettyprint.ipp"
 
 
+#endif

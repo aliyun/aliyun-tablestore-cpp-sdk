@@ -1,4 +1,7 @@
-/* 
+#pragma once
+#ifndef FUNCTIONTEST_CONFIG_HPP
+#define FUNCTIONTEST_CONFIG_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -29,7 +32,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
 
 namespace aliyun {
 namespace tablestore {
@@ -43,3 +45,4 @@ void read(Endpoint&, Credential&);
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

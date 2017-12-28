@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -69,7 +69,7 @@ int32_t PlainBufferBuilder::ComputePrimaryKeyValueSize(const PrimaryKeyValue& va
 int32_t PlainBufferBuilder::ComputeVariantValueSize(const PrimaryKeyValue& value)
 {
     // no TAG_CELL_VALUE and length
-    return ComputePrimaryKeyValueSize(value) - LITTLE_ENDIAN_32_SIZE - 1;   
+    return ComputePrimaryKeyValueSize(value) - LITTLE_ENDIAN_32_SIZE - 1;
 }
 
 int32_t PlainBufferBuilder::ComputePrimaryKeyColumnSize(const PrimaryKeyColumn& pkColumn)
@@ -113,7 +113,7 @@ int32_t PlainBufferBuilder::ComputeColumnValueSize(const AttributeValue& value)
 int32_t PlainBufferBuilder::ComputeVariantValueSize(const AttributeValue& value)
 {
     // no TAG_CELL_VALUE and length
-    return ComputeColumnValueSize(value) - LITTLE_ENDIAN_32_SIZE - 1;   
+    return ComputeColumnValueSize(value) - LITTLE_ENDIAN_32_SIZE - 1;
 }
 
 int32_t PlainBufferBuilder::ComputeColumnSize(const Attribute& column)
@@ -215,7 +215,7 @@ string PlainBufferBuilder::SerializePrimaryKeyValue(const PrimaryKeyValue& value
     int32_t bufSize = ComputeVariantValueSize(value);
     PlainBufferOutputStream outputStream(bufSize);
     PlainBufferCodedOutputStream codedOutputStream(&outputStream);
-    
+
     codedOutputStream.WritePrimaryKeyValue(value);
     return outputStream.GetBuffer();
 }
@@ -225,7 +225,7 @@ string PlainBufferBuilder::SerializeColumnValue(const AttributeValue& value)
     int32_t bufSize = ComputeVariantValueSize(value);
     PlainBufferOutputStream outputStream(bufSize);
     PlainBufferCodedOutputStream codedOutputStream(&outputStream);
-    
+
     codedOutputStream.WriteColumnValue(value);
     return outputStream.GetBuffer();
 }

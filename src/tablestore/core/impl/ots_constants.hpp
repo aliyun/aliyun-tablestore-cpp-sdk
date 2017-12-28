@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_IMPL_OTS_CONSTANTS_HPP
+#define TABLESTORE_CORE_IMPL_OTS_CONSTANTS_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -71,3 +73,4 @@ extern "C" {
 extern char const * const kTableStoreBuildInfo; // let gdb happy
 }
 
+#endif

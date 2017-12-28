@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -200,7 +200,7 @@ public:
         issueCtx.mFixedHeaders = headers;
         return res;
     }
-    
+
     virtual void issue(
         const Tracker& tracker,
         const http::ResponseCallback& respCb,
@@ -293,7 +293,7 @@ public:
             inplaceHeaders.insert(
                 make_pair(MemPiece::from(i->first), MemPiece::from(i->second)));
         }
-        
+
         string out;
         if (mRawBody.present()) {
             out = *mRawBody;
@@ -395,7 +395,7 @@ public:
     {
         return mIssueContext;
     }
-    
+
     void asyncRun(const function<void()>& fn)
     {
         mActor->pushBack(fn);
@@ -855,7 +855,7 @@ void AsyncClient_Sts(const string&)
             (token).issue();
         TESTA_ASSERT(searchMap(tb.issueContext().mFixedHeaders, impl::kOTSStsToken) == "ststoken")
             (searchMap(tb.issueContext().mFixedHeaders, impl::kOTSStsToken)).issue();
-        
+
         http::Headers headers;
         headers[impl::kOTSRequestId] = tb.requestId();
         com::aliyun::tablestore::protocol::ListTableResponse resp;

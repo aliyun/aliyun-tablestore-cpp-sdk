@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_UTIL_ARITHMETIC_HPP
+#define TABLESTORE_UTIL_ARITHMETIC_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -48,3 +50,4 @@ void hex(std::string&, const MemPiece&);
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

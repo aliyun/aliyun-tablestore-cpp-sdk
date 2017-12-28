@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_IMPL_SERDE_HPP
+#define TABLESTORE_CORE_IMPL_SERDE_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -308,3 +310,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

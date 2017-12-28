@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -234,7 +234,7 @@ void PrimaryKeyValue_infmax(const string&)
         (v).issue();
     TESTA_ASSERT(pp::prettyPrint(v) == "+inf")
         (v).issue();
-    
+
     PrimaryKeyValue u;
     u.setInfMax();
     TESTA_ASSERT(u.isInfMax()).issue();
@@ -250,7 +250,7 @@ void PrimaryKeyValue_infmin(const string&)
         (v).issue();
     TESTA_ASSERT(pp::prettyPrint(v) == "-inf")
         (v).issue();
-    
+
     PrimaryKeyValue u;
     u.setInfMin();
     TESTA_ASSERT(u.isInfMin()).issue();
@@ -266,7 +266,7 @@ void PrimaryKeyValue_autoincr(const string&)
         (v).issue();
     TESTA_ASSERT(pp::prettyPrint(v) == "auto-incr")
         (v).issue();
-    
+
     PrimaryKeyValue u;
     u.setAutoIncrement();
     TESTA_ASSERT(u.isAutoIncrement()).issue();
@@ -994,14 +994,14 @@ void CompositeColumnCondition_pp(const string&)
         "\"PassIfMissing\":false,"
         "\"LatestVersionOnly\":true}]}")
         (c).issue();
-        
+
 }
 TESTA_DEF_JUNIT_LIKE1(CompositeColumnCondition_pp);
 
 void PointQueryCriterion_pp(const string&)
 {
     PointQueryCriterion cri;
-    cri.mutablePrimaryKey().append() = 
+    cri.mutablePrimaryKey().append() =
         PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(123));
     cri.mutableTable() = "test-table";
     cri.mutableColumnsToGet().append() = "attr";

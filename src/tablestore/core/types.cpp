@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -274,7 +274,7 @@ void PrettyPrinter<
     (string& out, SingleColumnCondition::Relation exp) const
 {
     switch(exp) {
-    case SingleColumnCondition::kEqual: 
+    case SingleColumnCondition::kEqual:
         out.append("kEqual");
         break;
     case SingleColumnCondition::kNotEqual:
@@ -286,7 +286,7 @@ void PrettyPrinter<
     case SingleColumnCondition::kLargerEqual:
         out.append("kLargerEqual");
         break;
-    case SingleColumnCondition::kSmaller: 
+    case SingleColumnCondition::kSmaller:
         out.append("kSmaller");
         break;
     case SingleColumnCondition::kSmallerEqual:
@@ -317,7 +317,7 @@ void PrettyPrinter<ColumnCondition::Type, ColumnCondition::Type>::operator()
     (string& out, ColumnCondition::Type cct) const
 {
     switch(cct) {
-    case ColumnCondition::kSingle: 
+    case ColumnCondition::kSingle:
         out.append("kSingle");
         break;
     case ColumnCondition::kComposite:
@@ -330,7 +330,7 @@ void PrettyPrinter<RangeQueryCriterion::Direction, RangeQueryCriterion::Directio
     (string& out, RangeQueryCriterion::Direction dir) const
 {
     switch(dir) {
-    case RangeQueryCriterion::FORWARD: 
+    case RangeQueryCriterion::FORWARD:
         out.append("FORWARD");
         break;
     case RangeQueryCriterion::BACKWARD:
@@ -343,7 +343,7 @@ void PrettyPrinter<RowUpdateChange::Update::Type, RowUpdateChange::Update::Type>
     (string& out, RowUpdateChange::Update::Type type) const
 {
     switch(type) {
-    case RowUpdateChange::Update::kPut: 
+    case RowUpdateChange::Update::kPut:
         out.append("kPut");
         break;
     case RowUpdateChange::Update::kDelete:
@@ -3039,7 +3039,7 @@ Optional<OTSError> RowUpdateChange::Update::validate() const
         if (mTimestamp.present()) {
             OTSError e(OTSError::kPredefined_OTSParameterInvalid);
             e.mutableMessage() = "Timestamp should not be specified for Delete-All update.";
-            
+
             return Optional<OTSError>(util::move(e));
         }
         break;

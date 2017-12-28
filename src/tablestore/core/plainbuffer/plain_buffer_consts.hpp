@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -30,6 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
+#ifndef TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CONSTS_HPP
+#define TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CONSTS_HPP
 
 #include <stdint.h>
 
@@ -69,3 +71,4 @@ const int8_t VT_AUTO_INCREMENT = 0xb;
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

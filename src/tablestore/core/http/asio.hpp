@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_ASIO_HPP
+#define TABLESTORE_CORE_HTTP_ASIO_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -77,7 +79,7 @@ public:
             // empty means "go ahead with the remaining part of the last piece of memory".
             util::MutableMemPiece*)
         > ResponseHandler;
-    
+
     virtual ~Connection() {}
 
     /**
@@ -165,3 +167,4 @@ public:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

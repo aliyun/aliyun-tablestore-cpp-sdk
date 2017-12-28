@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CRC8_HPP
+#define TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_CRC8_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -81,13 +83,13 @@ class PlainBufferCrc8
 public:
 
     static uint8_t CrcInt8(uint8_t crc, uint8_t in);
-    
+
     static uint8_t CrcInt32(uint8_t crc, uint32_t in);
-    
+
     static uint8_t CrcInt64(uint8_t crc, uint64_t in);
-    
+
     static uint8_t CrcString(uint8_t crc, const util::MemPiece& in);
-    
+
 private:
 
     static Crc8Table mCrc8Table;
@@ -97,3 +99,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_HTTP_BOOKMARK_INPUT_STREAM_HPP
+#define TABLESTORE_CORE_HTTP_BOOKMARK_INPUT_STREAM_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -102,3 +104,4 @@ private:
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_IMPL_ASYNC_CLIENT_BASE_HPP
+#define TABLESTORE_CORE_IMPL_ASYNC_CLIENT_BASE_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -355,3 +357,4 @@ bool AsyncClientBase::Context<kAction>::retry(
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
+#endif

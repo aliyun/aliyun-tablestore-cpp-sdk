@@ -1,4 +1,4 @@
-/* 
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -203,7 +203,7 @@ void TimerCenter::realCleaner()
         .what("ASIO: enter TimerCenter::realCleaner().");
     deque<Id> toClean;
     MonotonicTime now = MonotonicTime::now();
-    
+
     ScopedLock lock(mMutex);
     if (mClose.load(boost::memory_order_acquire)) {
         return;

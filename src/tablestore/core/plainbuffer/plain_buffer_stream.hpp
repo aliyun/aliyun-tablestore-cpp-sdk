@@ -1,5 +1,7 @@
 #pragma once
-/* 
+#ifndef TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_STREAM_HPP
+#define TABLESTORE_CORE_PLAINBUFFER_PLAIN_BUFFER_STREAM_HPP
+/*
 BSD 3-Clause License
 
 Copyright (c) 2017, Alibaba Cloud
@@ -129,7 +131,7 @@ public:
         int64_t int64Value;
         double doubleValue;
     };
-    
+
     double ReadDouble()
     {
         DoubleDecoder dd;
@@ -272,3 +274,4 @@ private:
 } // namespace tablestore
 } // namespace aliyun
 
+#endif
