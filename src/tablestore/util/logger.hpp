@@ -105,10 +105,13 @@ public:
 
     /**
      * Registers a sinker into this sinker center, thread-safely.
-     * After this call, the ownership of the sinker is transfered.
      *
-     * If there is already a sinker associated with the key, it will be returned
-     * without transferring the ownership; otherwise, returns NULL.
+     * If @p key does not associate with any sinker, it returns NULL.
+     * And the sinker will be assoicated with it, with ownership transfered.
+     * 
+     * If there is already a sinker already associated with @p key, 
+     * it will be returned without transferring the ownership.
+     * Meanwhile, the ownership of the sinker in paramater is not transfered.
      */
     virtual Sinker* registerSinker(const std::string& key, Sinker*) =0;
 

@@ -296,11 +296,6 @@ public:
         mSinker->sink(recImpl);
     }
 
-    void flush()
-    {
-        mSinker->flush();
-    }
-
     Logger* spawn(const string& key)
     {
         return spawn(key, mLevel);
@@ -314,7 +309,7 @@ public:
         subkey.append(key);
         return new DefaultLogger(key, lvl, mSinker);
     }
-    
+
 private:
     const string mKey;
     const LogLevel mLevel;
