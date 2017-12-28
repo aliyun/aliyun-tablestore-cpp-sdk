@@ -266,7 +266,7 @@ public:
         mAccessKeySecret(accessKeySecret),
         mSecurityToken(securityToken)
     {}
-        
+
     explicit Credential(const util::MoveHolder<Credential>&);
 
     Credential& operator=(const util::MoveHolder<Credential>&);

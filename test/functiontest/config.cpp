@@ -31,17 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "config.hpp"
 #include "tablestore/core/types.hpp"
-#include "tablestore/util/mempiece.hpp"
 #include "tablestore/util/assert.hpp"
 #include "tablestore/util/move.hpp"
-#include "tablestore/util/foreach.hpp"
-#include <tr1/functional>
 #include <string>
-#include <fstream>
+#include <cstdlib>
 
 using namespace std;
-using namespace std::tr1;
-using namespace std::tr1::placeholders;
 using namespace aliyun::tablestore::util;
 
 namespace aliyun {
@@ -50,200 +45,21 @@ namespace core {
 
 namespace {
 
-struct State
+string readEnv(const char* key)
 {
-    explicit State(Endpoint& ep, Credential& cr)
-      : mEndpoint(&ep),
-        mCredential(&cr)
-    {
-    }
-
-    Endpoint& endpoint() const
-    {
-        return *mEndpoint;
-    }
-
-    Credential& credential() const
-    {
-        return *mCredential;
-    }
-
-    function<State(const State&, const string& line)>& fn()
-    {
-        return mFn;
-    }
-
-private:
-    mutable Endpoint* mEndpoint;
-    mutable Credential* mCredential;
-    function<State(const State&, const string& line)> mFn;
-};
-
-bool isWhitespace(char c)
-{
-    return c == '\t' || c == ' ';
-}
-
-string trim(const string& in)
-{
-    const char* b = in.data();
-    const char* e = b + in.size() - 1;
-    for(; b <= e && isWhitespace(*b); ++b) {
-    }
-    for(; b <= e && isWhitespace(*e); --e) {
-    }
-    string res;
-    for(; b <= e; ++b) {
-        res.push_back(*b);
-    }
-    return res;
-}
-
-MemPiece extractTable(const MemPiece& line)
-{
-    if (line.startsWith(MemPiece::from("[")) && line.endsWith(MemPiece::from("]"))) {
-        return line.subpiece(1, line.length() - 2);
-    } else {
-        return MemPiece();
-    }
-}
-
-void extractKeyValue(MemPiece& key, MemPiece& val, const MemPiece& in)
-{
-    const uint8_t* b = in.data();
-    const uint8_t* e = b + in.length();
-
-    const uint8_t* i = b;
-    for(; i < e && !isWhitespace((char) *i) && *i != '='; ++i) {
-    }
-    key = MemPiece(b, i - b);
-    for(; i < e && isWhitespace(*i); ++i) {
-    }
-    OTS_ASSERT(i < e)((uintptr_t) i)((uintptr_t) e);
-    OTS_ASSERT(*i == '=')(*i);
-    ++i;
-    for(; i < e && isWhitespace(*i); ++i) {
-    }
-    val = MemPiece(i, e - i);
-}
-
-State expectTable(const State& state, const string& line);
-State fillEndpoint(const State& state, const string& line);
-State fillCredential(const State& state, const string& line);
-
-State fillEndpoint(const State& state, const string& line)
-{
-    string trimmed = trim(line);
-    if (trimmed.empty()) {
-        return state;
-    }
-    MemPiece table = extractTable(MemPiece::from(trimmed));
-    if (table.length() > 0) {
-        State nxtState = state;
-        if (table == MemPiece::from("credential")) {
-            nxtState.fn() = bind(fillCredential, _1, _2);
-        } else {
-            nxtState.fn() = bind(expectTable, _1, _2);
-        }
-        return nxtState;
-    } else {
-        MemPiece key;
-        MemPiece val;
-        extractKeyValue(key, val, MemPiece::from(trimmed));
-        if (key == MemPiece::from("endpoint")) {
-            state.endpoint().mutableEndpoint() =
-                val.subpiece(1, val.length() - 2).to<string>();
-        } else if (key == MemPiece::from("instance")) {
-            state.endpoint().mutableInstanceName() =
-                val.subpiece(1, val.length() - 2).to<string>();
-        } else {
-            OTS_ASSERT(false)(key.to<string>())(val.to<string>());
-        }
-        return state;
-    }
-}
-
-State fillCredential(const State& state, const string& line)
-{
-    string trimmed = trim(line);
-    if (trimmed.empty()) {
-        return state;
-    }
-    MemPiece table = extractTable(MemPiece::from(trimmed));
-    if (table.length() > 0) {
-        State nxtState = state;
-        nxtState.fn() = bind(expectTable, _1, _2);
-        return nxtState;
-    } else {
-        MemPiece key;
-        MemPiece val;
-        extractKeyValue(key, val, MemPiece::from(trimmed));
-        if (key == MemPiece::from("access-key-id")) {
-            state.credential().mutableAccessKeyId() =
-                val.subpiece(1, val.length() - 2).to<string>();
-        } else if (key == MemPiece::from("access-key-secret")) {
-            state.credential().mutableAccessKeySecret() =
-                val.subpiece(1, val.length() - 2).to<string>();
-        } else if (key == MemPiece::from("security-token")) {
-            state.credential().mutableSecurityToken() =
-                val.subpiece(1, val.length() - 2).to<string>();
-        } else {
-            OTS_ASSERT(false)(key.to<string>())(val.to<string>());
-        }
-        return state;
-    }
-}
-
-State expectTable(const State& state, const string& line)
-{
-    string trimmed = trim(line);
-    if (trimmed.empty()) {
-        return state;
-    }
-    MemPiece table = extractTable(MemPiece::from(trimmed));
-    if (table.length() > 0) {
-        if (table == MemPiece::from("endpoint")) {
-            State nxt = state;
-            nxt.fn() = bind(fillEndpoint, _1, _2);
-            return nxt;
-        } else if (table == MemPiece::from("credential")) {
-            State nxt = state;
-            nxt.fn() = bind(fillCredential, _1, _2);
-            return nxt;
-        } else {
-            return state;
-        }
-    } else {
-        return state;
-    }
+    char* val = getenv(key);
+    OTS_ASSERT(val != NULL);
+    return string(val);
 }
 
 } // namespace
 
 void read(Endpoint& ep, Credential& cr)
 {
-    {
-        Endpoint empty;
-        moveAssign(ep, util::move(empty));
-    }
-    {
-        Credential empty;
-        moveAssign(cr, util::move(empty));
-    }
-
-    ifstream fin("config.toml");
-    string line;
-    State state(ep, cr);
-    state.fn() = bind(expectTable, _1, _2);
-    for(;;) {
-        getline(fin, line);
-        if (!fin) {
-            break;
-        }
-        State nxtState = state.fn()(state, line);
-        state = nxtState;
-    }
-    fin.close();
+    ep.mutableEndpoint() = readEnv("OTS_ENDPOINT");
+    ep.mutableInstanceName() = readEnv("OTS_INSTANCE");
+    cr.mutableAccessKeyId() = readEnv("OTS_AK_ID");
+    cr.mutableAccessKeySecret() = readEnv("OTS_AK_SECRET");
 }
 
 } // namespace core
