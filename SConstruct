@@ -170,9 +170,8 @@ env.AddMethod(extract)
 flags = {
     'CFLAGS': [],
     'CXXFLAGS': [],
-    'CCFLAGS': ['-Wall', '-pthread', '-fPIC', '-g',
-                '-Wno-float-equal', '-fwrapv'],
-    'LINKFLAGS': ['-pthread', '-rdynamic', '-L%s' % env['LIB_DIR'].path]}
+    'CCFLAGS': ['-Wall', '-pthread', '-fPIC', '-g', '-fwrapv'],
+    'LINKFLAGS': ['-pthread', '-rdynamic']}
 if mode == 'debug':
     flags['CCFLAGS'] += ['-O0', '--coverage']
     flags['LINKFLAGS'] += ['--coverage']
@@ -197,7 +196,8 @@ else:
     assert False, 'unsupport compiler'
 
 env.MergeFlags(flags)
-env.AppendUnique(CPPPATH=[env['BUILD_DIR'], env['HEADER_DIR']])
+env.AppendUnique(CPPPATH = [env['BUILD_DIR'], env['HEADER_DIR']])
+env.AppendUnique(LIBPATH = [env['LIB_DIR']])
 
 _extLibs = set()
 _libDeps = {}
@@ -256,6 +256,7 @@ def program(env, target, source, **kwargs):
             libs = []
         cmd = [env['CXX'], '-o', target[0].path]
         cmd += env['LINKFLAGS']
+        cmd += ['-L%s' % x.path for x in env['LIBPATH']]
         cmd += [x.path for x in source]
         cmd += [('-l' + x) for x in libs]
         cmd = ' '.join(cmd)
