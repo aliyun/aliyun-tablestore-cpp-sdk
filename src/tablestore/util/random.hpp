@@ -47,8 +47,8 @@ public:
     virtual ~Random()
     {}
 
-    virtual int64_t next() =0;
-    virtual int64_t upperBound() const =0;
+    virtual uint64_t next() =0;
+    virtual uint64_t upperBound() const =0;
     virtual uint64_t seed() const =0;
 };
 
