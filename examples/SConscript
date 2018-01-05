@@ -43,3 +43,6 @@ env.program('auto_incr',
 env.program('async_list_table',
             env.Object(env.Glob('async_list_table.cpp')),
             LIBS=['tablestore_core_static'])
+env.program('sync_list_table_with_sts',
+            env.Object(env.Glob('sync_list_table_with_sts.cpp')),
+            LIBS=['tablestore_core_static'])
