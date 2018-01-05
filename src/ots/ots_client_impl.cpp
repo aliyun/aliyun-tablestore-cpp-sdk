@@ -573,11 +573,6 @@ void OTSClientImpl::ValidateResponse(
         OTS_THROW("", "OTSInvalidResponse", errorMessage.c_str()); 
     }
 
-    string respAuth;
-    if (!FindInMap(httpResponse.mResponseHeaders, kAuthorization, &respAuth)) {
-        string errorMessage = kAuthorization + " is not found";
-        OTS_THROW("", "OTSInvalidResponse", errorMessage.c_str());
-    }
     string respDate;
     if (!FindInMap(httpResponse.mResponseHeaders, kDate, &respDate)) {
         string errorMessage = kDate + " is invalid";
@@ -600,36 +595,6 @@ void OTSClientImpl::ValidateResponse(
         OTS_THROW("", "OTSInvalidResponse", errorMessage.c_str());
     }
 
-    // Parse authorization.
-    if (respAuth.size() < 4 || respAuth.substr(0,4) != "OTS ") {
-        string errorMessage = kAuthorization + " does not start with OTS";
-        OTS_THROW("", "OTSInvalidResponse", kAuthorization.c_str());
-    }
-    size_t pos = respAuth.find_first_of(':');
-    if (pos < 0) {
-        string errorMessage = kAuthorization + " format is invalid";
-        OTS_THROW("", "OTSInvalidResponse", errorMessage.c_str());
-    }
-    string respAccessId = respAuth.substr(4, pos-4);
-    if (respAccessId != mAccessId) {
-        OTS_THROW("", "OTSInvalidResponse", "accessid doesn't match");
-    }
-    string respSign = respAuth.substr(pos+1, respAuth.size()-pos+1);
-
-    // Make signature according to response header and URI.
-    string plainText, tmpDigest, signature;
-    map<string, string>::const_iterator iter = httpResponse.mResponseHeaders.begin();
-    for (; iter != httpResponse.mResponseHeaders.end(); ++iter) {
-        if ((iter->first).size() > 6 && (iter->first).substr(0, 5) == "x-ots") {
-            plainText += iter->first + ":" + iter->second + "\n"; 
-        }
-    }
-    plainText += "/" + operation;
-    HmacSha1(mAccessKey, plainText, &tmpDigest);
-    Base64Encode(tmpDigest, &signature);
-    if (respSign != signature) {
-        OTS_THROW("", "OTSInvalidResponse", "signature doesn't match");
-    }
 }
 
 void OTSClientImpl::ParseHttpResponse(
