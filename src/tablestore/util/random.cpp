@@ -88,22 +88,23 @@ private:
 
 uint64_t nextUint(Random& rng, uint64_t upper)
 {
+    OTS_ASSERT(upper > 0)(upper);
     const uint64_t bound = rng.upperBound();
     if (upper <= bound) {
         return rng.next() % upper;
     } else {
-        uint64_t oldUpper = upper;
+        uint64_t shiftUpper = upper;
         deque<uint64_t> segs;
-        for(; upper > bound; upper /= bound) {
+        for(; shiftUpper > bound; shiftUpper /= bound) {
             segs.push_back(rng.next());
         }
-        segs.push_back(rng.next() % upper);
+        segs.push_back(rng.next() % shiftUpper);
         uint64_t res = 0;
         for(; !segs.empty(); segs.pop_back()) {
             res *= bound;
             res += segs.back();
         }
-        return res % oldUpper;
+        return res % upper;
     }
 }
 
@@ -127,13 +128,10 @@ int64_t nextInt(Random& rng, int64_t exclusiveUpper)
 
 int64_t nextInt(Random& rng, int64_t inclusiveLower, int64_t exclusiveUpper)
 {
-    uint64_t range = exclusiveUpper;
-    if (inclusiveLower >= 0) {
-        range -= inclusiveLower;
-    } else {
-        range += static_cast<uint64_t>(-inclusiveLower);
-    }
-    OTS_ASSERT(range > 0)(range);
+    OTS_ASSERT(exclusiveUpper > inclusiveLower)
+        (inclusiveLower)
+        (exclusiveUpper);
+    uint64_t range = static_cast<uint64_t>(exclusiveUpper) - static_cast<uint64_t>(inclusiveLower);
     int64_t res = nextUint(rng, range);
     res += inclusiveLower;
     return res;

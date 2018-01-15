@@ -189,5 +189,29 @@ void Random_Large(const string&)
 } // namespace
 TESTA_DEF_JUNIT_LIKE1(Random_Large);
 
+namespace {
+void Random_NegativeLower(const string&)
+{
+    auto_ptr<random::Random> rng(random::newDefault());
+    deque<int64_t> samples;
+    for(int64_t i = 0; i < 10000; ++i) {
+        samples.push_back(random::nextInt(*rng, -1, 1));
+    }
+
+    FOREACH_ITER(i, samples) {
+        const int64_t x = *i;
+        TESTA_ASSERT(x >= -1 && x < 1)
+            (x)
+            .issue();
+    }
+
+    bool thereBeNegOne = (find(samples.begin(), samples.end(), -1) != samples.end());
+    TESTA_ASSERT(thereBeNegOne).issue();
+    bool thereBeZero = (find(samples.begin(), samples.end(), 0) != samples.end());
+    TESTA_ASSERT(thereBeZero).issue();
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(Random_NegativeLower);
+
 } // namespace tablestore
 } // namespace aliyun
