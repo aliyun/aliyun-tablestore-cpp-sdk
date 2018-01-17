@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/util/timestamp.hpp"
 #include "testa/testa.hpp"
 #include <boost/chrono/chrono.hpp>
-#include <boost/chrono/chrono_io.hpp>
 #include <deque>
 #include <string>
 
