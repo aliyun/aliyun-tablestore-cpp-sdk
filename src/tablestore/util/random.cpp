@@ -31,17 +31,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "random.hpp"
 #include "tablestore/util/assert.hpp"
+#include "tablestore/util/timestamp.hpp"
+#include <boost/random/mersenne_twister.hpp>
 #include <string>
-#include <cstdlib>
-#include <cstdio>
-#include <cerrno>
-#include <cstring>
-extern "C" {
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-}
+#include <deque>
 
 using namespace std;
 
@@ -57,25 +50,24 @@ class Default : public Random
 public:
     explicit Default(unsigned int seed)
       : mSeed(seed)
-    {}
-    explicit Default()
-      : mSeed(0)
     {
-        int fd = open("/dev/urandom", O_RDONLY);
-        OTS_ASSERT(fd >= 0)(errno)(string(strerror(errno)));
-        {
-            int64_t ret = read(fd, &mSeed, sizeof(mSeed));
-            OTS_ASSERT(ret >= 0)(errno)(string(strerror(errno)));
-        }
-        {
-            int ret = close(fd);
-            OTS_ASSERT(ret == 0)(errno)(string(strerror(errno)));
-        }
+        init();
+    }
+    explicit Default()
+      : mSeed(UtcTime::now().toUsec())
+    {
+        init();
     }
 
-    int64_t upperBound() const
+    uint64_t upperBound() const
     {
-        return RAND_MAX;
+        uint64_t up = mRng.max();
+        return up + 1;
+    }
+
+    uint64_t next()
+    {
+        return mRng();
     }
 
     uint64_t seed() const
@@ -83,14 +75,38 @@ public:
         return mSeed;
     }
 
-    int64_t next()
+private:
+    void init()
     {
-        return rand_r(&mSeed);
+        mRng.seed(static_cast<uint32_t>(mSeed));
     }
 
 private:
-    unsigned int mSeed;
+    uint64_t mSeed;
+    boost::mt19937 mRng;
 };
+
+uint64_t nextUint(Random& rng, uint64_t upper)
+{
+    OTS_ASSERT(upper > 0)(upper);
+    const uint64_t bound = rng.upperBound();
+    if (upper <= bound) {
+        return rng.next() % upper;
+    } else {
+        uint64_t shiftUpper = upper;
+        deque<uint64_t> segs;
+        for(; shiftUpper > bound; shiftUpper /= bound) {
+            segs.push_back(rng.next());
+        }
+        segs.push_back(rng.next() % shiftUpper);
+        uint64_t res = 0;
+        for(; !segs.empty(); segs.pop_back()) {
+            res *= bound;
+            res += segs.back();
+        }
+        return res % upper;
+    }
+}
 
 } // namespace
 
@@ -107,14 +123,18 @@ Random* newDefault(uint64_t seed)
 int64_t nextInt(Random& rng, int64_t exclusiveUpper)
 {
     OTS_ASSERT(exclusiveUpper > 0)(exclusiveUpper);
-    return rng.next() % exclusiveUpper;
+    return nextUint(rng, exclusiveUpper);
 }
 
 int64_t nextInt(Random& rng, int64_t inclusiveLower, int64_t exclusiveUpper)
 {
-    int64_t range = exclusiveUpper - inclusiveLower;
-    OTS_ASSERT(range > 0)(range);
-    return inclusiveLower + rng.next() % range;
+    OTS_ASSERT(exclusiveUpper > inclusiveLower)
+        (inclusiveLower)
+        (exclusiveUpper);
+    uint64_t range = static_cast<uint64_t>(exclusiveUpper) - static_cast<uint64_t>(inclusiveLower);
+    int64_t res = nextUint(rng, range);
+    res += inclusiveLower;
+    return res;
 }
 
 } // namespace random
