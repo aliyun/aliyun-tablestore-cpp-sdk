@@ -31,16 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "timestamp.hpp"
 #include "tablestore/util/prettyprint.hpp"
+#include <boost/chrono/chrono.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/system/error_code.hpp>
 #include <deque>
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-extern "C" {
-#include <sys/time.h>
-}
 
 using namespace std;
+using namespace boost::chrono;
 
 namespace aliyun {
 namespace tablestore {
@@ -48,27 +45,14 @@ namespace util {
 
 void sleepFor(const Duration& d)
 {
-    sleepUntil(MonotonicTime::now() + d);
+    boost::this_thread::sleep_for(microseconds(d.toUsec()));
 }
 
 void sleepUntil(const MonotonicTime& target)
 {
-    int64_t tm = target.toUsec();
-    if (tm > 0) {
-        timespec ts;
-        ts.tv_sec = tm / kUsecPerSec;
-        ts.tv_nsec = tm % kUsecPerSec * kNsecPerUsec;
-        while (true) {
-            int r = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
-            if (r == 0) {
-                break;
-            } else if (r == EINTR) {
-                // interrupted by a signal handler. do nothing but retry.
-            } else {
-                int e = errno;
-                OTS_ASSERT(false)(r)(e)(string(strerror(e)));
-            }
-        }
+    Duration d = target - MonotonicTime::now();
+    if (d > Duration::fromUsec(0)) {
+        sleepFor(d);
     }
 }
 
@@ -116,11 +100,12 @@ void MonotonicTime::prettyPrint(string& out) const
 
 MonotonicTime MonotonicTime::now()
 {
-    timespec tm;
-    int r = clock_gettime(CLOCK_MONOTONIC, &tm);
-    OTS_ASSERT(r == 0)(r)(string(strerror(errno)));
-    int64_t usec = tm.tv_sec * kUsecPerSec + tm.tv_nsec / kNsecPerUsec;
-    return MonotonicTime(usec);
+    boost::system::error_code err;
+    steady_clock::time_point sc = steady_clock::now(err);
+    OTS_ASSERT(!err)(err.message());
+    steady_clock::duration d = sc.time_since_epoch();
+    microseconds usec = duration_cast<microseconds>(d);
+    return MonotonicTime(usec.count());
 }
 
 
@@ -199,11 +184,12 @@ void UtcTime::prettyPrint(string& out) const
 
 UtcTime UtcTime::now()
 {
-    timeval tv;
-    int r = gettimeofday(&tv, NULL);
-    OTS_ASSERT(r == 0)(r)(string(strerror(errno)));
-    int64_t usec = tv.tv_sec * kUsecPerSec + tv.tv_usec;
-    return UtcTime(usec);
+    boost::system::error_code err;
+    system_clock::time_point sc = system_clock::now(err);
+    OTS_ASSERT(!err)(err.message());
+    system_clock::duration d = sc.time_since_epoch();
+    microseconds usec = duration_cast<microseconds>(d);
+    return UtcTime(usec.count());
 }
 
 } // namespace util

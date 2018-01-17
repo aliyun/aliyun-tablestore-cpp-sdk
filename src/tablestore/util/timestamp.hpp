@@ -37,8 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <stdint.h>
 
-struct timeval;
-
 namespace aliyun {
 namespace tablestore {
 namespace util {
@@ -350,10 +348,6 @@ public:
         return *this;
     }
 
-    static UtcTime fromTimeval(const timeval& tv) throw()
-    {
-        return UtcTime(tv.tv_sec * kUsecPerSec + tv.tv_usec);
-    }
     static UtcTime fromUsec(int64_t usec) throw()
     {
         return UtcTime(usec);
