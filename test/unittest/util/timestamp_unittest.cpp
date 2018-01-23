@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/timestamp.hpp"
 #include "testa/testa.hpp"
+#include <boost/chrono/chrono.hpp>
 #include <deque>
 #include <string>
 
@@ -208,39 +209,21 @@ void MonotonicTime_ordering(const string&)
 }
 TESTA_DEF_JUNIT_LIKE1(MonotonicTime_ordering);
 
-namespace {
-
-template<typename X, typename Y, typename Z>
-void CheckRound(X a, Y b, Z diff)
-{
-    TESTA_ASSERT(b - diff < a)(a)(b)(diff).issue();
-    TESTA_ASSERT(a < b + diff)(a)(b)(diff).issue();
-}
-
-} // namespace
-
 void MonotonicTime_now(const string&)
 {
     util::MonotonicTime a = util::MonotonicTime::now();
     util::sleepFor(util::Duration::fromSec(1));
     util::MonotonicTime b = util::MonotonicTime::now();
     util::Duration d = b - a;
-    CheckRound(d, util::Duration::fromSec(1),
-        util::Duration::fromMsec(20));
+    TESTA_ASSERT(d >= util::Duration::fromSec(1))
+        (d)
+        .issue();
+    TESTA_ASSERT(d < util::Duration::fromSec(1) + util::Duration::fromMsec(20))
+        (d)
+        .issue();
 }
 TESTA_DEF_JUNIT_LIKE1(MonotonicTime_now);
 
-
-void UtcTime_from_timeval(const string&)
-{
-    timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 1;
-    util::UtcTime tm = util::UtcTime::fromTimeval(tv);
-    TESTA_ASSERT(tm.toUsec() == util::kUsecPerSec + 1)
-        (tm).issue();
-}
-TESTA_DEF_JUNIT_LIKE1(UtcTime_from_timeval);
 
 void UtcTime_ordering(const string&)
 {
@@ -294,6 +277,17 @@ void UtcTime_iso8601(const string&)
         (x).issue();
 }
 TESTA_DEF_JUNIT_LIKE1(UtcTime_iso8601);
+
+void UtcTime_now(const string&)
+{
+    util::UtcTime now = util::UtcTime::now();
+    util::UtcTime y2k = util::UtcTime::fromSec(946656000);
+    TESTA_ASSERT(now > y2k)
+        (pp::prettyPrint(now))
+        (pp::prettyPrint(y2k))
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(UtcTime_now);
 
 } // namespace tablestore
 } // namespace aliyun
