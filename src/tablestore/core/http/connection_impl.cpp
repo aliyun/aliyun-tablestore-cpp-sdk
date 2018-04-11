@@ -794,6 +794,7 @@ void Scheduler::close()
         if (!mIdleConnections.pop(conn)) {
             break;
         }
+        auto_ptr<ConnectionBase> p(conn);
         conn->gentlyClose();
     }
 
@@ -831,6 +832,7 @@ void Scheduler::destroy(ConnectionBase* conn)
     OTS_LOG_DEBUG(mLogger)
         ("Connection", tracker)
         .what("CONN: destroy a connection");
+    auto_ptr<ConnectionBase> p(conn);
     conn->gentlyClose();
     int64_t x = mBusyCount.fetch_sub(1, boost::memory_order_acq_rel);
     OTS_ASSERT(x >= 1)(x);
