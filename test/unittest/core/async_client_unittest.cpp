@@ -894,24 +894,11 @@ TESTA_DEF_JUNIT_LIKE1(AsyncClient_Sts);
 namespace pp {
 namespace impl {
 
-template<class T>
-struct PrettyPrinterCategory<
-    T, typename mp::EnableIf<
-           std::tr1::is_same<
-               T, com::aliyun::tablestore::protocol::ListTableResponse>::value,
-           void>
-    ::Type>
-{
-    typedef com::aliyun::tablestore::protocol::ListTableResponse Category;
-};
-
 template<>
-struct PrettyPrinter<
-    com::aliyun::tablestore::protocol::ListTableResponse,
-    com::aliyun::tablestore::protocol::ListTableResponse>
+struct PrettyPrinter<com::aliyun::tablestore::protocol::ListTableResponse, void>
 {
     void operator()(
-        std::string& out,
+        string& out,
         com::aliyun::tablestore::protocol::ListTableResponse resp) const
     {
         out.push_back('[');

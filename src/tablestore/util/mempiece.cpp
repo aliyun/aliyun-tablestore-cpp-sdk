@@ -49,7 +49,7 @@ void MemPiece::prettyPrint(string& out) const
     const uint8_t* b = data();
     const uint8_t* e = b + length();
     for(; b < e; ++b) {
-        pp::impl::Character::prettyPrint(out, static_cast<char>(*b));
+        pp::prettyPrint(out, static_cast<char>(*b));
     }
     out.append("\"");
 }

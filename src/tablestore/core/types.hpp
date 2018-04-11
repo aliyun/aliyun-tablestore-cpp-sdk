@@ -170,6 +170,11 @@ public:
         return *this;
     }
 
+    void prettyPrint(std::string& out) const
+    {
+        IVector<Elem>::prettyPrint(out);
+    }
+
     int64_t size() const
     {
         return mElems.size();
@@ -2934,210 +2939,114 @@ private:
 namespace pp {
 namespace impl {
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::Action>::value, void>::Type>
-{
-    typedef aliyun::tablestore::core::Action Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::Action, aliyun::tablestore::core::Action>
+struct PrettyPrinter<aliyun::tablestore::core::Action, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::Action) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::PrimaryKeyType>::value, void>::Type>
-{
-    typedef aliyun::tablestore::core::PrimaryKeyType Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyType, aliyun::tablestore::core::PrimaryKeyType>
+struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyType, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::PrimaryKeyType) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<
-    T,
-    typename mp::EnableIf<
-        std::tr1::is_same<
-            T,
-            aliyun::tablestore::core::PrimaryKeyColumnSchema::Option>::value,
-        void>::Type>
-{
-    typedef aliyun::tablestore::core::PrimaryKeyColumnSchema::Option Category;
-};
-
 template<>
 struct PrettyPrinter<
-    aliyun::tablestore::core::PrimaryKeyColumnSchema::Option,
-    aliyun::tablestore::core::PrimaryKeyColumnSchema::Option>
+    aliyun::tablestore::core::PrimaryKeyColumnSchema::Option, void>
 {
     void operator()(
         std::string&,
         aliyun::tablestore::core::PrimaryKeyColumnSchema::Option) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::BloomFilterType>::value, void>::Type>
-{
-    typedef aliyun::tablestore::core::BloomFilterType Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::BloomFilterType, aliyun::tablestore::core::BloomFilterType>
+struct PrettyPrinter<aliyun::tablestore::core::BloomFilterType, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::BloomFilterType) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::PrimaryKeyValue::Category>::value, void>::Type>
+template<>
+struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyValue::Category, void>
 {
-    typedef typename aliyun::tablestore::core::PrimaryKeyValue::Category Category;
+    void operator()(
+        std::string&, aliyun::tablestore::core::PrimaryKeyValue::Category) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::PrimaryKeyValue::Category, aliyun::tablestore::core::PrimaryKeyValue::Category>
-{
-    void operator()(std::string&, aliyun::tablestore::core::PrimaryKeyValue::Category) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::CompareResult>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::CompareResult Category;
-};
-
-template<>
-struct PrettyPrinter<aliyun::tablestore::core::CompareResult, aliyun::tablestore::core::CompareResult>
+struct PrettyPrinter<aliyun::tablestore::core::CompareResult, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::CompareResult) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::TableStatus>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::TableStatus Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::TableStatus, aliyun::tablestore::core::TableStatus>
+struct PrettyPrinter<aliyun::tablestore::core::TableStatus, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::TableStatus) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::RowChange::ReturnType>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::RowChange::ReturnType Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::RowChange::ReturnType, aliyun::tablestore::core::RowChange::ReturnType>
+struct PrettyPrinter<aliyun::tablestore::core::RowChange::ReturnType, void>
 {
     void operator()(std::string&, aliyun::tablestore::core::RowChange::ReturnType) const;
 };
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::AttributeValue::Category>::value, void>::Type>
+template<>
+struct PrettyPrinter<aliyun::tablestore::core::AttributeValue::Category, void>
 {
-    typedef typename aliyun::tablestore::core::AttributeValue::Category Category;
+    void operator()(
+        std::string&, aliyun::tablestore::core::AttributeValue::Category) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::AttributeValue::Category, aliyun::tablestore::core::AttributeValue::Category>
+struct PrettyPrinter<
+    aliyun::tablestore::core::Condition::RowExistenceExpectation, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::AttributeValue::Category) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::Condition::RowExistenceExpectation>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::Condition::RowExistenceExpectation Category;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::Condition::RowExistenceExpectation) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::Condition::RowExistenceExpectation, aliyun::tablestore::core::Condition::RowExistenceExpectation>
+struct PrettyPrinter<aliyun::tablestore::core::SingleColumnCondition::Relation, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::Condition::RowExistenceExpectation) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::SingleColumnCondition::Relation>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::SingleColumnCondition::Relation Category;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::SingleColumnCondition::Relation) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::SingleColumnCondition::Relation, aliyun::tablestore::core::SingleColumnCondition::Relation>
+struct PrettyPrinter<
+    aliyun::tablestore::core::CompositeColumnCondition::Operator, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::SingleColumnCondition::Relation) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::CompositeColumnCondition::Operator>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::CompositeColumnCondition::Operator Category;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::CompositeColumnCondition::Operator) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::CompositeColumnCondition::Operator, aliyun::tablestore::core::CompositeColumnCondition::Operator>
+struct PrettyPrinter<aliyun::tablestore::core::ColumnCondition::Type, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::CompositeColumnCondition::Operator) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::ColumnCondition::Type>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::ColumnCondition::Type Category;
+    void operator()(
+        std::string&, aliyun::tablestore::core::ColumnCondition::Type) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::ColumnCondition::Type, aliyun::tablestore::core::ColumnCondition::Type>
+struct PrettyPrinter<
+    aliyun::tablestore::core::RangeQueryCriterion::Direction, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::ColumnCondition::Type) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::RangeQueryCriterion::Direction>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::RangeQueryCriterion::Direction Category;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::RangeQueryCriterion::Direction) const;
 };
 
 template<>
-struct PrettyPrinter<aliyun::tablestore::core::RangeQueryCriterion::Direction, aliyun::tablestore::core::RangeQueryCriterion::Direction>
+struct PrettyPrinter<
+    aliyun::tablestore::core::RowUpdateChange::Update::Type, void>
 {
-    void operator()(std::string&, aliyun::tablestore::core::RangeQueryCriterion::Direction) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::core::RowUpdateChange::Update::Type>::value, void>::Type>
-{
-    typedef typename aliyun::tablestore::core::RowUpdateChange::Update::Type Category;
-};
-
-template<>
-struct PrettyPrinter<aliyun::tablestore::core::RowUpdateChange::Update::Type, aliyun::tablestore::core::RowUpdateChange::Update::Type>
-{
-    void operator()(std::string&, aliyun::tablestore::core::RowUpdateChange::Update::Type) const;
-};
-
-template<class T>
-struct PrettyPrinterCategory<
-    T,
-    typename mp::EnableIf<
-        std::tr1::is_same<
-            T,
-            aliyun::tablestore::util::Result<
-                aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-                aliyun::tablestore::core::OTSError> >::value,
-        void>::Type>
-{
-    typedef typename aliyun::tablestore::util::Result<
-        aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::OTSError> Category;
+    void operator()(
+        std::string&,
+        aliyun::tablestore::core::RowUpdateChange::Update::Type) const;
 };
 
 template<>
@@ -3145,9 +3054,7 @@ struct PrettyPrinter<
     aliyun::tablestore::util::Result<
         aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
         aliyun::tablestore::core::OTSError>,
-    aliyun::tablestore::util::Result<
-        aliyun::tablestore::util::Optional<aliyun::tablestore::core::Row>,
-        aliyun::tablestore::core::OTSError> >
+    void>
 {
     void operator()(
         std::string&,

@@ -52,7 +52,7 @@ using namespace aliyun::tablestore::core;
 namespace pp {
 namespace impl {
 
-void PrettyPrinter<Action, Action>::operator()(string& out, Action act) const
+void PrettyPrinter<Action, void>::operator()(string& out, Action act) const
 {
     switch(act) {
     case kApi_CreateTable:
@@ -97,7 +97,7 @@ void PrettyPrinter<Action, Action>::operator()(string& out, Action act) const
     }
 }
 
-void PrettyPrinter<PrimaryKeyType, PrimaryKeyType>::operator()(
+void PrettyPrinter<PrimaryKeyType, void>::operator()(
     string& out, PrimaryKeyType pkt) const
 {
     switch(pkt) {
@@ -113,9 +113,7 @@ void PrettyPrinter<PrimaryKeyType, PrimaryKeyType>::operator()(
     }
 }
 
-void PrettyPrinter<
-    PrimaryKeyColumnSchema::Option,
-    PrimaryKeyColumnSchema::Option>::operator()(
+void PrettyPrinter<PrimaryKeyColumnSchema::Option, void>::operator()(
     string& out, PrimaryKeyColumnSchema::Option pko) const
 {
     switch(pko) {
@@ -125,7 +123,7 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<BloomFilterType, BloomFilterType>::operator()(
+void PrettyPrinter<BloomFilterType, void>::operator()(
     string& out, BloomFilterType bft) const
 {
     switch(bft) {
@@ -141,9 +139,8 @@ void PrettyPrinter<BloomFilterType, BloomFilterType>::operator()(
     }
 }
 
-void PrettyPrinter<
-    PrimaryKeyValue::Category, PrimaryKeyValue::Category>::operator()
-    (string& out, PrimaryKeyValue::Category cat) const
+void PrettyPrinter<PrimaryKeyValue::Category, void>::operator()(
+    string& out, PrimaryKeyValue::Category cat) const
 {
     switch(cat) {
     case PrimaryKeyValue::kNone:
@@ -170,7 +167,7 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<CompareResult, CompareResult>::operator()(
+void PrettyPrinter<CompareResult, void>::operator()(
     string& out, CompareResult cr) const
 {
     switch(cr) {
@@ -189,7 +186,7 @@ void PrettyPrinter<CompareResult, CompareResult>::operator()(
     }
 }
 
-void PrettyPrinter<TableStatus, TableStatus>::operator()(
+void PrettyPrinter<TableStatus, void>::operator()(
     string& out, TableStatus ts) const
 {
     switch(ts) {
@@ -211,7 +208,7 @@ void PrettyPrinter<TableStatus, TableStatus>::operator()(
     }
 }
 
-void PrettyPrinter<RowChange::ReturnType, RowChange::ReturnType>::operator()(
+void PrettyPrinter<RowChange::ReturnType, void>::operator()(
     string& out, RowChange::ReturnType ts) const
 {
     switch(ts) {
@@ -224,9 +221,8 @@ void PrettyPrinter<RowChange::ReturnType, RowChange::ReturnType>::operator()(
     }
 }
 
-void PrettyPrinter<
-    AttributeValue::Category, AttributeValue::Category>::operator()
-    (string& out, AttributeValue::Category cat) const
+void PrettyPrinter<AttributeValue::Category, void>::operator()(
+    string& out, AttributeValue::Category cat) const
 {
     switch(cat) {
     case AttributeValue::kNone:
@@ -250,10 +246,8 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<
-    Condition::RowExistenceExpectation,
-    Condition::RowExistenceExpectation>::operator()
-    (string& out, Condition::RowExistenceExpectation exp) const
+void PrettyPrinter<Condition::RowExistenceExpectation, void>::operator()(
+    string& out, Condition::RowExistenceExpectation exp) const
 {
     switch(exp) {
     case Condition::kIgnore:
@@ -268,10 +262,8 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<
-    SingleColumnCondition::Relation,
-    SingleColumnCondition::Relation>::operator()
-    (string& out, SingleColumnCondition::Relation exp) const
+void PrettyPrinter<SingleColumnCondition::Relation, void>::operator()(
+    string& out, SingleColumnCondition::Relation exp) const
 {
     switch(exp) {
     case SingleColumnCondition::kEqual:
@@ -295,10 +287,8 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<
-    CompositeColumnCondition::Operator,
-    CompositeColumnCondition::Operator>::operator()
-    (string& out, CompositeColumnCondition::Operator op) const
+void PrettyPrinter<CompositeColumnCondition::Operator, void>::operator()(
+    string& out, CompositeColumnCondition::Operator op) const
 {
     switch(op) {
     case CompositeColumnCondition::kNot:
@@ -313,8 +303,8 @@ void PrettyPrinter<
     }
 }
 
-void PrettyPrinter<ColumnCondition::Type, ColumnCondition::Type>::operator()
-    (string& out, ColumnCondition::Type cct) const
+void PrettyPrinter<ColumnCondition::Type, void>::operator()(
+    string& out, ColumnCondition::Type cct) const
 {
     switch(cct) {
     case ColumnCondition::kSingle:
@@ -326,8 +316,8 @@ void PrettyPrinter<ColumnCondition::Type, ColumnCondition::Type>::operator()
     }
 }
 
-void PrettyPrinter<RangeQueryCriterion::Direction, RangeQueryCriterion::Direction>::operator()
-    (string& out, RangeQueryCriterion::Direction dir) const
+void PrettyPrinter<RangeQueryCriterion::Direction, void>::operator()(
+    string& out, RangeQueryCriterion::Direction dir) const
 {
     switch(dir) {
     case RangeQueryCriterion::FORWARD:
@@ -339,8 +329,8 @@ void PrettyPrinter<RangeQueryCriterion::Direction, RangeQueryCriterion::Directio
     }
 }
 
-void PrettyPrinter<RowUpdateChange::Update::Type, RowUpdateChange::Update::Type>::operator()
-    (string& out, RowUpdateChange::Update::Type type) const
+void PrettyPrinter<RowUpdateChange::Update::Type, void>::operator()(
+    string& out, RowUpdateChange::Update::Type type) const
 {
     switch(type) {
     case RowUpdateChange::Update::kPut:
@@ -355,9 +345,8 @@ void PrettyPrinter<RowUpdateChange::Update::Type, RowUpdateChange::Update::Type>
     }
 }
 
-void PrettyPrinter<
-    Result<Optional<Row>, OTSError>, Result<Optional<Row>, OTSError> >::operator()(
-        string& out, const Result<Optional<Row>, OTSError>& res) const
+void PrettyPrinter<Result<Optional<Row>, OTSError>, void>::operator()(
+    string& out, const Result<Optional<Row>, OTSError>& res) const
 {
     if (res.ok()) {
         out.append("{\"Ok\":");

@@ -33,39 +33,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TABLESTORE_UTIL_PRETTYPRINT_HPP
 #define TABLESTORE_UTIL_PRETTYPRINT_HPP
 
+#include "metaprogramming.hpp"
 #include <string>
 
 namespace pp {
 
 namespace impl {
 
-template<class Category, class T>
-struct PrettyPrinter
-{
-    void operator()(std::string& out, const T& x) const
-    {
-        x.prettyPrint(out);
-    }
-};
-
-struct DefaultCategory {};
-
-template<class T, class Enable = void>
-struct PrettyPrinterCategory
-{
-    typedef DefaultCategory Category;
-};
+template<class T, class E=void>
+struct PrettyPrinter;
 
 } // namespace impl
-} // namespace pp
-
-namespace pp {
 
 template<class T>
 void prettyPrint(std::string& out, const T& x)
 {
-    typedef typename impl::PrettyPrinterCategory<T>::Category Category;
-    impl::PrettyPrinter<Category, T> p;
+    impl::PrettyPrinter<typename mp::RemoveCvref<T>::Type> p;
     p(out, x);
 }
 
@@ -73,13 +56,12 @@ template<class T>
 std::string prettyPrint(const T& x)
 {
     std::string res;
-    prettyPrint(res, x);
+    prettyPrint<T>(res, x);
     return res;
 }
 
 } // namespace pp
 
 #include "prettyprint.ipp"
-
 
 #endif

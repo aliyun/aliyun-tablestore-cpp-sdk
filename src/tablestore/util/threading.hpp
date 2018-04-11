@@ -147,14 +147,8 @@ private:
 namespace pp {
 namespace impl {
 
-template<class T>
-struct PrettyPrinterCategory<T, typename mp::EnableIf<std::tr1::is_same<T, aliyun::tablestore::util::Semaphore::Status>::value, void>::Type>
-{
-    typedef aliyun::tablestore::util::Semaphore::Status Category;
-};
-
 template<>
-struct PrettyPrinter<aliyun::tablestore::util::Semaphore::Status, aliyun::tablestore::util::Semaphore::Status>
+struct PrettyPrinter<aliyun::tablestore::util::Semaphore::Status, void>
 {
     void operator()(std::string&, aliyun::tablestore::util::Semaphore::Status) const;
 };

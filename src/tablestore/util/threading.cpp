@@ -43,7 +43,7 @@ namespace pp {
 namespace impl {
 
 typedef aliyun::tablestore::util::Semaphore Semaphore;
-void PrettyPrinter<Semaphore::Status, Semaphore::Status>::operator()(
+void PrettyPrinter<Semaphore::Status, void>::operator()(
     string& out, Semaphore::Status st) const
 {
     switch(st) {
