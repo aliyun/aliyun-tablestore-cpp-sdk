@@ -43,23 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace mp {
 
-template<class Enable, class T>
-struct EnableIfExists
-{
-    typedef T Type;
-};
-
-
-template<bool Enable, class T>
-struct EnableIf {};
-
-template<class T>
-struct EnableIf<true, T>
-{
-    typedef T Type;
-};
-
-
+template<class T> class TellType;
 
 template<class Enable>
 struct VoidIfExists
@@ -67,10 +51,8 @@ struct VoidIfExists
     typedef void Type;
 };
 
-
-template<bool Enable>
+template<bool enable>
 struct VoidIf;
-
 template<>
 struct VoidIf<true>
 {
@@ -81,6 +63,16 @@ template<class T>
 struct IsInteger
 {
     static const bool value = false;
+};
+template<>
+struct IsInteger<int8_t>
+{
+    static const bool value = true;
+};
+template<>
+struct IsInteger<uint8_t>
+{
+    static const bool value = true;
 };
 template<>
 struct IsInteger<int16_t>
@@ -113,6 +105,13 @@ struct IsInteger<uint64_t>
     static const bool value = true;
 };
 
+
+template<class T>
+#if __cplusplus < 201103L
+struct IsScalar: public std::tr1::is_scalar<T> {};
+#else
+struct IsScalar: public std::is_scalar<T> {};
+#endif
 
 template<class T>
 #if __cplusplus < 201103L

@@ -118,15 +118,10 @@ MoveHolder<T> move(T& val)
 namespace impl {
 
 template<class Category, class T>
-struct MoveAssignment {};
+struct MoveAssign {};
 
-struct Moveable {};
-
-template<class T, class Enable = void>
-struct MoveCategory
-{
-    typedef Moveable Category;
-};
+template<class T, class E = void>
+struct MoveCategory;
 
 } // namespace impl
 
@@ -134,8 +129,10 @@ template<class T>
 void moveAssign(T& to, const MoveHolder<T>& from) throw()
 {
     typedef typename impl::MoveCategory<T>::Category Category;
-    impl::MoveAssignment<Category, T> f;
-    f(to, from);
+    impl::MoveAssign<Category, T> f;
+    if (&to != &*from) {
+        f(to, from);
+    }
 }
 
 } // namespace util

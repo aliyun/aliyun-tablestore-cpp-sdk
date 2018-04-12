@@ -41,36 +41,95 @@ namespace tablestore {
 namespace util {
 namespace impl {
 
-struct ClearSwapable {};
 struct Copyable {};
+struct Moveable {};
+struct SmartPtr {};
+struct ClearSwapable {};
 
 template<class T>
-struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_arithmetic<T>::value, void>::Type>
+struct MoveCategory<
+    T,
+    typename mp::VoidIf<mp::IsScalar<T>::value>::Type>
 {
     typedef Copyable Category;
 };
-template<class T>
-struct MoveCategory<T, typename mp::EnableIf<std::tr1::is_enum<T>::value, void>::Type>
+
+
+template<class T, T& (T::*)(const util::MoveHolder<T>&)>
+struct _IsMoveAssignment
 {
-    typedef Copyable Category;
+    typedef void Type;
+};
+
+template<class T, class E = void>
+struct HasMoveAssignment
+{
+    static const bool value = false;
+};
+template<class T>
+struct HasMoveAssignment<T, typename _IsMoveAssignment<T, &T::operator= >::Type>
+{
+    static const bool value = true;
 };
 
 template<class T>
-struct MoveCategory<T, typename mp::EnableIfExists<typename T::value_type, void>::Type>
+struct MoveCategory<
+    T,
+    typename mp::VoidIf<HasMoveAssignment<T>::value>::Type>
+{
+    typedef Moveable Category;
+};
+
+template<class T, void (T::*)()>
+struct _IsClear
+{
+    typedef void Type;
+};
+template<class T, class E = void>
+struct HasClear
+{
+    static const bool value = false;
+};
+template<class T>
+struct HasClear<T, typename _IsClear<T, &T::clear>::Type>
+{
+    static const bool value = true;
+};
+
+template<class T, void (T::*)(T&)>
+struct _IsSwap
+{
+    typedef void Type;
+};
+template<class T, class E = void>
+struct HasSwap
+{
+    static const bool value = false;
+};
+template<class T>
+struct HasSwap<T, typename _IsSwap<T, &T::swap>::Type>
+{
+    static const bool value = true;
+};
+
+template<class T>
+struct MoveCategory<
+    T,
+    typename mp::VoidIf<HasClear<T>::value && HasSwap<T>::value>::Type>
 {
     typedef ClearSwapable Category;
 };
 
-struct SmartPtr {};
-
 template<class T>
-struct MoveCategory<T, typename mp::EnableIfExists<typename T::element_type, void>::Type>
+struct MoveCategory<
+    T,
+    typename mp::VoidIf<mp::IsSmartPtr<T>::value>::Type>
 {
     typedef SmartPtr Category;
 };
 
 template<class T>
-struct MoveAssignment<Moveable, T>
+struct MoveAssign<Moveable, T>
 {
     void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
@@ -79,7 +138,7 @@ struct MoveAssignment<Moveable, T>
 };
 
 template<class T>
-struct MoveAssignment<ClearSwapable, T>
+struct MoveAssign<ClearSwapable, T>
 {
     void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
@@ -89,7 +148,7 @@ struct MoveAssignment<ClearSwapable, T>
 };
 
 template<class T>
-struct MoveAssignment<Copyable, T>
+struct MoveAssign<Copyable, T>
 {
     void operator()(T& to, const MoveHolder<T>& from) const throw()
     {
@@ -98,12 +157,14 @@ struct MoveAssignment<Copyable, T>
 };
 
 template<class T>
-struct MoveAssignment<SmartPtr, T>
+struct MoveAssign<SmartPtr, T>
 {
     void operator()(T& to, const MoveHolder<T>& from) const
     {
-        to = *from;
-        from->reset();
+        if (to.get() != from->get()) {
+            to = *from;
+            from->reset();
+        }
     }
 };
 

@@ -63,19 +63,6 @@ struct PrettyPrinter<
 };
 
 template<>
-struct PrettyPrinter<std::string, void>
-{
-    void operator()(std::string& out, const std::string& x) const
-    {
-        out.push_back('\"');
-        for(std::string::const_iterator i = x.begin(); i != x.end(); ++i) {
-            pp::prettyPrint(out, *i);
-        }
-        out.push_back('\"');
-    }
-};
-
-template<>
 struct PrettyPrinter<bool, void>
 {
     void operator()(std::string& out, bool x) const
@@ -99,12 +86,9 @@ inline void toHex(std::string& out, uint8_t x)
     out.push_back(kAlphabet[x]);
 }
 
-template<class T>
-struct PrettyPrinter<
-    T,
-    typename mp::VoidIf<mp::IsSame<T, char>::value || mp::IsSame<T, unsigned char>::value>::Type>
+struct Char
 {
-    void operator()(std::string& out, const T& x) const
+    static void p(std::string& out, char x)
     {
         uint8_t xx = x;
         if (xx >= 32 && xx <= 127) {
@@ -123,6 +107,17 @@ struct PrettyPrinter<
             toHex(out, xx >> 4);
             toHex(out, xx & 0xF);
         }
+    };
+};
+
+template<>
+struct PrettyPrinter<char, void>
+{
+    void operator()(std::string& out, char x) const
+    {
+        out.push_back('\'');
+        Char::p(out, x);
+        out.push_back('\'');
     };
 };
 
@@ -145,6 +140,19 @@ struct PrettyPrinter<
             }
         }
     };
+};
+
+template<>
+struct PrettyPrinter<std::string, void>
+{
+    void operator()(std::string& out, const std::string& x) const
+    {
+        out.push_back('\"');
+        for(std::string::const_iterator i = x.begin(); i != x.end(); ++i) {
+            Char::p(out, *i);
+        }
+        out.push_back('\"');
+    }
 };
 
 template<class T>
@@ -244,38 +252,67 @@ struct PrettyPrinter<
     }
 };
 
-#if __cplusplus < 201103L
 
-template<class T, int idx, bool end>
+#if __cplusplus < 201103L
+template<class T>
+struct _TupleSize
+{
+    static const std::size_t value = std::tr1::tuple_size<T>::value;
+};
+template<class T, std::size_t n>
+const typename std::tr1::tuple_element<n, T>::type& _getTuple(const T& xs)
+{
+    return std::tr1::get<n>(xs);
+}
+#else
+template<class T>
+struct _TupleSize
+{
+    static const std::size_t value = std::tuple_size<T>::value;
+};
+template<class T, std::size_t n>
+const typename std::tuple_element<n, T>::type& _getTuple(const T& xs)
+{
+    return std::get<n>(xs);
+}
+#endif
+
+template<class T, std::size_t idx, bool end>
 struct _TuplePrettyPrint
 {
     void operator()(std::string& out, const T& xs) const
     {
-        pp::prettyPrint(out, std::tr1::get<idx>(xs));
-        if (idx + 1 == std::tr1::tuple_size<T>::value) {
+        pp::prettyPrint(out, _getTuple<T, idx>(xs));
+        if (idx + 1 == _TupleSize<T>::value) {
             return;
         }
         out.push_back(',');
         _TuplePrettyPrint<
             T,
             idx + 1,
-            idx + 1 == std::tr1::tuple_size<T>::value> p;
+            idx + 1 == _TupleSize<T>::value> p;
         p(out, xs);
     }
 };
 
-template<class T, int idx>
+template<class T, std::size_t idx>
 struct _TuplePrettyPrint<T, idx, true>
 {
     void operator()(std::string& out, const T& xs) const
     {}
 };
 
+#if __cplusplus < 201103L
+template<std::size_t n>
+struct __TupleSize
+{
+    static const bool value = (n >= 0);
+};
+
 template<class T>
 struct PrettyPrinter<
     T,
-    typename mp::VoidIfExists<
-        typeof(std::tr1::tuple_size<T>::value)>::Type>
+    typename mp::VoidIf<__TupleSize<std::tr1::tuple_size<T>::value>::value>::Type>
 {
     void operator()(std::string& out, const T& xs) const
     {
@@ -286,36 +323,11 @@ struct PrettyPrinter<
     }
 
 };
-
 #else
-
-template<class T, int idx, bool end>
-struct _TuplePrettyPrint
-{
-    void operator()(std::string& out, const T& xs) const
-    {
-        pp::prettyPrint(out, std::get<idx>(xs));
-        out.push_back(',');
-        _TuplePrettyPrint<
-            T,
-            idx + 1,
-            idx + 1 == std::tuple_size<T>::value> p;
-        p(out, xs);
-    }
-};
-
-template<class T, int idx>
-struct _TuplePrettyPrint<T, idx, true>
-{
-    void operator()(std::string& out, const T& xs) const
-    {}
-};
-
 template<class T>
 struct PrettyPrinter<
     T,
-    typename mp::VoidIfExists<
-        typeof(std::tuple_size<T>::value)>::Type>
+    typename mp::VoidIfExists<typename std::tuple_size<T>::value_type>::Type>
 {
     void operator()(std::string& out, const T& xs) const
     {
@@ -326,7 +338,6 @@ struct PrettyPrinter<
     }
 
 };
-
 #endif
 
 template<int n>
