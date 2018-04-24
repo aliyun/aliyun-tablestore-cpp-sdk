@@ -34,25 +34,78 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/util/assert.hpp"
 #include "tablestore/util/move.hpp"
+#include "tablestore/util/metaprogramming.hpp"
 #include <tr1/functional>
+#include <tr1/type_traits>
+#include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
 namespace util {
 
+template<class T, class E = void>
+class Optional;
+
+namespace impl {
 template<class T>
-class Optional
+struct SmallTrivial
+{
+    static const bool value = mp::IsTrivial<T>::value && (sizeof(T) <= sizeof(int64_t));
+};
+
+template<class T>
+struct Apply
+{
+    template<class U, class V>
+    Optional<U> apply(const std::tr1::function<U(V)>& fn) const
+    {
+        const T& thiz = static_cast<const T&>(*this);
+        if (thiz.present()) {
+            return Optional<U>(fn(*thiz));
+        } else {
+            return Optional<U>();
+        }
+    }
+
+    template<class U, class V>
+    Optional<U> apply(U (*fn)(V)) const
+    {
+        const T& thiz = static_cast<const T&>(*this);
+        if (thiz.present()) {
+            return Optional<U>(fn(*thiz));
+        } else {
+            return Optional<U>();
+        }
+    }
+};
+
+} // namespace impl
+
+template<class T>
+class Optional<
+    T,
+    typename mp::VoidIf<impl::SmallTrivial<T>::value>::Type>
+  : public impl::Apply<Optional<T> >
 {
 public:
     explicit Optional()
       : mPresent(false),
         mValue()
     {}
-    explicit Optional(const T& v)
+
+    template<class U>
+    explicit Optional(U v)
       : mPresent(true),
         mValue(v)
     {}
-    Optional(const Optional<T>& v)
+
+    explicit Optional(const MoveHolder<T>& v)
+      : mPresent(true),
+        mValue(*v)
+    {}
+
+    template<class U>
+    Optional(const Optional<U>& v)
       : mPresent(v.mPresent),
         mValue()
     {
@@ -60,35 +113,28 @@ public:
             mValue = *v;
         }
     }
-    explicit Optional(const MoveHolder<T>& v)
-      : mPresent(true),
-        mValue()
-    {
-        moveAssign(mValue, v);
-    }
+
     explicit Optional(const MoveHolder<Optional<T> >& a)
-      : mPresent(a.get().mPresent),
+      : mPresent(false),
         mValue()
     {
         *this = a;
     }
 
-    Optional<T>& operator=(const Optional<T>& ano)
+    Optional<T>& operator=(const Optional<T>& a)
     {
-        if (ano.present()) {
-            mPresent = true;
-            mValue = ano.mValue;
+        if (a.present()) {
+            reset(*a);
         } else {
-            mPresent = false;
-            mValue = T();
+            reset();
         }
         return *this;
     }
+
     Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
     {
         if (v->present()) {
-            mPresent = true;
-            moveAssign(mValue, util::move(v->mValue));
+            reset(**v);
         } else {
             reset();
         }
@@ -143,29 +189,223 @@ public:
         return &mValue;
     }
 
-    template<class U, class V>
-    Optional<U> apply(const std::tr1::function<U(V)>& fn) const
-    {
-        if (present()) {
-            return Optional<U>(fn(**this));
-        } else {
-            return Optional<U>();
-        }
-    }
-
-    template<class U, class V>
-    Optional<U> apply(U (*fn)(V)) const
-    {
-        if (present()) {
-            return Optional<U>(fn(**this));
-        } else {
-            return Optional<U>();
-        }
-    }
-
 private:
     bool mPresent;
     T mValue;
+};
+
+template<class T>
+class Optional<
+    T,
+    typename mp::VoidIf<mp::IsReference<T>::value>::Type>
+  : public impl::Apply<Optional<T> >
+{
+    typedef typename mp::RemoveRef<T>::Type Tp;
+
+public:
+    explicit Optional()
+      : mPtr(NULL)
+    {}
+
+    template<class U>
+    explicit Optional(U& v)
+      : mPtr(NULL)
+    {
+        mPtr = &v;
+    }
+
+    template<class U>
+    Optional(const Optional<U>& v)
+      : mPtr(NULL)
+    {
+        if (v.present()) {
+            mPtr = &v;
+        }
+    }
+
+    template<class U>
+    explicit Optional(const MoveHolder<Optional<U> >& a)
+      : mPtr(NULL)
+    {
+        if (a->present()) {
+            mPtr = &**a;
+        }
+    }
+
+    template<class U>
+    Optional<T>& operator=(const Optional<U>& a)
+    {
+        if (a.present()) {
+            mPtr = &*a;
+        }
+        return *this;
+    }
+
+    template<class U>
+    Optional<T>& operator=(const MoveHolder<Optional<U> >& v)
+    {
+        if (v->present()) {
+            mPtr = &**v;
+        }
+        return *this;
+    }
+
+    bool present() const throw()
+    {
+        return mPtr != NULL;
+    }
+
+    void reset()
+    {
+        mPtr = NULL;
+    }
+
+    void reset(T v)
+    {
+        mPtr = &v;
+    }
+
+    const Tp& operator*() const throw()
+    {
+        OTS_ASSERT(present());
+        return *mPtr;
+    }
+
+    Tp& operator*() throw()
+    {
+        OTS_ASSERT(present());
+        return *mPtr;
+    }
+
+    const Tp* operator->() const throw()
+    {
+        OTS_ASSERT(present());
+        return mPtr;
+    }
+
+    Tp* operator->() throw()
+    {
+        OTS_ASSERT(present());
+        return mPtr;
+    }
+
+private:
+    Tp* mPtr;
+};
+
+template<class T>
+class Optional<
+    T,
+    typename mp::VoidIf<!impl::SmallTrivial<T>::value && !mp::IsReference<T>::value>::Type>
+  : public impl::Apply<Optional<T> >
+{
+public:
+    ~Optional()
+    {
+        if (mPtr != NULL) {
+            mPtr->~T();
+        }
+    }
+
+    explicit Optional()
+      : mPtr(NULL)
+    {}
+
+    explicit Optional(const T& v)
+      : mPtr(NULL)
+    {
+        reset(v);
+    }
+
+    Optional(const Optional<T>& v)
+      : mPtr(NULL)
+    {
+        if (v.present()) {
+            reset(*v);
+        }
+    }
+
+    explicit Optional(const MoveHolder<T>& a)
+      : mPtr(NULL)
+    {
+        reset(a);
+    }
+    
+    explicit Optional(const MoveHolder<Optional<T> >& a)
+      : mPtr(NULL)
+    {
+        *this = a;
+    }
+
+    Optional<T>& operator=(const Optional<T>& a)
+    {
+        if (a.present()) {
+            reset(*a);
+        }
+        return *this;
+    }
+
+    Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
+    {
+        if (v->present()) {
+            reset(util::move(**v));
+        }
+        return *this;
+    }
+
+    bool present() const throw()
+    {
+        return mPtr != NULL;
+    }
+
+    void reset()
+    {
+        if (mPtr != NULL) {
+            mPtr->~T();
+            mPtr = NULL;
+        }
+    }
+
+    void reset(const T& v)
+    {
+        reset();
+        mPtr = new (mBuf) T(v);
+    }
+
+    void reset(const MoveHolder<T>& v)
+    {
+        reset();
+        mPtr = new (mBuf) T();
+        moveAssign(*mPtr, v);
+    }
+
+    const T& operator*() const throw()
+    {
+        OTS_ASSERT(present());
+        return *mPtr;
+    }
+
+    T& operator*() throw()
+    {
+        OTS_ASSERT(present());
+        return *mPtr;
+    }
+
+    const T* operator->() const throw()
+    {
+        OTS_ASSERT(present());
+        return mPtr;
+    }
+
+    T* operator->() throw()
+    {
+        OTS_ASSERT(present());
+        return mPtr;
+    }
+
+private:
+    T* mPtr;
+    uint8_t mBuf[sizeof(T)];
 };
 
 } // namespace util

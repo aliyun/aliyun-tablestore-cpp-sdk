@@ -127,6 +127,21 @@ struct IsUnsigned: public std::tr1::is_unsigned<T> {};
 struct IsUnsigned: public std::is_unsigned<T> {};
 #endif
 
+template<class T>
+#if __cplusplus < 201103L
+struct IsTrivial
+{
+    static const bool value =
+        std::tr1::is_scalar<T>::value
+        || (std::tr1::has_trivial_constructor<T>::value
+            && std::tr1::has_trivial_copy<T>::value
+            && std::tr1::has_trivial_assign<T>::value
+            && std::tr1::has_trivial_destructor<T>::value);
+};
+#else
+struct IsTrivial: public std::is_trivial<T> {};
+#endif
+
 #if __cplusplus < 201103L
 template<class T>
 struct MakeUnsigned;
@@ -186,6 +201,23 @@ struct RemoveCvref
         typename std::remove_reference<T>::type>::type Type;
 #endif
 };
+
+template<class T>
+#if __cplusplus < 201103L
+struct IsReference: public std::tr1::is_reference<T> {};
+#else
+struct IsReference: public std::is_reference<T> {};
+#endif
+
+template<class T>
+struct RemoveRef {
+#if __cplusplus < 201103L
+    typedef typename std::tr1::remove_reference<T>::type Type;
+#else
+    typedef typename std::remove_reference<T>::type Type;
+#endif
+};
+
 
 template<class T, class E=void>
 struct IsSmartPtr

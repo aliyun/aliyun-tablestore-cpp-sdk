@@ -94,6 +94,7 @@ void Table_tb(
         req.mutableTable() = name;
         DeleteTableResponse resp;
         Optional<OTSError> res = client->deleteTable(resp, req);
+        (void) res;
         throw;
     }
 }
