@@ -121,22 +121,23 @@ public:
         *this = a;
     }
 
-    Optional<T>& operator=(const Optional<T>& a)
+    template<class U>
+    Optional<T>& operator=(const Optional<U>& a)
     {
-        if (a.present()) {
-            reset(*a);
-        } else {
+        if (&a != this) {
             reset();
+            if (a.present()) {
+                reset(*a);
+            }
         }
         return *this;
     }
 
     Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
     {
+        reset();
         if (v->present()) {
             reset(**v);
-        } else {
-            reset();
         }
         return *this;
     }
@@ -149,8 +150,7 @@ public:
     void reset()
     {
         mPresent = false;
-        T v = T();
-        moveAssign(mValue, util::move(v));
+        mValue = T();
     }
 
     void reset(const T& v)
@@ -162,31 +162,19 @@ public:
     void reset(const MoveHolder<T>& v)
     {
         mPresent = true;
-        moveAssign(mValue, v);
+        mValue = *v;
     }
 
-    const T& operator*() const throw()
+    T& operator*() const throw()
     {
         OTS_ASSERT(present());
-        return mValue;
+        return const_cast<T&>(mValue);
     }
 
-    T& operator*() throw()
+    T* operator->() const throw()
     {
         OTS_ASSERT(present());
-        return mValue;
-    }
-
-    const T* operator->() const throw()
-    {
-        OTS_ASSERT(present());
-        return &mValue;
-    }
-
-    T* operator->() throw()
-    {
-        OTS_ASSERT(present());
-        return &mValue;
+        return &const_cast<T&>(mValue);
     }
 
 private:
@@ -223,8 +211,7 @@ public:
         }
     }
 
-    template<class U>
-    explicit Optional(const MoveHolder<Optional<U> >& a)
+    explicit Optional(const MoveHolder<Optional<T> >& a)
       : mPtr(NULL)
     {
         if (a->present()) {
@@ -235,17 +222,20 @@ public:
     template<class U>
     Optional<T>& operator=(const Optional<U>& a)
     {
-        if (a.present()) {
-            mPtr = &*a;
+        if (&a != this) {
+            reset();
+            if (a.present()) {
+                reset(*a);
+            }
         }
         return *this;
     }
 
-    template<class U>
-    Optional<T>& operator=(const MoveHolder<Optional<U> >& v)
+    Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
     {
+        reset();
         if (v->present()) {
-            mPtr = &**v;
+            reset(**v);
         }
         return *this;
     }
@@ -265,25 +255,13 @@ public:
         mPtr = &v;
     }
 
-    const Tp& operator*() const throw()
+    Tp& operator*() const throw()
     {
         OTS_ASSERT(present());
         return *mPtr;
     }
 
-    Tp& operator*() throw()
-    {
-        OTS_ASSERT(present());
-        return *mPtr;
-    }
-
-    const Tp* operator->() const throw()
-    {
-        OTS_ASSERT(present());
-        return mPtr;
-    }
-
-    Tp* operator->() throw()
+    Tp* operator->() const throw()
     {
         OTS_ASSERT(present());
         return mPtr;
@@ -302,9 +280,7 @@ class Optional<
 public:
     ~Optional()
     {
-        if (mPtr != NULL) {
-            mPtr->~T();
-        }
+        reset();
     }
 
     explicit Optional()
@@ -339,14 +315,18 @@ public:
 
     Optional<T>& operator=(const Optional<T>& a)
     {
-        if (a.present()) {
-            reset(*a);
+        if (&a != this) {
+            reset();
+            if (a.present()) {
+                reset(*a);
+            }
         }
         return *this;
     }
 
     Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
     {
+        reset();
         if (v->present()) {
             reset(util::move(**v));
         }
@@ -374,30 +354,20 @@ public:
 
     void reset(const MoveHolder<T>& v)
     {
-        reset();
-        mPtr = new (mBuf) T();
-        moveAssign(*mPtr, v);
+        if (&*v != mPtr) {
+            reset();
+            mPtr = new (mBuf) T();
+            moveAssign(*mPtr, v);
+        }
     }
 
-    const T& operator*() const throw()
+    T& operator*() const throw()
     {
         OTS_ASSERT(present());
         return *mPtr;
     }
 
-    T& operator*() throw()
-    {
-        OTS_ASSERT(present());
-        return *mPtr;
-    }
-
-    const T* operator->() const throw()
-    {
-        OTS_ASSERT(present());
-        return mPtr;
-    }
-
-    T* operator->() throw()
+    T* operator->() const throw()
     {
         OTS_ASSERT(present());
         return mPtr;

@@ -118,7 +118,7 @@ void Optional_apply(const string&)
 {
     {
         util::Optional<int> in;
-        util::Optional<int> res = in.apply(inc).apply(inc);
+        util::Optional<int> res = in.apply(inc);
         TESTA_ASSERT(!res.present()).issue();
     }
     {
