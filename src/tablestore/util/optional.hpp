@@ -57,22 +57,22 @@ template<class T>
 struct Apply
 {
     template<class U, class V>
-    Optional<U> apply(const std::tr1::function<U(V)>& fn) const
+    Optional<U> apply(const std::tr1::function<Optional<U>(V)>& fn) const
     {
         const T& thiz = static_cast<const T&>(*this);
         if (thiz.present()) {
-            return Optional<U>(fn(*thiz));
+            return fn(*thiz);
         } else {
             return Optional<U>();
         }
     }
 
     template<class U, class V>
-    Optional<U> apply(U (*fn)(V)) const
+    Optional<U> apply(Optional<U> (*fn)(V)) const
     {
         const T& thiz = static_cast<const T&>(*this);
         if (thiz.present()) {
-            return Optional<U>(fn(*thiz));
+            return fn(*thiz);
         } else {
             return Optional<U>();
         }

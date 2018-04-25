@@ -107,9 +107,9 @@ TESTA_DEF_JUNIT_LIKE1(Optional_ref);
 
 namespace {
 
-int inc(int x)
+util::Optional<int> inc(int x)
 {
-    return x + 1;
+    return util::Optional<int>(x + 1);
 }
 
 } // namespace
@@ -122,7 +122,7 @@ void Optional_apply(const string&)
         TESTA_ASSERT(!res.present()).issue();
     }
     {
-        function<int(int)> xinc = bind(inc, _1);
+        function<util::Optional<int>(int)> xinc = bind(inc, _1);
         util::Optional<int> in(0);
         util::Optional<int> res = in.apply(xinc).apply(xinc);
         TESTA_ASSERT(*res == 2)
