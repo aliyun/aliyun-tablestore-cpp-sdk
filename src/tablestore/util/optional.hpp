@@ -47,11 +47,6 @@ template<class T, class E = void>
 class Optional;
 
 namespace impl {
-template<class T>
-struct SmallTrivial
-{
-    static const bool value = mp::IsTrivial<T>::value && (sizeof(T) <= sizeof(int64_t));
-};
 
 template<class T>
 struct Apply
@@ -84,7 +79,7 @@ struct Apply
 template<class T>
 class Optional<
     T,
-    typename mp::VoidIf<impl::SmallTrivial<T>::value>::Type>
+    typename mp::VoidIf<mp::IsTrivial<T>::value>::Type>
   : public impl::Apply<Optional<T> >
 {
 public:
@@ -192,23 +187,22 @@ public:
       : mPtr(NULL)
     {}
 
-    template<class U>
-    explicit Optional(U& v)
+    explicit Optional(Tp& v)
       : mPtr(NULL)
     {
         mPtr = &v;
     }
 
     template<class U>
-    Optional(const Optional<U>& v)
+    Optional(const Optional<U&>& v)
       : mPtr(NULL)
     {
         if (v.present()) {
-            mPtr = &v;
+            mPtr = &*v;
         }
     }
 
-    explicit Optional(const MoveHolder<Optional<T> >& a)
+    explicit Optional(const MoveHolder<Optional<Tp&> >& a)
       : mPtr(NULL)
     {
         if (a->present()) {
@@ -217,7 +211,7 @@ public:
     }
 
     template<class U>
-    Optional<T>& operator=(const Optional<U>& a)
+    Optional<Tp&>& operator=(const Optional<U&>& a)
     {
         if (&a != this) {
             reset();
@@ -228,7 +222,7 @@ public:
         return *this;
     }
 
-    Optional<T>& operator=(const MoveHolder<Optional<T> >& v)
+    Optional<Tp&>& operator=(const MoveHolder<Optional<Tp&> >& v)
     {
         reset();
         if (v->present()) {
@@ -271,7 +265,7 @@ private:
 template<class T>
 class Optional<
     T,
-    typename mp::VoidIf<!impl::SmallTrivial<T>::value && !mp::IsReference<T>::value>::Type>
+    typename mp::VoidIf<!mp::IsTrivial<T>::value && !mp::IsReference<T>::value>::Type>
   : public impl::Apply<Optional<T> >
 {
 public:
