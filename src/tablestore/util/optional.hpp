@@ -93,8 +93,7 @@ public:
         mValue()
     {}
 
-    template<class U>
-    explicit Optional(U v)
+    explicit Optional(T v)
       : mPresent(true),
         mValue(v)
     {}
@@ -104,8 +103,7 @@ public:
         mValue(*v)
     {}
 
-    template<class U>
-    Optional(const Optional<U>& v)
+    Optional(const Optional<T>& v)
       : mPresent(v.mPresent),
         mValue()
     {
@@ -121,8 +119,7 @@ public:
         *this = a;
     }
 
-    template<class U>
-    Optional<T>& operator=(const Optional<U>& a)
+    Optional<T>& operator=(const Optional<T>& a)
     {
         if (&a != this) {
             reset();
@@ -250,7 +247,7 @@ public:
         mPtr = NULL;
     }
 
-    void reset(T v)
+    void reset(Tp& v)
     {
         mPtr = &v;
     }
