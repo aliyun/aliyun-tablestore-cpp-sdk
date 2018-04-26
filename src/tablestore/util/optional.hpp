@@ -142,7 +142,6 @@ public:
     void reset()
     {
         mPresent = false;
-        mValue = T();
     }
 
     void reset(const T& v)
@@ -188,10 +187,8 @@ public:
     {}
 
     explicit Optional(Tp& v)
-      : mPtr(NULL)
-    {
-        mPtr = &v;
-    }
+      : mPtr(&v)
+    {}
 
     template<class U>
     Optional(const Optional<U&>& v)
