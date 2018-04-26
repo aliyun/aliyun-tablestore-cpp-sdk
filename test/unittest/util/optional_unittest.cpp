@@ -42,7 +42,7 @@ using namespace std::tr1::placeholders;
 namespace aliyun {
 namespace tablestore {
 
-void Optional_transfer(const string&)
+void Optional_object(const string&)
 {
     deque<int> xs;
     xs.push_back(1);
@@ -59,13 +59,57 @@ void Optional_transfer(const string&)
         (*opMove)
         .issue();
 }
-TESTA_DEF_JUNIT_LIKE1(Optional_transfer);
+TESTA_DEF_JUNIT_LIKE1(Optional_object);
+
+void Optional_scalar(const string&)
+{
+    int x = 1;
+    util::Optional<int> opCopy(x);
+    TESTA_ASSERT(pp::prettyPrint(x) == "1" && pp::prettyPrint(*opCopy) == "1")
+        (x)
+        (*opCopy)
+        .issue();
+
+    util::Optional<int> opMove;
+    opMove.reset(util::move(x));
+    TESTA_ASSERT(pp::prettyPrint(x) == "1" && pp::prettyPrint(*opMove) == "1")
+        (x)
+        (*opMove)
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Optional_scalar);
+
+void Optional_ref(const string&)
+{
+    int x = 1;
+    int& rx = x;
+    util::Optional<int&> op(rx);
+    TESTA_ASSERT(pp::prettyPrint(*op) == "1")
+        (x)
+        (*op)
+        .issue();
+    rx = 2;
+    TESTA_ASSERT(pp::prettyPrint(*op) == "2")
+        (x)
+        (*op)
+        .issue();
+
+    int y = -1;
+    int& ry = y;
+    op.reset(ry);
+    TESTA_ASSERT(pp::prettyPrint(x) == "2" && pp::prettyPrint(*op) == "-1")
+        (x)
+        (y)
+        (*op)
+        .issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Optional_ref);
 
 namespace {
 
-int inc(int x)
+util::Optional<int> inc(int x)
 {
-    return x + 1;
+    return util::Optional<int>(x + 1);
 }
 
 } // namespace
@@ -78,7 +122,7 @@ void Optional_apply(const string&)
         TESTA_ASSERT(!res.present()).issue();
     }
     {
-        function<int(int)> xinc = bind(inc, _1);
+        function<util::Optional<int>(int)> xinc = bind(inc, _1);
         util::Optional<int> in(0);
         util::Optional<int> res = in.apply(xinc).apply(xinc);
         TESTA_ASSERT(*res == 2)
