@@ -54,36 +54,40 @@ struct MoveCategory<
     typedef Copyable Category;
 };
 
-template<class T, void (T::*)()>
-struct _IsClear
-{
-    typedef void Type;
-};
-template<class T, class E = void>
-struct HasClear
-{
-    static const bool value = false;
-};
 template<class T>
-struct HasClear<T, typename _IsClear<T, &T::clear>::Type>
+class HasClear
 {
-    static const bool value = true;
+    typedef uint8_t Yes;
+    typedef uint16_t No;
+
+    template<class U, void (U::*)()> struct Check;
+
+    template<class U>
+    static Yes test(Check<U, &U::clear>*);
+
+    template<class>
+    static No test(...);
+
+public:
+    static const bool value = (sizeof(test<T>(NULL)) == sizeof(Yes));
 };
 
-template<class T, void (T::*)(T&)>
-struct _IsSwap
-{
-    typedef void Type;
-};
-template<class T, class E = void>
-struct HasSwap
-{
-    static const bool value = false;
-};
 template<class T>
-struct HasSwap<T, typename _IsSwap<T, &T::swap>::Type>
+class HasSwap
 {
-    static const bool value = true;
+    typedef uint8_t Yes;
+    typedef uint16_t No;
+
+    template<class U, void (U::*)(U&)> struct Check;
+
+    template<class U>
+    static Yes test(Check<U, &U::swap>*);
+
+    template<class>
+    static No test(...);
+
+public:
+    static const bool value = (sizeof(test<T>(NULL)) == sizeof(Yes));
 };
 
 template<class T>
