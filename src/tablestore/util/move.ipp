@@ -42,7 +42,6 @@ namespace util {
 namespace impl {
 
 struct Copyable {};
-struct Moveable {};
 struct SmartPtr {};
 struct ClearSwapable {};
 struct Function {};
@@ -53,32 +52,6 @@ struct MoveCategory<
     typename mp::VoidIf<mp::IsScalar<T>::value>::Type>
 {
     typedef Copyable Category;
-};
-
-
-template<class T, T& (T::*)(const util::MoveHolder<T>&)>
-struct _IsMoveAssignment
-{
-    typedef void Type;
-};
-
-template<class T, class E = void>
-struct HasMoveAssignment
-{
-    static const bool value = false;
-};
-template<class T>
-struct HasMoveAssignment<T, typename _IsMoveAssignment<T, &T::operator= >::Type>
-{
-    static const bool value = true;
-};
-
-template<class T>
-struct MoveCategory<
-    T,
-    typename mp::VoidIf<HasMoveAssignment<T>::value>::Type>
-{
-    typedef Moveable Category;
 };
 
 template<class T, void (T::*)()>

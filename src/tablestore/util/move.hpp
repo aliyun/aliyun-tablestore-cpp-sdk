@@ -117,11 +117,16 @@ MoveHolder<T> move(T& val)
 // external move assignments
 namespace impl {
 
+struct Moveable {};
+
 template<class Category, class T>
 struct MoveAssign {};
 
 template<class T, class E = void>
-struct MoveCategory;
+struct MoveCategory
+{
+    typedef Moveable Category;
+};
 
 } // namespace impl
 

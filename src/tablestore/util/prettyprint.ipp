@@ -341,7 +341,7 @@ struct PrettyPrinter<
 #endif
 
 template<int n>
-struct PrettyPrinter<const char[n], void>
+struct PrettyPrinter<char[n], void>
 {
     void operator()(std::string& out, const char* cs) const
     {
