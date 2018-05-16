@@ -122,6 +122,61 @@ void TestHmacSha1_LongKey(const string&)
 } // namespace
 TESTA_DEF_JUNIT_LIKE1(TestHmacSha1_LongKey);
 
+namespace {
+inline uint32_t adler32oracle(const MemPiece& in)
+{
+    static const uint32_t kMod = 65521; // the largest prime number below 2^16
+    uint32_t x = 1;
+    uint32_t y = 0;
+    const uint8_t* b = in.data();
+    const uint8_t* e = b + in.length();
+    for(; b < e; ++b) {
+        x = (x + *b) % kMod;
+        y = (y + x) % kMod;
+    }
+    return (y << 16) | x;
+}
+
+inline uint32_t adler32trial(const MemPiece& in)
+{
+    Adler32 alg;
+    const uint8_t* b = in.data();
+    const uint8_t* e = b + in.length();
+    for(; b < e; ++b) {
+        alg.update(*b);
+    }
+    return alg.get();
+}
+
+void TestAdler32_0(const string&)
+{
+    string plaintext("0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz");
+    uint32_t oracle = adler32oracle(MemPiece::from(plaintext));
+    uint32_t trial = adler32trial(MemPiece::from(plaintext));
+    TESTA_ASSERT(oracle == trial)
+        (oracle)
+        (trial).issue();
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(TestAdler32_0);
+
+namespace {
+void TestAdler32_1(const string&)
+{
+    string plaintext("0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz");
+    uint32_t oracle = adler32oracle(MemPiece::from(plaintext));
+    Adler32 adl0;
+    update(adl0, MemPiece::from(plaintext.substr(0, 10)));
+    Adler32 adl1(adl0.get());
+    update(adl1, MemPiece::from(plaintext.substr(10)));
+    uint32_t trial = adl1.get();
+    TESTA_ASSERT(oracle == trial)
+        (oracle)
+        (trial).issue();
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(TestAdler32_1);
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

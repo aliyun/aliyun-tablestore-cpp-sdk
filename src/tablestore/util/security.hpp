@@ -171,11 +171,70 @@ inline void crc8MemPiece(uint8_t& out, const MemPiece& in)
     if (in.length() == 0) {
         return;
     }
-    const uint8_t* b = (uint8_t*) in.data();
+    const uint8_t* b = in.data();
     const uint8_t* e = b + in.length();
     for(; b < e; ++b) {
         crc8(out, *b);
     }
+}
+
+class Adler32
+{
+    static const uint32_t kMod = 65521; // the largest prime number below 2^16
+public:
+    explicit Adler32()
+      : mA(1),
+        mB(0)
+    {}
+
+    explicit Adler32(uint32_t x)
+    {
+        mA = x & 0xFFFF;
+        mB = x >> 16;
+    }
+
+    void update(uint8_t x)
+    {
+        mA = (mA + x) % kMod;
+        mB = (mB + mA) % kMod;
+    }
+
+    uint32_t get() const
+    {
+        return (mB << 16) | mA;
+    }
+
+private:
+    uint32_t mA;
+    uint32_t mB;
+};
+
+namespace impl {
+
+template<class T, class Enable = void>
+struct Adler32Updater
+{};
+
+template<>
+struct Adler32Updater<MemPiece, void>
+{
+    void operator()(Adler32& adl, const MemPiece& in) const
+    {
+        const uint8_t* b = in.data();
+        const uint8_t* e = b + in.length();
+        for(; b < e; ++b) {
+            adl.update(*b);
+        }
+    }
+};
+
+} // namespace
+
+template<class T>
+void update(Adler32& adl, const T& x)
+{
+    impl::Adler32Updater<T> updater;
+    updater(adl, x);
 }
 
 } // namespace util
