@@ -151,6 +151,26 @@ public:
     virtual void reset() =0;
 };
 
+template<typename T>
+bool operator==(const IVector<T>& a, const IVector<T>& b)
+{
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for(int64_t i = 0, sz = a.size(); i < sz; ++i) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename T>
+bool operator!=(const IVector<T>& a, const IVector<T>& b)
+{
+    return !(a == b);
+}
+
 template<class Elem>
 class DequeBasedVector : public IVector<Elem>
 {
@@ -611,6 +631,16 @@ public:
     void reset();
     CompareResult compare(const PrimaryKeyValue&) const;
 
+    bool operator==(const PrimaryKeyValue& a) const
+    {
+        return compare(a) == kCR_Equivalent;
+    }
+
+    bool operator!=(const PrimaryKeyValue& a) const
+    {
+        return !(*this == a);
+    }
+
     bool isReal() const
     {
         switch(category()) {
@@ -689,6 +719,15 @@ public:
     }
 
     PrimaryKeyColumn& operator=(const util::MoveHolder<PrimaryKeyColumn>&);
+    void prettyPrint(std::string&) const;
+    util::Optional<OTSError> validate() const;
+    void reset();
+    bool operator==(const PrimaryKeyColumn&) const;
+
+    bool operator!=(const PrimaryKeyColumn& a) const
+    {
+        return !(*this == a);
+    }
 
     const std::string& name() const
     {
@@ -709,10 +748,6 @@ public:
     {
         return mValue;
     }
-
-    void prettyPrint(std::string&) const;
-    util::Optional<OTSError> validate() const;
-    void reset();
 
 private:
     std::string mName;
@@ -1006,6 +1041,16 @@ public:
     void reset();
     CompareResult compare(const AttributeValue&) const;
 
+    bool operator==(const AttributeValue& a) const
+    {
+        return compare(a) == kCR_Equivalent;
+    }
+
+    bool operator!=(const AttributeValue& a) const
+    {
+        return !(*this == a);
+    }
+
 public:
     // for strings
     static AttributeValue toStr(const std::string&);
@@ -1062,6 +1107,12 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
+    bool operator==(const Attribute&) const;
+
+    bool operator!=(const Attribute& a) const
+    {
+        return !(*this == a);
+    }
 
     const std::string& name() const
     {
@@ -1113,6 +1164,12 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
+    bool operator==(const Row&) const;
+
+    bool operator!=(const Row& a) const
+    {
+        return !(*this == a);
+    }
 
     const PrimaryKey& primaryKey() const
     {
@@ -1268,6 +1325,13 @@ public:
     virtual void reset() =0;
 };
 
+bool operator==(const ColumnCondition&, const ColumnCondition&);
+
+inline bool operator!=(const ColumnCondition& a, const ColumnCondition& b)
+{
+    return !(a == b);
+}
+
 class SingleColumnCondition : public ColumnCondition
 {
 public:
@@ -1306,6 +1370,7 @@ public:
 
     SingleColumnCondition& operator=(
         const util::MoveHolder<SingleColumnCondition>&);
+    bool operator==(const SingleColumnCondition&) const;
 
     ColumnCondition::Type type() const
     {
@@ -1396,6 +1461,7 @@ public:
 
     CompositeColumnCondition& operator=(
         const util::MoveHolder<CompositeColumnCondition>&);
+    bool operator==(const CompositeColumnCondition&) const;
 
     Type type() const
     {
@@ -1452,6 +1518,11 @@ public:
     }
 
     Condition& operator=(const util::MoveHolder<Condition>&);
+    bool operator==(const Condition&) const;
+    bool operator!=(const Condition& b) const
+    {
+        return !(*this == b);
+    }
 
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
@@ -1500,6 +1571,7 @@ protected:
 
     void move(RowChange& a);
     virtual void prettyPrint(std::string&) const;
+    bool operator==(const RowChange&) const;
 
 public:
     virtual ~RowChange() {}
@@ -1618,6 +1690,11 @@ public:
         Update& operator=(const util::MoveHolder<Update>&);
         void prettyPrint(std::string&) const;
         util::Optional<OTSError> validate() const;
+        bool operator==(const Update&) const;
+        bool operator!=(const Update& b) const
+        {
+            return !(*this == b);
+        }
 
         Type type() const
         {
@@ -1678,6 +1755,11 @@ public:
     void prettyPrint(std::string&) const;
     util::Optional<OTSError> validate() const;
     void reset();
+    bool operator==(const RowUpdateChange&) const;
+    bool operator!=(const RowUpdateChange& b) const
+    {
+        return !(*this == b);
+    }
 
     const IVector<Update>& updates() const
     {

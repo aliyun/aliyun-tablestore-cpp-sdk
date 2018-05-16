@@ -366,6 +366,26 @@ private:
     uint8_t mBuf[sizeof(T)];
 };
 
+template<class T>
+bool operator==(const Optional<T>& a, const Optional<T>& b)
+{
+    if (a.present()) {
+        if (b.present()) {
+            return *a == *b;
+        } else {
+            return false;
+        }
+    } else {
+        return !b.present();
+    }
+}
+
+template<class T>
+bool operator!=(const Optional<T>& a, const Optional<T>& b)
+{
+    return !(a == b);
+}
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "plain_buffer_stream.hpp"
 #include "plain_buffer_consts.hpp"
-#include "../impl/ots_exception.hpp"
+#include "ots_exception.hpp"
 #include "tablestore/core/types.hpp"
 #include <string>
 #include <list>

@@ -198,6 +198,52 @@ private:
     std::auto_ptr<BlockFreeQueue> mAvailableBlocks;
 };
 
+class StrPool
+{
+public:
+    explicit StrPool();
+    ~StrPool();
+
+    struct Stats
+    {
+        int64_t mTotal;
+        int64_t mAvailable;
+        int64_t mBorrowed;
+
+        explicit Stats()
+          : mTotal(0),
+            mAvailable(0),
+            mBorrowed(0)
+        {}
+
+        void prettyPrint(std::string&) const;
+    };
+
+    Stats stats() const;
+
+    std::string* borrow();
+    void giveBack(std::string*);
+
+public:
+    // for private use
+    /**
+     * An interface to thread-safe queues on strings.
+     */
+    class IQueue
+    {
+    public:
+        virtual ~IQueue() {}
+
+        virtual void push(std::string*) =0;
+        virtual std::string* pop() =0;
+        virtual int64_t size() const =0;
+    };
+
+private:
+    boost::atomic<int64_t> mBorrowed;
+    std::auto_ptr<IQueue> mAvailable;
+};
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

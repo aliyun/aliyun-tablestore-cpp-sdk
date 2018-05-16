@@ -176,6 +176,101 @@ MemPool::Stats IncrementalMemPool::stats() const
     return res;
 }
 
+StrPool::~StrPool()
+{
+    int64_t borrowed = mBorrowed.load(boost::memory_order_acquire);
+    OTS_ASSERT(borrowed == 0)
+        (borrowed)
+        .what("Some of strings are not returned.");
+    for(; mAvailable->size() > 0;) {
+        string* str = mAvailable->pop();;
+        delete str;
+    }
+}
+
+void StrPool::Stats::prettyPrint(string& out) const
+{
+    out.append("{\"Total\":");
+    pp::prettyPrint(out, mTotal);
+    out.append(",\"Available\":");
+    pp::prettyPrint(out, mAvailable);
+    out.append(",\"Borrowed\":");
+    pp::prettyPrint(out, mBorrowed);
+    out.append("}");
+}
+
+StrPool::Stats StrPool::stats() const
+{
+    Stats res;
+    res.mBorrowed = mBorrowed.load(boost::memory_order_acquire);
+    res.mAvailable = mAvailable->size();
+    res.mTotal = res.mAvailable + res.mBorrowed;
+    return res;
+}
+
+string* StrPool::borrow()
+{
+    string* res = mAvailable->pop();
+    mBorrowed.fetch_add(1, boost::memory_order_acq_rel);
+    return res;
+}
+
+void StrPool::giveBack(string* s)
+{
+    s->clear();
+    mAvailable->push(s);
+    mBorrowed.fetch_sub(1, boost::memory_order_acq_rel);
+}
+
+namespace {
+
+class StrQueue: public StrPool::IQueue, private boost::noncopyable
+{
+public:
+    explicit StrQueue()
+      : mStrs(0),
+        mSize(0)
+    {}
+
+    void push(string* s)
+    {
+        bool ret = mStrs.push(s);
+        OTS_ASSERT(ret);
+        mSize.fetch_add(1, boost::memory_order_acq_rel);
+    }
+
+    string* pop()
+    {
+        string* res = NULL;
+        bool ret = mStrs.pop(res);
+        if (ret) {
+            mSize.fetch_sub(1, boost::memory_order_acq_rel);
+            return res;
+        } else {
+            return new string();
+        }
+    }
+
+    int64_t size() const
+    {
+        return mSize.load(boost::memory_order_acq_rel);
+    }
+
+private:
+    boost::lockfree::queue<
+        string*,
+        boost::lockfree::fixed_sized<false> > mStrs;
+    boost::atomic<int64_t> mSize;
+
+};
+
+} // namespace
+
+StrPool::StrPool()
+  : mBorrowed(0),
+    mAvailable(new StrQueue())
+{}
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

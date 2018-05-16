@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "plain_buffer_builder.hpp"
 #include "plain_buffer_crc8.hpp"
-#include "../impl/ots_exception.hpp"
+#include "ots_exception.hpp"
 #include <list>
 #include <string>
 

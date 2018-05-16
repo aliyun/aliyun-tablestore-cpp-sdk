@@ -112,8 +112,6 @@ util::Optional<int> inc(int x)
     return util::Optional<int>(x + 1);
 }
 
-} // namespace
-
 void Optional_apply(const string&)
 {
     {
@@ -130,7 +128,28 @@ void Optional_apply(const string&)
             .issue();
     }
 }
+} // namespace
 TESTA_DEF_JUNIT_LIKE1(Optional_apply);
+
+namespace {
+void Optional_equiv(const string&)
+{
+    deque<util::Optional<int> > ops;
+    ops.push_back(util::Optional<int>());
+    ops.push_back(util::Optional<int>(1));
+    ops.push_back(util::Optional<int>(2));
+    for(size_t i = 0; i < ops.size(); ++i) {
+        for(size_t j = 0; j < ops.size(); ++j) {
+            if (i == j) {
+                TESTA_ASSERT(ops[i] == ops[j])(i)(j).issue();
+            } else {
+                TESTA_ASSERT(ops[i] != ops[j])(i)(j).issue();
+            }
+        }
+    }
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(Optional_equiv);
 
 } // namespace tablestore
 } // namespace aliyun

@@ -1086,6 +1086,17 @@ void PrimaryKeyColumn::prettyPrint(string& out) const
     pp::prettyPrint(out, mValue);
 }
 
+bool PrimaryKeyColumn::operator==(const PrimaryKeyColumn& a) const
+{
+    if (name() != a.name()) {
+        return false;
+    }
+    if (value() != a.value()) {
+        return false;
+    }
+    return true;
+}
+
 void PrimaryKey::prettyPrint(string& out) const
 {
     if (mColumns.size() == 0) {
@@ -1650,6 +1661,20 @@ void Attribute::reset()
     mTimestamp.reset();
 }
 
+bool Attribute::operator==(const Attribute& a) const
+{
+    if (name() != a.name()) {
+        return false;
+    }
+    if (value() != a.value()) {
+        return false;
+    }
+    if (timestamp() != a.timestamp()) {
+        return false;
+    }
+    return true;
+}
+
 void Attribute::prettyPrint(string& out) const
 {
     out.append("{\"Name\":");
@@ -1706,6 +1731,17 @@ Row& Row::operator=(const MoveHolder<Row>& a)
     moveAssign(mPkey, util::move(a->mPkey));
     moveAssign(mAttrs, util::move(a->mAttrs));
     return *this;
+}
+
+bool Row::operator==(const Row& a) const
+{
+    if (mPkey != a.mPkey) {
+        return false;
+    }
+    if (mAttrs != a.mAttrs) {
+        return false;
+    }
+    return true;
 }
 
 void Row::reset()
@@ -2384,7 +2420,23 @@ Optional<OTSError> ComputeSplitsBySizeResponse::validate() const
 Condition& Condition::operator=(const MoveHolder<Condition>& a)
 {
     mRowCondition = a->mRowCondition;
+    moveAssign(mColumnCondition, util::move(a->mColumnCondition));
     return *this;
+}
+
+bool Condition::operator==(const Condition& b) const
+{
+    if (rowCondition() != b.rowCondition()) {
+        return false;
+    }
+    if ((columnCondition().get() == NULL) != (b.columnCondition().get() == NULL)) {
+        return false;
+    } else if (columnCondition().get() != NULL
+        && *columnCondition() != *b.columnCondition())
+    {
+        return false;
+    }
+    return true;
 }
 
 void Condition::reset()
@@ -2412,6 +2464,25 @@ Optional<OTSError> Condition::validate() const
     return Optional<OTSError>();
 }
 
+bool operator==(const ColumnCondition& a, const ColumnCondition& b)
+{
+    if (a.type() != b.type()) {
+        return false;
+    }
+    switch(a.type()) {
+    case ColumnCondition::kSingle:
+        return static_cast<const SingleColumnCondition&>(a)
+            .operator==(
+                static_cast<const SingleColumnCondition&>(b));
+    case ColumnCondition::kComposite:
+        return static_cast<const CompositeColumnCondition&>(a)
+            .operator==(
+                static_cast<const CompositeColumnCondition&>(b));
+    }
+    OTS_ASSERT(false);
+    return true;
+}
+
 SingleColumnCondition& SingleColumnCondition::operator=(
     const MoveHolder<SingleColumnCondition>& a)
 {
@@ -2421,6 +2492,26 @@ SingleColumnCondition& SingleColumnCondition::operator=(
     mPassIfMissing = a->mPassIfMissing;
     mLatestVersionOnly = a->mLatestVersionOnly;
     return *this;
+}
+
+bool SingleColumnCondition::operator==(const SingleColumnCondition& b) const
+{
+    if (columnName() != b.columnName()) {
+        return false;
+    }
+    if (relation() != b.relation()) {
+        return false;
+    }
+    if (columnValue() != b.columnValue()) {
+        return false;
+    }
+    if (passIfMissing() != b.passIfMissing()) {
+        return false;
+    }
+    if (latestVersionOnly() != b.latestVersionOnly()) {
+        return false;
+    }
+    return true;
 }
 
 void SingleColumnCondition::reset()
@@ -2472,6 +2563,22 @@ CompositeColumnCondition& CompositeColumnCondition::operator=(
     return *this;
 }
 
+bool CompositeColumnCondition::operator==(const CompositeColumnCondition& b) const
+{
+    if (op() != b.op()) {
+        return false;
+    }
+    if (children().size() != b.children().size()) {
+        return false;
+    }
+    for(int64_t i = 0, sz = children().size(); i < sz; ++i) {
+        if (*children()[i] != *b.children()[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void CompositeColumnCondition::reset()
 {
     mOperator = kAnd;
@@ -2514,6 +2621,23 @@ void RowChange::reset()
     mPrimaryKey.reset();
     mCondition.reset();
     mReturnType = kRT_None;
+}
+
+bool RowChange::operator==(const RowChange& b) const
+{
+    if (table() != b.table()) {
+        return false;
+    }
+    if (primaryKey() != b.primaryKey()) {
+        return false;
+    }
+    if (condition() != b.condition()) {
+        return false;
+    }
+    if (returnType() != b.returnType()) {
+        return false;
+    }
+    return true;
 }
 
 void RowChange::prettyPrint(string& out) const
@@ -2970,10 +3094,38 @@ RowUpdateChange::Update& RowUpdateChange::Update::operator=(
     return *this;
 }
 
+bool RowUpdateChange::Update::operator==(const RowUpdateChange::Update& b) const
+{
+    if (type() != b.type()) {
+        return false;
+    }
+    if (attrName() != b.attrName()) {
+        return false;
+    }
+    if (attrValue() != b.attrValue()) {
+        return false;
+    }
+    if (timestamp() != b.timestamp()) {
+        return false;
+    }
+    return true;
+}
+
 void RowUpdateChange::reset()
 {
     RowChange::reset();
     mUpdates.reset();
+}
+
+bool RowUpdateChange::operator==(const RowUpdateChange& b) const
+{
+    if (!RowChange::operator==(b)) {
+        return false;
+    }
+    if (updates() != b.updates()) {
+        return false;
+    }
+    return true;
 }
 
 void RowUpdateChange::Update::prettyPrint(string& out) const

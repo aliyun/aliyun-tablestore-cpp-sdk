@@ -32,7 +32,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "../impl/ots_exception.hpp"
+#include "ots_exception.hpp"
 #include "tablestore/util/mempiece.hpp"
 #include <string>
 #include <stdint.h>

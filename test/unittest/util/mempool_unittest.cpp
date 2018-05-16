@@ -85,6 +85,58 @@ void IncrementalMemPool_1thread(const string&)
 }
 TESTA_DEF_JUNIT_LIKE1(IncrementalMemPool_1thread);
 
+void IncrementalStrPool_1thread(const string&)
+{
+    StrPool sp;
+    {
+        StrPool::Stats stats = sp.stats();
+        TESTA_ASSERT(stats.mBorrowed == 0)
+            (stats.mBorrowed).issue();
+    }
+    deque<string*> strs;
+    for(int64_t i = 0; i < 128; ++i) {
+        strs.push_back(sp.borrow());
+
+        StrPool::Stats stats = sp.stats();
+        TESTA_ASSERT(stats.mBorrowed == (int64_t) strs.size())
+            (stats.mBorrowed)
+            (strs.size())
+            .issue();
+        TESTA_ASSERT(stats.mTotal >= (int64_t) strs.size())
+            (stats.mTotal)
+            (strs.size())
+            .issue();
+    }
+
+    int64_t total = strs.size();
+    for(; !strs.empty();) {
+        sp.giveBack(strs.back());
+        strs.pop_back();
+
+        StrPool::Stats stats = sp.stats();
+        TESTA_ASSERT(stats.mBorrowed == (int64_t) strs.size())
+            (stats.mBorrowed)
+            (strs.size())
+            .issue();
+        TESTA_ASSERT(stats.mTotal == total)
+            (stats.mTotal)
+            (total)
+            .issue();
+    }
+
+    {
+        StrPool::Stats stats = sp.stats();
+        TESTA_ASSERT(stats.mBorrowed == 0)
+            (stats.mBorrowed)
+            .issue();
+        TESTA_ASSERT(stats.mTotal == total)
+            (stats.mTotal)
+            (total)
+            .issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(IncrementalStrPool_1thread);
+
 namespace {
 
 void MemPool_tester(
@@ -123,6 +175,49 @@ void IncrementalMemPool_Nthreads(const string&)
     }
 }
 TESTA_DEF_JUNIT_LIKE1(IncrementalMemPool_Nthreads);
+
+namespace {
+
+void StrPool_tester(
+    boost::atomic<bool>& stopper,
+    random::Random& rng,
+    StrPool& spool)
+{
+    for(;;) {
+        if (stopper.load(boost::memory_order_acquire)) {
+            break;
+        }
+        string* s = spool.borrow();
+        sleepFor(Duration::fromUsec(random::nextInt(rng, 10000)));
+        spool.giveBack(s);
+    }
+}
+
+} // namespace
+
+void StrPool_Nthreads(const string&)
+{
+    StrPool sp;
+    auto_ptr<random::Random> rng(random::newDefault());
+    boost::atomic<bool> stopper;
+    boost::thread_group testers;
+    for(int i = 0; i < 32; ++i) {
+        testers.create_thread(bind(
+                StrPool_tester,
+                boost::ref(stopper),
+                boost::ref(*rng),
+                boost::ref(sp)));
+    }
+    sleepFor(Duration::fromMsec(500));
+    stopper.store(true, boost::memory_order_release);
+    testers.join_all();
+    {
+        StrPool::Stats stats = sp.stats();
+        TESTA_ASSERT(stats.mBorrowed == 0)
+            (stats).issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(StrPool_Nthreads);
 
 } // namespace tablestore
 } // namespace aliyun

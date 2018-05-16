@@ -81,12 +81,13 @@ public:
     typedef typename ApiTraits<kApi_ListTable>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_ListTable>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -98,12 +99,13 @@ public:
     typedef typename ApiTraits<kApi_CreateTable>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_CreateTable>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -115,12 +117,13 @@ public:
     typedef typename ApiTraits<kApi_DeleteTable>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_DeleteTable>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -132,12 +135,13 @@ public:
     typedef typename ApiTraits<kApi_DescribeTable>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_DescribeTable>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -149,12 +153,13 @@ public:
     typedef typename ApiTraits<kApi_UpdateTable>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_UpdateTable>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -166,12 +171,13 @@ public:
     typedef typename ApiTraits<kApi_ComputeSplitsBySize>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_ComputeSplitsBySize>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -183,12 +189,13 @@ public:
     typedef typename ApiTraits<kApi_PutRow>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_PutRow>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -200,12 +207,13 @@ public:
     typedef typename ApiTraits<kApi_GetRow>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_GetRow>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -217,12 +225,13 @@ public:
     typedef typename ApiTraits<kApi_GetRange>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_GetRange>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -234,12 +243,13 @@ public:
     typedef typename ApiTraits<kApi_UpdateRow>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_UpdateRow>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -251,12 +261,13 @@ public:
     typedef typename ApiTraits<kApi_DeleteRow>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_DeleteRow>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
 };
 
 template<>
@@ -268,12 +279,13 @@ public:
     typedef typename ApiTraits<kApi_BatchGetRow>::PbRequest PbRequest;
     typedef typename ApiTraits<kApi_BatchGetRow>::PbResponse PbResponse;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
     const ApiRequest* mRequest; // not own
 };
 
@@ -295,12 +307,13 @@ public:
 
     typedef std::map<std::string, Index, util::QuasiLexicographicLess<std::string> > Indices;
 
-    explicit Serde(util::MemPool&);
+    explicit Serde(util::MemPool&, util::StrPool&);
     util::Optional<OTSError> serialize(std::deque<util::MemPiece>&, const ApiRequest&);
     util::Optional<OTSError> deserialize(ApiResponse&, std::deque<util::MemPiece>&);
 
 private:
     MemPoolZeroCopyOutputStream mOStream;
+    util::StrPool& mStrPool;
     const ApiRequest* mRequest; // not own
     Indices mIndices;
 };

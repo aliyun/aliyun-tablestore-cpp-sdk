@@ -159,6 +159,7 @@ private:
     const Credential mCredential;
     std::auto_ptr<http::Asio> mAsio;
     std::auto_ptr<util::MemPool> mMemPool;
+    std::auto_ptr<util::StrPool> mStrPool;
     std::auto_ptr<http::Client> mHttp;
     http::Headers mFixedHeaders;
     util::Duration mRequestTimeout;
@@ -176,7 +177,7 @@ AsyncClientBase::Context<kAction>::Context(
     mRetryTimer(NULL),
     kPath(ApiTraits<kAction>::kPath),
     kTracker(tracker),
-    mSerde(*base.mMemPool),
+    mSerde(*base.mMemPool, *base.mStrPool),
     mRetryStrategy(base.mRetryStrategy->clone())
 {
     OTS_ASSERT(!mBase.mClose.load(boost::memory_order_acquire))
