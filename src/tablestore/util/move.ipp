@@ -45,6 +45,7 @@ struct Copyable {};
 struct Moveable {};
 struct SmartPtr {};
 struct ClearSwapable {};
+struct Function {};
 
 template<class T>
 struct MoveCategory<
@@ -129,6 +130,14 @@ struct MoveCategory<
 };
 
 template<class T>
+struct MoveCategory<
+    T,
+    typename mp::VoidIfExists<typename T::result_type>::Type>
+{
+    typedef Function Category;
+};
+
+template<class T>
 struct MoveAssign<Moveable, T>
 {
     void operator()(T& to, const MoveHolder<T>& from) const throw()
@@ -165,6 +174,16 @@ struct MoveAssign<SmartPtr, T>
             to = *from;
             from->reset();
         }
+    }
+};
+
+template<class T>
+struct MoveAssign<Function, T>
+{
+    void operator()(T& to, const MoveHolder<T>& from) const
+    {
+        std::swap(to, *from);
+        *from = T();
     }
 };
 
