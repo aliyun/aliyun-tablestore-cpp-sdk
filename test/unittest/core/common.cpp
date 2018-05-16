@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "tablestore/util/timestamp.hpp"
 #include "tablestore/util/assert.hpp"
+#include "gmock/gmock.h"
 #include <cstdio>
 
 using namespace std;
@@ -39,6 +40,14 @@ using namespace std;
 namespace aliyun {
 namespace tablestore {
 namespace core {
+
+void initGmock()
+{
+    ::testing::GTEST_FLAG(throw_on_failure) = true;
+    int argc = 1;
+    char const* argv[] = {"dummy"};
+    ::testing::InitGoogleMock(&argc, (char**) argv);
+}
 
 Channel::Channel()
   : mConsumeSem(0),

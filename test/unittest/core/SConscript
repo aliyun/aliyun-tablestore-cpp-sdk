@@ -2,5 +2,5 @@
 Import('env')
 
 env.program('core_unittest', env.Object(env.Glob('*.cpp')),
-    LIBS=['tablestore_core_static', 'testa_static'])
+    LIBS=['tablestore_core_static', 'testa_static', 'gmock_static'])
 env.Depends('async_client_unittest.os', '$BUILD_DIR/src/tablestore/core/protocol/table_store.pb.h')

@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "testa/testa.hpp"
 #include "config.hpp"
+#include "tablestore/core/batch_writer.hpp"
 #include "tablestore/core/client.hpp"
 #include "tablestore/core/types.hpp"
 #include "tablestore/core/range_iterator.hpp"
@@ -39,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/ref.hpp>
 #include <tr1/functional>
 #include <tr1/memory>
+#include <stdexcept>
 #include <set>
 
 using namespace std;
@@ -1411,6 +1413,129 @@ void AsyncComputeSplitsBySize(const string& csname)
         (resp).issue();
 }
 TESTA_DEF_JUNIT_LIKE1(AsyncComputeSplitsBySize);
+
+class BatchWriterTrial : public Trial
+{
+public:
+    explicit BatchWriterTrial(Testbench& tb, deque<PrimaryKeyValue>& rows)
+      : Trial(tb),
+        mRows(rows),
+        mOngoingReqs(0)
+    {
+        AsyncBatchWriter* w = NULL;
+        Optional<OTSError> err = AsyncBatchWriter::create(
+            w,
+            testbench().client(),
+            testbench().logger(),
+            BatchWriterConfig());
+        TESTA_ASSERT(!err.present())
+            (*err).issue();
+        mWriter.reset(w);
+    }
+
+    void asyncDo()
+    {
+        mOngoingReqs.fetch_add(2, boost::memory_order_acq_rel);
+        {
+            PutRowRequest req;
+            req.mutableRowChange().mutableTable() = testbench().caseName();
+            req.mutableRowChange().mutablePrimaryKey().append() =
+                PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(0));
+            mWriter->putRow(
+                req,
+                bind(&BatchWriterTrial::writeCallback,
+                    this, _1, _2, _3));
+        }
+        {
+            PutRowRequest req;
+            req.mutableRowChange().mutableTable() = testbench().caseName();
+            req.mutableRowChange().mutablePrimaryKey().append() =
+                PrimaryKeyColumn("pkey", PrimaryKeyValue::toInteger(1));
+
+            mWriter->putRow(
+                req,
+                bind(&BatchWriterTrial::writeCallback,
+                    this, _1, _2, _3));
+        }
+    }
+
+    void writeCallback(PutRowRequest& req, Optional<OTSError>& err, PutRowResponse& resp)
+    {
+        if (err.present()) {
+            OTS_LOG_ERROR(testbench().logger())
+                ("Request", req)
+                ("Error", *err);
+        } else {
+            OTS_LOG_DEBUG(testbench().logger())
+                ("Request", req)
+                ("Response", resp);
+        }
+        int64_t ongoing = mOngoingReqs.fetch_sub(1, boost::memory_order_acq_rel) - 1;
+        OTS_LOG_DEBUG(testbench().logger())
+            ("RequestsOnTheFly", ongoing);
+        if (ongoing == 0) {
+            mActor.pushBack(bind(&BatchWriterTrial::scanTable, this));
+        }
+    }
+
+    void scanTable()
+    {
+        RangeQueryCriterion cri;
+        cri.mutableInclusiveStart().append() =
+            PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMin());
+        cri.mutableExclusiveEnd().append() =
+            PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
+        cri.mutableTable() = testbench().caseName();
+        cri.mutableMaxVersions().reset(1);
+        try {
+            RangeIterator iter(testbench().client(), cri);
+            for(;;) {
+                Optional<OTSError> e = iter.moveNext();
+                if (e.present()) {
+                    OTS_LOG_DEBUG(testbench().logger())
+                        ("Error", *e)
+                        .what("RI: Error on range iterator");
+                    TESTA_ASSERT(false)
+                        (*e).issue();
+                    break;
+                }
+                if (!iter.valid()) {
+                    OTS_LOG_DEBUG(testbench().logger())
+                        ("RowCount", mRows.size())
+                        .what("RI: finish on range iterator");
+                    break;
+                }
+                const Row& r = iter.get();
+                const PrimaryKey& pk = r.primaryKey();
+                TESTA_ASSERT(pk.size() == 1)
+                    (pk.size()).issue();
+                mRows.push_back(pk[0].value());
+            }
+        }
+        catch(const std::logic_error&) {
+        }
+        testbench().asyncDeleteTable();
+    }
+
+private:
+    deque<PrimaryKeyValue>& mRows;
+    boost::atomic<int64_t> mOngoingReqs;
+    auto_ptr<AsyncBatchWriter> mWriter;
+    Actor mActor;
+};
+
+void AsyncBatchWriter(const string& csname)
+{
+    Optional<OTSError> err;
+    Testbench tb(err, csname);
+    deque<PrimaryKeyValue> pkeys;
+    BatchWriterTrial trial(tb, pkeys);
+    tb.gogogo(trial);
+
+    TESTA_ASSERT(pp::prettyPrint(pkeys) == "[0,1]")
+        (pkeys).issue();
+}
+TESTA_DEF_JUNIT_LIKE1(AsyncBatchWriter);
 
 } // namespace
 } // namespace core

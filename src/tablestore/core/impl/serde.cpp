@@ -70,6 +70,7 @@ void concat(string& out, const deque<MemPiece>& pieces)
 
 void toError(OTSError& api, const PB::Error& pb)
 {
+    api.setHttpStatusFromErrorCode(pb.code());
     api.mutableErrorCode() = pb.code();
     if (pb.has_message()) {
         api.mutableMessage() = pb.message();

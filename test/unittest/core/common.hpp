@@ -32,13 +32,75 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "gmock/gmock.h"
+#include "tablestore/core/client.hpp"
 #include "tablestore/util/threading.hpp"
+#include <tr1/functional>
 #include <string>
 #include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
 namespace core {
+
+void initGmock();
+
+class MockAsyncClient : public AsyncClient {
+public:
+    MOCK_METHOD2(createTable, void(
+        CreateTableRequest&,
+        const std::tr1::function<void(
+                CreateTableRequest&, util::Optional<OTSError>&, CreateTableResponse&)>&));
+    MOCK_METHOD2(deleteTable, void(
+        DeleteTableRequest&,
+        const std::tr1::function<void(
+                DeleteTableRequest&, util::Optional<OTSError>&, DeleteTableResponse&)>&));
+    MOCK_METHOD2(listTable, void(
+        ListTableRequest&,
+        const std::tr1::function<void(
+                ListTableRequest&, util::Optional<OTSError>&, ListTableResponse&)>&));
+    MOCK_METHOD2(describeTable, void(
+        DescribeTableRequest&,
+        const std::tr1::function<void(
+                DescribeTableRequest&, util::Optional<OTSError>&, DescribeTableResponse&)>&));
+    MOCK_METHOD2(updateTable, void(
+        UpdateTableRequest&,
+        const std::tr1::function<void(
+                UpdateTableRequest&, util::Optional<OTSError>&, UpdateTableResponse&)>&));
+    MOCK_METHOD2(putRow, void(
+        PutRowRequest&,
+        const std::tr1::function<void(
+                PutRowRequest&, util::Optional<OTSError>&, PutRowResponse&)>&));
+    MOCK_METHOD2(updateRow, void(
+        UpdateRowRequest&,
+        const std::tr1::function<void(
+                UpdateRowRequest&, util::Optional<OTSError>&, UpdateRowResponse&)>&));
+    MOCK_METHOD2(deleteRow, void(
+        DeleteRowRequest&,
+        const std::tr1::function<void(
+                DeleteRowRequest&, util::Optional<OTSError>&, DeleteRowResponse&)>&));
+    MOCK_METHOD2(batchWriteRow, void(
+        BatchWriteRowRequest&,
+        const std::tr1::function<void(
+                BatchWriteRowRequest&, util::Optional<OTSError>&, BatchWriteRowResponse&)>&));
+    MOCK_METHOD2(getRow, void(
+        GetRowRequest&,
+        const std::tr1::function<void(
+                GetRowRequest&, util::Optional<OTSError>&, GetRowResponse&)>&));
+    MOCK_METHOD2(batchGetRow, void(
+        BatchGetRowRequest&,
+        const std::tr1::function<void(
+                BatchGetRowRequest&, util::Optional<OTSError>&, BatchGetRowResponse&)>&));
+    MOCK_METHOD2(getRange, void(
+        GetRangeRequest&,
+        const std::tr1::function<void(
+                GetRangeRequest&, util::Optional<OTSError>&, GetRangeResponse&)>&));
+    MOCK_METHOD2(computeSplitsBySize, void(
+        ComputeSplitsBySizeRequest&,
+        const std::tr1::function<void(
+                ComputeSplitsBySizeRequest&, util::Optional<OTSError>&, ComputeSplitsBySizeResponse&)>&));
+};
+
 
 class Channel
 {
