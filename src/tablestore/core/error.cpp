@@ -183,6 +183,68 @@ void OTSError::prettyPrint(string& out) const
     out.append("\"}");
 }
 
+void OTSError::setHttpStatusFromErrorCode(const string& _ec)
+{
+    MemPiece ec = MemPiece::from(_ec);
+    if (ec == MemPiece::from(kErrorCode_CouldntResolveHost)) {
+        mHttpStatus = kHttpStatus_CouldntResolveHost;
+    } else if (ec == MemPiece::from(kErrorCode_CouldntConnect)) {
+        mHttpStatus = kHttpStatus_CouldntConnect;
+    } else if (ec == MemPiece::from(kErrorCode_OTSRequestTimeout)) {
+        mHttpStatus = kHttpStatus_OperationTimeout;
+    } else if (ec == MemPiece::from(kErrorCode_WriteRequestFail)) {
+        mHttpStatus = kHttpStatus_WriteRequestFail;
+    } else if (ec == MemPiece::from(kErrorCode_CorruptedResponse)) {
+        mHttpStatus = kHttpStatus_CorruptedResponse;
+    } else if (ec == MemPiece::from(kErrorCode_NoAvailableConnection)) {
+        mHttpStatus = kHttpStatus_NoAvailableConnection;
+    } else if (ec == MemPiece::from(kErrorCode_OTSOutOfColumnCountLimit)) {
+        mHttpStatus = 400;
+    } else if (ec == MemPiece::from(kErrorCode_OTSObjectNotExist)) {
+        mHttpStatus = 404;
+    } else if (ec == MemPiece::from(kErrorCode_OTSServerBusy)) {
+        mHttpStatus = 503;
+    } else if (ec == MemPiece::from(kErrorCode_OTSCapacityUnitExhausted)) {
+        mHttpStatus = 403;
+    } else if (ec == MemPiece::from(kErrorCode_OTSTooFrequentReservedThroughputAdjustment)) {
+        mHttpStatus = 403;
+    } else if (ec == MemPiece::from(kErrorCode_OTSInternalServerError)) {
+        mHttpStatus = 500;
+    } else if (ec == MemPiece::from(kErrorCode_OTSQuotaExhausted)) {
+        mHttpStatus = 403;
+    } else if (ec == MemPiece::from(kErrorCode_OTSRequestBodyTooLarge)) {
+        mHttpStatus = 413;
+    } else if (ec == MemPiece::from(kErrorCode_OTSTimeout)) {
+        mHttpStatus = 503;
+    } else if (ec == MemPiece::from(kErrorCode_OTSObjectAlreadyExist)) {
+        mHttpStatus = 409;
+    } else if (ec == MemPiece::from(kErrorCode_OTSTableNotReady)) {
+        mHttpStatus = 404;
+    } else if (ec == MemPiece::from(kErrorCode_OTSConditionCheckFail)) {
+        mHttpStatus = 403;
+    } else if (ec == MemPiece::from(kErrorCode_OTSOutOfRowSizeLimit)) {
+        mHttpStatus = 400;
+    } else if (ec == MemPiece::from(kErrorCode_OTSInvalidPK)) {
+        mHttpStatus = 400;
+    } else if (ec == MemPiece::from(kErrorCode_OTSMethodNotAllowed)) {
+        mHttpStatus = 405;
+    } else if (ec == MemPiece::from(kErrorCode_OTSAuthFailed)) {
+        mHttpStatus = 403;
+    } else if (ec == MemPiece::from(kErrorCode_OTSServerUnavailable)) {
+        mHttpStatus = 503;
+    } else if (ec == MemPiece::from(kErrorCode_OTSParameterInvalid)) {
+        mHttpStatus = 400;
+    } else if (ec == MemPiece::from(kErrorCode_OTSRowOperationConflict)) {
+        mHttpStatus = 409;
+    } else if (ec == MemPiece::from(kErrorCode_OTSPartitionUnavailable)) {
+        mHttpStatus = 503;
+    } else if (ec == MemPiece::from(kErrorCode_SslHandshakeFail)) {
+        mHttpStatus = kHttpStatus_SslHandshakeFail;
+    } else {
+        mHttpStatus = 400;
+    }
+}
+
 bool isCurlError(const OTSError& err)
 {
     return err.httpStatus() > 0 && err.httpStatus() <= 99;

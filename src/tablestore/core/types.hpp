@@ -33,6 +33,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/core/error.hpp"
+#include "tablestore/util/threading.hpp"
 #include "tablestore/util/prettyprint.hpp"
 #include "tablestore/util/move.hpp"
 #include "tablestore/util/mempiece.hpp"

@@ -197,6 +197,7 @@ public:
         return mHttpStatus;
     }
 
+    void setHttpStatusFromErrorCode(const std::string&);
     void prettyPrint(std::string&) const;
 
 private:
@@ -212,7 +213,6 @@ private:
 
 bool isCurlError(const OTSError&);
 bool isTemporary(const OTSError&);
-
 
 } // namespace core
 } // namespace tablestore
