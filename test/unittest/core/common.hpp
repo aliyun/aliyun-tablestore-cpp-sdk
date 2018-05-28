@@ -43,64 +43,44 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-void initGmock();
-
-class MockAsyncClient : public AsyncClient {
+class MockAsyncClient: public AsyncClient
+{
+private:
+    util::Actor mActor;
 public:
-    MOCK_METHOD2(createTable, void(
-        CreateTableRequest&,
-        const std::tr1::function<void(
-                CreateTableRequest&, util::Optional<OTSError>&, CreateTableResponse&)>&));
-    MOCK_METHOD2(deleteTable, void(
-        DeleteTableRequest&,
-        const std::tr1::function<void(
-                DeleteTableRequest&, util::Optional<OTSError>&, DeleteTableResponse&)>&));
-    MOCK_METHOD2(listTable, void(
-        ListTableRequest&,
-        const std::tr1::function<void(
-                ListTableRequest&, util::Optional<OTSError>&, ListTableResponse&)>&));
-    MOCK_METHOD2(describeTable, void(
-        DescribeTableRequest&,
-        const std::tr1::function<void(
-                DescribeTableRequest&, util::Optional<OTSError>&, DescribeTableResponse&)>&));
-    MOCK_METHOD2(updateTable, void(
-        UpdateTableRequest&,
-        const std::tr1::function<void(
-                UpdateTableRequest&, util::Optional<OTSError>&, UpdateTableResponse&)>&));
-    MOCK_METHOD2(putRow, void(
-        PutRowRequest&,
-        const std::tr1::function<void(
-                PutRowRequest&, util::Optional<OTSError>&, PutRowResponse&)>&));
-    MOCK_METHOD2(updateRow, void(
-        UpdateRowRequest&,
-        const std::tr1::function<void(
-                UpdateRowRequest&, util::Optional<OTSError>&, UpdateRowResponse&)>&));
-    MOCK_METHOD2(deleteRow, void(
-        DeleteRowRequest&,
-        const std::tr1::function<void(
-                DeleteRowRequest&, util::Optional<OTSError>&, DeleteRowResponse&)>&));
-    MOCK_METHOD2(batchWriteRow, void(
-        BatchWriteRowRequest&,
-        const std::tr1::function<void(
-                BatchWriteRowRequest&, util::Optional<OTSError>&, BatchWriteRowResponse&)>&));
-    MOCK_METHOD2(getRow, void(
-        GetRowRequest&,
-        const std::tr1::function<void(
-                GetRowRequest&, util::Optional<OTSError>&, GetRowResponse&)>&));
-    MOCK_METHOD2(batchGetRow, void(
-        BatchGetRowRequest&,
-        const std::tr1::function<void(
-                BatchGetRowRequest&, util::Optional<OTSError>&, BatchGetRowResponse&)>&));
-    MOCK_METHOD2(getRange, void(
-        GetRangeRequest&,
-        const std::tr1::function<void(
-                GetRangeRequest&, util::Optional<OTSError>&, GetRangeResponse&)>&));
-    MOCK_METHOD2(computeSplitsBySize, void(
-        ComputeSplitsBySizeRequest&,
-        const std::tr1::function<void(
-                ComputeSplitsBySizeRequest&, util::Optional<OTSError>&, ComputeSplitsBySizeResponse&)>&));
-};
+    explicit MockAsyncClient()
+    {}
 
+#define DEF_ACTION(api, upcase) \
+    private:\
+    typedef std::tr1::function<void(\
+        upcase##Request&, util::Optional<OTSError>&, upcase##Response&)> upcase##Callback;\
+    typedef std::tr1::function<void(upcase##Request&, const upcase##Callback&)> upcase##Action;\
+    upcase##Action m##upcase##Action;\
+    public:\
+    upcase##Action& mutable##upcase() {return m##upcase##Action;}\
+    void api(upcase##Request& req, const upcase##Callback& cb)\
+    {\
+        OTS_ASSERT(m##upcase##Action);\
+        mActor.pushBack(bind(m##upcase##Action, req, cb));\
+    }
+
+    DEF_ACTION(createTable, CreateTable);
+    DEF_ACTION(deleteTable, DeleteTable);
+    DEF_ACTION(listTable, ListTable);
+    DEF_ACTION(describeTable, DescribeTable);
+    DEF_ACTION(updateTable, UpdateTable);
+    DEF_ACTION(putRow, PutRow);
+    DEF_ACTION(updateRow, UpdateRow);
+    DEF_ACTION(deleteRow, DeleteRow);
+    DEF_ACTION(batchWriteRow, BatchWriteRow);
+    DEF_ACTION(getRow, GetRow);
+    DEF_ACTION(batchGetRow, BatchGetRow);
+    DEF_ACTION(getRange, GetRange);
+    DEF_ACTION(computeSplitsBySize, ComputeSplitsBySize);
+
+#undef DEF_ACTION
+};
 
 class Channel
 {

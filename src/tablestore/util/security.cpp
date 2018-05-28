@@ -61,6 +61,8 @@ string md5(const deque<MemPiece>& xs)
     return b64.base64().to<string>();
 }
 
+namespace impl {
+
 class Md5Ctx
 {
 public:
@@ -71,6 +73,26 @@ public:
             .what("Security: fail to initialize openssl MD5.");
     }
 
+    void update(const MemPiece& p)
+    {
+        int r = MD5_Update(get(), p.data(), p.length());
+        OTS_ASSERT(r)
+            .what("Security: fail to update openssl MD5.");
+    }
+
+    void finalize(const MutableMemPiece& p)
+    {
+        const int64_t kLength = Md5::kLength;
+        OTS_ASSERT(p.length() >= kLength)
+            (p.length())
+            (kLength)
+            .what("Security: MD5 requires at least 16 bytes to store digest.");
+        int r = MD5_Final(p.begin(), get());
+        OTS_ASSERT(r)
+            .what("Security: fail to finalize MD5.");
+    }
+
+private:
     MD5_CTX* get()
     {
         return &mCtx;
@@ -80,42 +102,37 @@ private:
     MD5_CTX mCtx;
 };
 
+} // namespace impl
+
 Md5::Md5()
-  : mFinalized(false)
-{
-    mCtx.reset(new Md5Ctx());
-}
+  : mCtx(new impl::Md5Ctx()),
+    mFinalized(false)
+{}
 
 Md5::~Md5()
 {
     OTS_ASSERT(mFinalized)
         .what("Security: destroying a MD5 which is not finalized.");
+    delete mCtx;
 }
 
 void Md5::update(const MemPiece& p)
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to update a finalized MD5.");
-    int r = MD5_Update(mCtx->get(), p.data(), p.length());
-    OTS_ASSERT(r)
-        .what("Security: fail to update openssl MD5.");
+    mCtx->update(p);
 }
 
 void Md5::finalize(const MutableMemPiece& p)
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to finalize a finalized MD5.");
-    const int64_t kLength = Md5::kLength;
-    OTS_ASSERT(p.length() >= kLength)
-        (p.length())
-        (kLength)
-        .what("Security: MD5 requires at least 16 bytes to store digest.");
-    int r = MD5_Final(p.begin(), mCtx->get());
-    OTS_ASSERT(r)
-        .what("Security: fail to finalize MD5.");
+    mCtx->finalize(p);
     mFinalized = true;
 }
 
+
+namespace impl {
 
 class Sha1Ctx
 {
@@ -127,6 +144,26 @@ public:
             .what("Security: fail to initialize SHA1.");
     }
 
+    void update(const MemPiece& p)
+    {
+        int r = SHA1_Update(get(), p.data(), p.length());
+        OTS_ASSERT(r)
+            .what("Security: fail to update openssl MD5.");
+    }
+
+    void finalize(const MutableMemPiece& p)
+    {
+        static const int64_t kLength = Sha1::kLength;
+        OTS_ASSERT(p.length() >= kLength)
+            (p.length())
+            (kLength)
+            .what("Security: SHA1 requires at least 20 bytes to store digest.");
+        int r = SHA1_Final(p.begin(), get());
+        OTS_ASSERT(r)
+            .what("Security: fail to finalize MD5.");
+    }
+    
+private:
     SHA_CTX* get()
     {
         return &mCtx;
@@ -136,42 +173,37 @@ private:
     SHA_CTX mCtx;
 };
 
+} // namespace impl
+
 Sha1::Sha1()
-  : mFinalized(false)
-{
-    mCtx.reset(new Sha1Ctx());
-}
+  : mCtx(new impl::Sha1Ctx()),
+    mFinalized(false)
+{}
 
 Sha1::~Sha1()
 {
     OTS_ASSERT(mFinalized)
         .what("Security: destroying a MD5 which is not finalized.");
+    delete mCtx;
 }
 
 void Sha1::update(const MemPiece& p)
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to update a finalized MD5.");
-    int r = SHA1_Update(mCtx->get(), p.data(), p.length());
-    OTS_ASSERT(r)
-        .what("Security: fail to update openssl MD5.");
+    mCtx->update(p);
 }
 
 void Sha1::finalize(const MutableMemPiece& p)
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to finalize a finalized MD5.");
-    static const int64_t kLength = Sha1::kLength;
-    OTS_ASSERT(p.length() >= kLength)
-        (p.length())
-        (kLength)
-        .what("Security: SHA1 requires at least 20 bytes to store digest.");
-    int r = SHA1_Final(p.begin(), mCtx->get());
-    OTS_ASSERT(r)
-        .what("Security: fail to finalize MD5.");
+    mCtx->finalize(p);
     mFinalized = true;
 }
 
+
+namespace impl {
 
 class Base64Ctx
 {
@@ -190,7 +222,29 @@ public:
         BIO_free_all(mB64);
     }
 
-    BIO* get()
+    void update(const MemPiece& p)
+    {
+        int ret = BIO_write(get(), (char*) p.data(), p.length());
+        OTS_ASSERT(ret >= 0)
+            (ret);
+    }
+
+    void finalize()
+    {
+        int ret = BIO_flush(get());
+        OTS_ASSERT(ret >= 0)
+            (ret);
+    }
+
+    MemPiece base64() const
+    {
+        BUF_MEM* bptr;
+        BIO_get_mem_ptr(get(), &bptr);
+        return MemPiece(bptr->data, bptr->length);
+    }
+
+private:
+    BIO* get() const
     {
         return mB64;
     }
@@ -199,41 +253,40 @@ private:
     BIO* mB64;
 };
 
+} // namespace impl
+
 Base64Encoder::Base64Encoder()
-  : mCtx(new Base64Ctx()),
+  : mCtx(new impl::Base64Ctx()),
     mFinalized(false)
 {}
 
 Base64Encoder::~Base64Encoder()
 {
+    OTS_ASSERT(mFinalized)
+        .what("Security: destroying a BASE64 which is not finalized.");
+    delete mCtx;
 }
 
 void Base64Encoder::update(const MemPiece& p)
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to update a finalized BASE64.");
-    int ret = BIO_write(mCtx->get(), (char*) p.data(), p.length());
-    OTS_ASSERT(ret >= 0)
-        (ret);
+    mCtx->update(p);
 }
 
 void Base64Encoder::finalize()
 {
     OTS_ASSERT(!mFinalized)
         .what("Security: it is forbidden to finalize a BASE64 twice.");
+    mCtx->finalize();
     mFinalized = true;
-    int ret = BIO_flush(mCtx->get());
-    OTS_ASSERT(ret >= 0)
-        (ret);
 }
 
 MemPiece Base64Encoder::base64() const
 {
     OTS_ASSERT(mFinalized)
         .what("Security: it is forbidden to fetch result from an unfinalized BASE64.");
-    BUF_MEM* bptr;
-    BIO_get_mem_ptr(mCtx->get(), &bptr);
-    return MemPiece(bptr->data, bptr->length);
+    return mCtx->base64();
 }
 
 

@@ -43,13 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-class Logger;
-} // namespace util
-
 namespace core {
-class Tracker;
-
 namespace http {
 
 namespace impl {

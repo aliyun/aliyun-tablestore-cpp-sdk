@@ -33,43 +33,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/core/types.hpp"
+#include "tablestore/core/error.hpp"
 #include "tablestore/util/timestamp.hpp"
+#include "tablestore/util/random.hpp"
 #include <tr1/memory>
 #include <string>
 #include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-namespace random {
-class Random;
-} // namespace random
-} // namespace util
-
 namespace core {
-
-class OTSError;
-
-class RetryStrategy
-{
-public:
-    enum RetryCategory
-    {
-        UNRETRIABLE,
-        RETRIABLE,
-        DEPENDS,
-    };
-
-    static RetryCategory retriable(const OTSError&);
-    static bool retriable(Action, const OTSError&);
-
-    virtual ~RetryStrategy() {}
-
-    virtual RetryStrategy* clone() const =0;
-    virtual int64_t retries() const throw() =0;
-    virtual bool shouldRetry(Action, const OTSError&) const =0;
-    virtual util::Duration nextPause() =0;
-};
 
 class DeadlineRetryStrategy: public RetryStrategy
 {

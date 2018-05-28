@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace util {
-class MemPiece;
 
 Optional<std::string> toUint64(uint64_t&, const MemPiece&, int64_t radix);
 void format(std::string&, uint64_t num, int64_t radix);

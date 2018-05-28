@@ -48,17 +48,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-
-namespace util {
-class Logger;
-class Actor;
-} // namespace util
-
 namespace core {
-class Tracker;
-
 namespace http {
-class TimerImpl;
 
 class AsioImpl: public Asio
 {

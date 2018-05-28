@@ -91,6 +91,7 @@ Thread::Thread(const function<void()>& fn)
 {}
 
 Thread::Thread()
+  : mImpl(NULL)
 {}
 
 Thread::Thread(const MoveHolder<Thread>& a)
@@ -100,22 +101,27 @@ Thread::Thread(const MoveHolder<Thread>& a)
 
 Thread& Thread::operator=(const MoveHolder<Thread>& a)
 {
-    OTS_ASSERT(mImpl.get() == NULL)
-        .what("Being move target of a thread delegate"
-            " requires no thread it delegated to.");
-    mImpl.reset(a->mImpl.release());
+    if (this != &*a) {
+        OTS_ASSERT(mImpl == NULL)
+            .what("Being move target of a thread delegate"
+                " requires no thread it delegated to.");
+        mImpl = a->mImpl;
+        a->mImpl = NULL;
+    }
     return *this;
 }
 
 Thread::~Thread()
 {
+    delete mImpl;
 }
 
 void Thread::join()
 {
-    if (mImpl.get() != NULL) {
+    if (mImpl != NULL) {
         mImpl->join();
-        mImpl.reset();
+        delete mImpl;
+        mImpl = NULL;
     }
 }
 
@@ -143,6 +149,11 @@ private:
 Mutex::Mutex()
   : mMutex(new impl::Mutex())
 {}
+
+Mutex::~Mutex()
+{
+    delete mMutex;
+}
 
 void Mutex::lock()
 {
@@ -217,6 +228,11 @@ private:
 Semaphore::Semaphore(int64_t init)
   : mImpl(new impl::Semaphore(init))
 {}
+
+Semaphore::~Semaphore()
+{
+    delete mImpl;
+}
 
 void Semaphore::post()
 {
@@ -310,6 +326,7 @@ Actor::~Actor()
     mStopper.store(true, boost::memory_order_release);
     mSem.post();
     mThread.join();
+    delete mScript;
 }
 
 void Actor::pushBack(const Action& act)

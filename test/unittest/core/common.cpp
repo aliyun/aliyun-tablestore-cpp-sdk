@@ -41,14 +41,6 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
-void initGmock()
-{
-    ::testing::GTEST_FLAG(throw_on_failure) = true;
-    int argc = 1;
-    char const* argv[] = {"dummy"};
-    ::testing::InitGoogleMock(&argc, (char**) argv);
-}
-
 Channel::Channel()
   : mConsumeSem(0),
     mProduceSem(1)

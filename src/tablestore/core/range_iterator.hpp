@@ -32,6 +32,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "tablestore/core/client.hpp"
 #include "tablestore/core/types.hpp"
 #include "tablestore/core/error.hpp"
 #include "tablestore/util/optional.hpp"
@@ -44,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace core {
-class AsyncClient;
 
 /**
  * An iterator on rows between a range,

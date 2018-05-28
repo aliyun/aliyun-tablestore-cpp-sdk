@@ -179,7 +179,7 @@ AsyncBatchWriter::~AsyncBatchWriter()
 {
     OTS_LOG_INFO(mLogger)
         ("What", "BatchWriter is quiting.");
-    mExit.store(true, boost::memory_order_seq_cst);
+    mExit.store(true, boost::memory_order_release);
     mAggregateSem.post();
     mAggregateThread.join();
 

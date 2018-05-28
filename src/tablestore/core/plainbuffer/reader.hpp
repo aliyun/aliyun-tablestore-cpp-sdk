@@ -40,11 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-
-namespace util {
-class MemPiece;
-} // namespace util
-
 namespace core {
 namespace plainbuffer {
 

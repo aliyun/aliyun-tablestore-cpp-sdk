@@ -32,17 +32,13 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
+#include "tablestore/util/logger.hpp"
 #include <boost/atomic.hpp>
 #include <string>
 #include <stdint.h>
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-class Logger;
-} // namespace util
-
 namespace core {
 namespace impl {
 

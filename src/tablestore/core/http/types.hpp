@@ -33,10 +33,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "tablestore/core/error.hpp"
+#include "tablestore/core/types.hpp"
 #include "tablestore/util/mempiece.hpp"
 #include "tablestore/util/timestamp.hpp"
 #include "tablestore/util/optional.hpp"
 #include "tablestore/util/move.hpp"
+#include "tablestore/util/mempool.hpp"
+#include "tablestore/util/logger.hpp"
+#include "tablestore/util/threading.hpp"
 #include <tr1/functional>
 #include <tr1/memory>
 #include <map>
@@ -45,18 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-
-namespace util {
-class MemPool;
-class Logger;
-class Actor;
-} // namespace util
-
 namespace core {
-class Tracker;
-
 namespace http {
-class Connection;
 
 typedef std::map<
     std::string, std::string,

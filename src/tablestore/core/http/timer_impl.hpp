@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/types.hpp"
 #include "tablestore/util/timestamp.hpp"
 #include "tablestore/util/threading.hpp"
+#include "tablestore/util/logger.hpp"
+#include "tablestore/util/seq_gen.hpp"
 #include <boost/asio.hpp>
 #include <boost/atomic.hpp>
 #include <tr1/memory>
@@ -45,12 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-class Logger;
-class Actor;
-class SequenceGenerator;
-} // namespace util
-
 namespace core {
 namespace http {
 

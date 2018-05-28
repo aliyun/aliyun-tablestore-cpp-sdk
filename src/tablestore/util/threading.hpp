@@ -63,7 +63,7 @@ public:
     void join();
 
 private:
-    std::auto_ptr<impl::Thread> mImpl;
+    impl::Thread* mImpl;
 };
 
 namespace impl {
@@ -74,11 +74,13 @@ class Mutex: private boost::noncopyable
 {
 public:
     explicit Mutex();
+    ~Mutex();
+
     void lock();
     void unlock();
 
 private:
-    std::auto_ptr<impl::Mutex> mMutex;
+    impl::Mutex* mMutex;
 };
 
 class ScopedLock: private boost::noncopyable
@@ -105,13 +107,14 @@ public:
     };
 
     explicit Semaphore(int64_t init);
+    ~Semaphore();
 
     void post();
     void wait();
     Status waitFor(Duration);
 
 private:
-    std::auto_ptr<impl::Semaphore> mImpl;
+    impl::Semaphore* mImpl;
 };
 
 namespace impl {
@@ -137,7 +140,7 @@ private:
     Thread mThread;
     Semaphore mSem;
     boost::atomic<bool> mStopper;
-    std::auto_ptr<impl::ActionQueue> mScript;
+    impl::ActionQueue* mScript;
 };
 
 } // namespace util

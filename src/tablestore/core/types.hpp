@@ -40,23 +40,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/util/optional.hpp"
 #include "tablestore/util/result.hpp"
 #include "tablestore/util/timestamp.hpp"
+#include "tablestore/util/logger.hpp"
+#include <boost/noncopyable.hpp>
 #include <tr1/memory>
 #include <string>
 #include <deque>
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-class Actor;
-class Logger;
-namespace random {
-class Random;
-} // namespace random
-} // namespace util
-
 namespace core {
-
-class RetryStrategy;
 
 enum Action
 {
@@ -118,6 +110,27 @@ enum CompareResult
     kCR_Larger,
 };
 
+
+class RetryStrategy
+{
+public:
+    enum RetryCategory
+    {
+        UNRETRIABLE,
+        RETRIABLE,
+        DEPENDS,
+    };
+
+    static RetryCategory retriable(const OTSError&);
+    static bool retriable(Action, const OTSError&);
+
+    virtual ~RetryStrategy() {}
+
+    virtual RetryStrategy* clone() const =0;
+    virtual int64_t retries() const throw() =0;
+    virtual bool shouldRetry(Action, const OTSError&) const =0;
+    virtual util::Duration nextPause() =0;
+};
 
 template<class Elem>
 class IVector

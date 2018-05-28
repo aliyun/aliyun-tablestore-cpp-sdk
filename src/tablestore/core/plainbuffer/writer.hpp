@@ -32,18 +32,12 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include "tablestore/core/types.hpp"
 #include <string>
 
 namespace aliyun {
 namespace tablestore {
 namespace core {
-class AttributeValue;
-class PrimaryKeyValue;
-class RowPutChange;
-class RowDeleteChange;
-class RowUpdateChange;
-class PrimaryKey;
-
 namespace plainbuffer {
 
 std::string& write(std::string&, const AttributeValue&);

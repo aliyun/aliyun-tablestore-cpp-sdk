@@ -116,7 +116,7 @@ public:
         const std::tr1::function<void(const boost::system::error_code&)>&);
 
 private:
-    std::auto_ptr<FrontStream> mSslStream;
+    auto_ptr<FrontStream> mSslStream;
 };
 
 template<Endpoint::Protocol kProto>

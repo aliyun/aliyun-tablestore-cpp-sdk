@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/types.hpp"
 #include "tablestore/util/optional.hpp"
 #include "tablestore/util/mempiece.hpp"
+#include "tablestore/util/mempool.hpp"
 #include <memory>
 #include <string>
 #include <map>
@@ -54,17 +55,7 @@ class Error;
 
 namespace aliyun {
 namespace tablestore {
-
-namespace util {
-class MemPiece;
-class MemPool;
-} // namespace util
-
 namespace core {
-
-class ListTableRequest;
-class ListTableResponse;
-
 namespace impl {
 
 util::Optional<OTSError> deserialize(OTSError&, std::deque<util::MemPiece>&);

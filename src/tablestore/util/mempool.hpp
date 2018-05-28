@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/util/optional.hpp"
 #include "tablestore/util/move.hpp"
 #include <boost/atomic.hpp>
+#include <memory>
 #include <vector>
 #include <string>
 #include <stdint.h>

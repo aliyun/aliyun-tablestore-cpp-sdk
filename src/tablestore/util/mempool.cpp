@@ -253,7 +253,7 @@ public:
 
     int64_t size() const
     {
-        return mSize.load(boost::memory_order_acq_rel);
+        return mSize.load(boost::memory_order_acquire);
     }
 
 private:

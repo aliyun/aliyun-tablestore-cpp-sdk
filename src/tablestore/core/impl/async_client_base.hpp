@@ -54,8 +54,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace core {
-class ClientOptions;
-
 namespace impl {
 
 class AsyncClientBase
@@ -208,6 +206,7 @@ AsyncClientBase::Context<kAction>::~Context()
         ("OngoingRequests", x - 1)
         ("Path", kPath)
         .what("AsyncClient: finish a request.");
+    mRetryStrategy.reset();
 }
 
 template<Action kAction>

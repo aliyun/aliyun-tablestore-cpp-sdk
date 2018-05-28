@@ -46,12 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace aliyun {
 namespace tablestore {
-namespace util {
-class Logger;
-class Actor;
-class SequenceGenerator;
-} // namespace util
-
 namespace core {
 namespace http {
 class AsioImpl;

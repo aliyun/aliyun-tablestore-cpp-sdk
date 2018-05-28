@@ -41,9 +41,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace util {
-class MemPiece;
 
+namespace impl {
 class Md5Ctx;
+} // namespace impl
 
 class Md5
 {
@@ -57,13 +58,15 @@ public:
     void finalize(const MutableMemPiece&);
 
 private:
-    std::auto_ptr<Md5Ctx> mCtx;
+    impl::Md5Ctx* mCtx;
     bool mFinalized;
 };
 
 std::string md5(const std::deque<util::MemPiece>&);
 
+namespace impl {
 class Sha1Ctx;
+} // namespace impl
 
 class Sha1
 {
@@ -77,7 +80,7 @@ public:
     void finalize(const MutableMemPiece&);
 
 private:
-    std::auto_ptr<Sha1Ctx> mCtx;
+    impl::Sha1Ctx* mCtx;
     bool mFinalized;
 };
 
@@ -98,7 +101,9 @@ private:
     bool mFinalized;
 };
 
+namespace impl {
 class Base64Ctx;
+} // namespace impl
 
 class Base64Encoder
 {
@@ -111,7 +116,7 @@ public:
     MemPiece base64() const;
 
 private:
-    std::auto_ptr<Base64Ctx> mCtx;
+    impl::Base64Ctx* mCtx;
     bool mFinalized;
 };
 
