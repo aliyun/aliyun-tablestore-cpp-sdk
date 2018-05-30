@@ -404,10 +404,15 @@ bool ClientImpl::responseReceived(
     MemPiece mp(ctx->mLastRespBuffer.begin(), readBytes);
     ResponseReader::RequireMore more = ResponseReader::STOP;
     Optional<OTSError> e = ctx->mResponseReader->feed(more, mp);
-    OTS_ASSERT(!e.present())
-        (ctx->mTracker)
-        (*e);
-    if (more == ResponseReader::STOP) {
+    if (e.present()) {
+        OTS_LOG_DEBUG(mLogger)
+            ("Tracker", ctx->mTracker)
+            ("Error", *e)
+            .what("HTTP: corrupted response.");
+        ctx->mActor.pushBack(
+            bind(&ClientImpl::invokeCallback, this, ctx, e));
+        return false;
+    } else if (more == ResponseReader::STOP) {
         OTS_LOG_DEBUG(mLogger)
             ("Tracker", ctx->mTracker)
             .what("HTTP: response finishes properly.");
