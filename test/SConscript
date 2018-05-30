@@ -2,7 +2,6 @@
 Import('env')
 
 env.subDir('testa')
-env.subDir('gmock')
 env.subDir('unittest')
 env.subDir('functiontest')
 

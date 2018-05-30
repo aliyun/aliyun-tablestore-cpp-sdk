@@ -1,9 +1,0 @@
-# -*- python -*-
-Import('env')
-
-env.header('gtest', [env.Dir('gtest')])
-env.header('gmock', [env.Dir('gmock')])
-
-lib = env.StaticLibrary('gmock_static', env.Object(env.Glob('*.cc')))
-env.Install('$LIB_DIR', lib)
-env.libDeps('gmock_static', [])

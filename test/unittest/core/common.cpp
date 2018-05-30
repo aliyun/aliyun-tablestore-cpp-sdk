@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "tablestore/util/timestamp.hpp"
 #include "tablestore/util/assert.hpp"
-#include "gmock/gmock.h"
 #include <cstdio>
 
 using namespace std;

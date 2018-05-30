@@ -42,12 +42,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tr1/functional>
 #include <tr1/memory>
 #include <string>
+#include <set>
 
 using namespace std;
 using namespace std::tr1;
 using namespace std::tr1::placeholders;
 using namespace aliyun::tablestore::util;
-using namespace testing;
 
 namespace aliyun {
 namespace tablestore {
