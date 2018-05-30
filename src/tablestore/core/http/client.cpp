@@ -397,7 +397,9 @@ bool ClientImpl::responseReceived(
         ("ReadBytes", readBytes)
         .what("HTTP: a new piece of response came in.");
     OTS_ASSERT(readBytes <= ctx->mLastRespBuffer.length())
+        (ctx->mTracker)
         (readBytes)
+        (reinterpret_cast<uintptr_t>(ctx->mLastRespBuffer.begin()))
         (ctx->mLastRespBuffer.length());
     MemPiece mp(ctx->mLastRespBuffer.begin(), readBytes);
     ResponseReader::RequireMore more = ResponseReader::STOP;
@@ -420,6 +422,7 @@ bool ClientImpl::responseReceived(
         if (readBytes == ctx->mLastRespBuffer.length()) {
             ctx->mMemBlocks.push_back(mMemPool.borrow());
             *newPiece = ctx->mMemBlocks.back()->mutablePiece();
+            ctx->mLastRespBuffer = *newPiece;
         } else {
             uint8_t* b = ctx->mLastRespBuffer.begin();
             ctx->mLastRespBuffer = ctx->mLastRespBuffer.subpiece(b + readBytes);

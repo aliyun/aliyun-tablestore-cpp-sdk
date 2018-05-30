@@ -370,12 +370,14 @@ void ConnectionImpl<kProto>::requestComplete(
     int64_t bytes)
 {
     if (!err.present()) {
+        ctx->mLastResponseBuffer = ctx->mRequestCompletion(err);
         OTS_LOG_DEBUG(mLogger)
             ("Request", ctx->mTracker)
             ("Connection", tracker())
             ("SentBytes", bytes)
+            ("BufferStart", reinterpret_cast<uintptr_t>(ctx->mLastResponseBuffer.begin()))
+            ("BufferSize", ctx->mLastResponseBuffer.length())
             .what("CONN: written");
-        ctx->mLastResponseBuffer = ctx->mRequestCompletion(err);
         boost::asio::async_read(frontStream(),
             boost::asio::buffer(
                 ctx->mLastResponseBuffer.begin(),
@@ -442,6 +444,12 @@ void ConnectionImpl<kProto>::responseCompletionCondition(
         } else {
             ctx->mLastResponseBuffer = mp;
         }
+        OTS_LOG_DEBUG(mLogger)
+            ("Request", ctx->mTracker)
+            ("Connection", tracker())
+            ("BufferStart", reinterpret_cast<uintptr_t>(ctx->mLastResponseBuffer.begin()))
+            ("BufferSize", ctx->mLastResponseBuffer.length())
+            .what("CONN: response is going on.");
         boost::asio::async_read(frontStream(),
             boost::asio::buffer(
                 ctx->mLastResponseBuffer.begin(),
