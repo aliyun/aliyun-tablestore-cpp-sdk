@@ -483,7 +483,8 @@ public:
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
         cri.mutableTable() = testbench().caseName();
         cri.mutableMaxVersions().reset(1);
-        RangeIterator iter(testbench().client(), cri);
+        auto_ptr<SyncClient> sclient(SyncClient::create(testbench().client()));
+        RangeIterator iter(*sclient, cri);
         for(;;) {
             Optional<OTSError> e = iter.moveNext();
             if (e.present()) {
@@ -760,7 +761,8 @@ public:
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
         cri.mutableTable() = testbench().caseName();
         cri.mutableMaxVersions().reset(1);
-        RangeIterator iter(testbench().client(), cri);
+        auto_ptr<SyncClient> sclient(SyncClient::create(testbench().client()));
+        RangeIterator iter(*sclient, cri);
         for(;;) {
             Optional<OTSError> e = iter.moveNext();
             if (e.present()) {
@@ -951,7 +953,8 @@ public:
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
         cri.mutableTable() = testbench().caseName();
         cri.mutableMaxVersions().reset(1);
-        RangeIterator iter(testbench().client(), cri);
+        auto_ptr<SyncClient> sclient(SyncClient::create(testbench().client()));
+        RangeIterator iter(*sclient, cri);
         for(;;) {
             Optional<OTSError> e = iter.moveNext();
             if (e.present()) {
@@ -1219,7 +1222,8 @@ public:
             PrimaryKeyColumn("pkey", PrimaryKeyValue::toInfMax());
         cri.mutableTable() = testbench().caseName();
         cri.mutableMaxVersions().reset(1);
-        RangeIterator iter(testbench().client(), cri);
+        auto_ptr<SyncClient> sclient(SyncClient::create(testbench().client()));
+        RangeIterator iter(*sclient, cri);
         for(;;) {
             Optional<OTSError> e = iter.moveNext();
             if (e.present()) {
@@ -1487,7 +1491,8 @@ public:
         cri.mutableTable() = testbench().caseName();
         cri.mutableMaxVersions().reset(1);
         try {
-            RangeIterator iter(testbench().client(), cri);
+            auto_ptr<SyncClient> sclient(SyncClient::create(testbench().client()));
+            RangeIterator iter(*sclient, cri);
             for(;;) {
                 Optional<OTSError> e = iter.moveNext();
                 if (e.present()) {

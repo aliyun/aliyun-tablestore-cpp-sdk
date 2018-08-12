@@ -90,6 +90,52 @@ public:
 #undef DEF_ACTION
 };
 
+class MockSyncClient: public SyncClient
+{
+private:
+    util::Logger& mLogger;
+    std::deque<std::tr1::shared_ptr<util::Actor> > mActor;
+    std::tr1::shared_ptr<RetryStrategy> mRetryStrategy;
+
+public:
+    explicit MockSyncClient(util::Logger&);
+    ~MockSyncClient();
+
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+    std::tr1::shared_ptr<RetryStrategy>& mutableRetryStrategy();
+
+#define DEF_ACTION(api, upcase) \
+    private:\
+    typedef std::tr1::function<util::Optional<OTSError>( \
+        upcase##Response&, const upcase##Request&)> upcase##Action; \
+    upcase##Action m##upcase##Action;\
+    public:\
+    upcase##Action& mutable##upcase() {return m##upcase##Action;}\
+    util::Optional<OTSError> api(upcase##Response& resp, const upcase##Request& req)   \
+    {\
+        OTS_ASSERT(m##upcase##Action);\
+        return m##upcase##Action(resp, req);\
+    }\
+
+    DEF_ACTION(createTable, CreateTable);
+    DEF_ACTION(deleteTable, DeleteTable);
+    DEF_ACTION(listTable, ListTable);
+    DEF_ACTION(describeTable, DescribeTable);
+    DEF_ACTION(updateTable, UpdateTable);
+    DEF_ACTION(putRow, PutRow);
+    DEF_ACTION(updateRow, UpdateRow);
+    DEF_ACTION(deleteRow, DeleteRow);
+    DEF_ACTION(batchWriteRow, BatchWriteRow);
+    DEF_ACTION(getRow, GetRow);
+    DEF_ACTION(batchGetRow, BatchGetRow);
+    DEF_ACTION(getRange, GetRange);
+    DEF_ACTION(computeSplitsBySize, ComputeSplitsBySize);
+
+#undef DEF_ACTION
+};
+
 class Channel
 {
 public:

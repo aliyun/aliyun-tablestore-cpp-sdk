@@ -73,6 +73,39 @@ shared_ptr<RetryStrategy>& MockAsyncClient::mutableRetryStrategy()
     return mRetryStrategy;
 }
 
+
+MockSyncClient::MockSyncClient(util::Logger& logger)
+  : mLogger(logger)
+{
+    mActor.push_back(shared_ptr<util::Actor>(new util::Actor()));
+    mRetryStrategy.reset(new NoRetry());
+}
+
+MockSyncClient::~MockSyncClient()
+{
+}
+
+util::Logger& MockSyncClient::mutableLogger()
+{
+    return mLogger;
+}
+
+const deque<shared_ptr<util::Actor> >& MockSyncClient::actors() const
+{
+    return mActor;
+}
+
+const RetryStrategy& MockSyncClient::retryStrategy() const
+{
+    return *mRetryStrategy;
+}
+
+shared_ptr<RetryStrategy>& MockSyncClient::mutableRetryStrategy()
+{
+    return mRetryStrategy;
+}
+
+
 Channel::Channel()
   : mConsumeSem(0),
     mProduceSem(1)
