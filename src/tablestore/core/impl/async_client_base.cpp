@@ -78,6 +78,21 @@ Optional<OTSError> AsyncClientBase::create(
     return Optional<OTSError>();
 }
 
+util::Logger& AsyncClientBase::mutableLogger()
+{
+    return *mLogger;
+}
+
+const deque<shared_ptr<util::Actor> >& AsyncClientBase::actors() const
+{
+    return mActors;
+}
+
+const RetryStrategy& AsyncClientBase::retryStrategy() const
+{
+    return *mRetryStrategy;
+}
+
 namespace {
 
 http::Client* defaultHttpClient(

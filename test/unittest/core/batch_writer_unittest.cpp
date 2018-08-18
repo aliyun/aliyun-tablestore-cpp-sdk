@@ -171,7 +171,7 @@ void fillRequired(Request& req, const string& table, const PrimaryKeyValue& v)
 void SyncBatchWriter_PutRow(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     client.mutableBatchWriteRow() =
         bind(SyncBatchWriter_Cb, boost::ref(*logger), _1, _2);
     BatchWriterConfig cfg;
@@ -196,7 +196,7 @@ namespace {
 void SyncBatchWriter_UpdateRow(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     client.mutableBatchWriteRow() =
         bind(SyncBatchWriter_Cb, boost::ref(*logger), _1, _2);
     BatchWriterConfig cfg;
@@ -221,7 +221,7 @@ namespace {
 void SyncBatchWriter_DeleteRow(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     client.mutableBatchWriteRow() =
         bind(SyncBatchWriter_Cb, boost::ref(*logger), _1, _2);
     BatchWriterConfig cfg;
@@ -279,7 +279,7 @@ void AsyncBatchWriter_Cb(
 void AsyncBatchWriter_Aggregation(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     cfg.mutableRegularNap() = Duration::fromHour(1);
     cfg.mutableMaxNap() = cfg.regularNap() * 2;
@@ -351,7 +351,7 @@ namespace {
 void AsyncBatchWriter_Aggregation_DuplicatedRows(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     cfg.mutableRegularNap() = Duration::fromHour(1);
     cfg.mutableMaxNap() = cfg.regularNap() * 2;
@@ -401,7 +401,7 @@ namespace {
 void AsyncBatchWriter_Aggregation_AutoIncr(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     cfg.mutableRegularNap() = Duration::fromHour(1);
     cfg.mutableMaxNap() = cfg.regularNap() * 2;
@@ -487,7 +487,7 @@ void AsyncBatchWriter_CbWithDelay(
 void AsyncBatchWriter_Dtor(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     cfg.mutableRegularNap() = Duration::fromHour(1);
     cfg.mutableMaxNap() = cfg.regularNap() * 2;
@@ -532,7 +532,7 @@ namespace {
 void AsyncBatchWriter_NextNapAndConcurrency(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     cfg.mutableRegularNap() = Duration::fromMsec(10);
     cfg.mutableMaxNap() = Duration::fromMsec(30);
@@ -644,7 +644,7 @@ void AsyncBatchWriter_CbWithRetry(
 void AsyncBatchWriter_Retry(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     auto_ptr<impl::AsyncBatchWriter> writer(newAsyncBatchWriter(client, *logger, cfg));
 
@@ -725,7 +725,7 @@ void AsyncBatchWriter_CbWithRetrySingleRow(
 void AsyncBatchWriter_RetrySingleRow(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     auto_ptr<impl::AsyncBatchWriter> writer(newAsyncBatchWriter(client, *logger, cfg));
 
@@ -791,7 +791,7 @@ void CallbackForErroneousReq(
 void AsyncBatchWriter_ErroneousReq(const string&)
 {
     auto_ptr<Logger> logger(createLogger("/", Logger::kDebug));
-    MockAsyncClient client;
+    MockAsyncClient client(*logger);
     BatchWriterConfig cfg;
     auto_ptr<impl::AsyncBatchWriter> writer(newAsyncBatchWriter(client, *logger, cfg));
 

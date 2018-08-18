@@ -102,6 +102,21 @@ SyncClient::SyncClient(AsyncClient& client)
   : mAsyncClient(client.mAsyncClient)
 {}
 
+util::Logger& SyncClient::mutableLogger()
+{
+    return mAsyncClient->mutableLogger();
+}
+
+const deque<shared_ptr<util::Actor> >& SyncClient::actors() const
+{
+    return mAsyncClient->actors();
+}
+
+const RetryStrategy& SyncClient::retryStrategy() const
+{
+    return mAsyncClient->retryStrategy();
+}
+
 Optional<OTSError> SyncClient::listTable(
     ListTableResponse& resp, const ListTableRequest& req)
 {

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/client.hpp"
 #include "tablestore/util/threading.hpp"
 #include <tr1/functional>
+#include <tr1/memory>
 #include <string>
 #include <stdint.h>
 
@@ -45,10 +46,18 @@ namespace core {
 class MockAsyncClient: public AsyncClient
 {
 private:
-    util::Actor mActor;
+    util::Logger& mLogger;
+    std::deque<std::tr1::shared_ptr<util::Actor> > mActor;
+    std::tr1::shared_ptr<RetryStrategy> mRetryStrategy;
+
 public:
-    explicit MockAsyncClient()
-    {}
+    explicit MockAsyncClient(util::Logger&);
+    ~MockAsyncClient();
+
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+    std::tr1::shared_ptr<RetryStrategy>& mutableRetryStrategy();
 
 #define DEF_ACTION(api, upcase) \
     private:\
@@ -61,7 +70,7 @@ public:
     void api(upcase##Request& req, const upcase##Callback& cb)\
     {\
         OTS_ASSERT(m##upcase##Action);\
-        mActor.pushBack(bind(m##upcase##Action, req, cb));\
+        mActor[0]->pushBack(bind(m##upcase##Action, req, cb));\
     }
 
     DEF_ACTION(createTable, CreateTable);

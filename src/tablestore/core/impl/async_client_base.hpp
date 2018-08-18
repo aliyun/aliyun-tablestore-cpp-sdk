@@ -140,6 +140,11 @@ public:
         std::auto_ptr<RetryStrategy> mRetryStrategy;
     };
 
+public:
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+
 private:
     void init(
         const std::string& instance,
