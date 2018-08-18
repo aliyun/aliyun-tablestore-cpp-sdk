@@ -173,25 +173,21 @@ Optional<OTSError> SyncBatchWriterImpl::deleteRow(
 Optional<OTSError> SyncBatchWriter::create(
     SyncBatchWriter*& writer,
     AsyncClient& client,
-    util::Logger& logger,
     const BatchWriterConfig& cfg)
 {
     AsyncBatchWriter* ac = NULL;
-    TRY(AsyncBatchWriter::create(ac, client, logger, cfg));
-    auto_ptr<AsyncBatchWriter> holder(ac);
+    TRY(AsyncBatchWriter::create(ac, client, cfg));
     writer = new SyncBatchWriterImpl(ac);
-    holder.release();
     return Optional<OTSError>();
 }
 
 Optional<OTSError> AsyncBatchWriter::create(
     AsyncBatchWriter*& writer,
     AsyncClient& client,
-    util::Logger& logger,
     const BatchWriterConfig& cfg)
 {
     TRY(cfg.validate());
-    writer = new impl::AsyncBatchWriter(client, logger, cfg);
+    writer = new impl::AsyncBatchWriter(client, cfg);
     return Optional<OTSError>();
 }
 

@@ -1426,7 +1426,6 @@ public:
         Optional<OTSError> err = AsyncBatchWriter::create(
             w,
             testbench().client(),
-            testbench().logger(),
             BatchWriterConfig());
         TESTA_ASSERT(!err.present())
             (*err).issue();

@@ -152,7 +152,6 @@ public:
     static util::Optional<OTSError> create(
         SyncBatchWriter*&,
         AsyncClient&,
-        util::Logger&,
         const BatchWriterConfig&);
 
     /**
@@ -192,7 +191,6 @@ public:
     static util::Optional<OTSError> create(
         AsyncBatchWriter*&,
         AsyncClient&,
-        util::Logger&,
         const BatchWriterConfig&);
 
     /**
