@@ -496,10 +496,12 @@ void Scheduler::WaitForConnection::close()
 
 Connector::Connector(
     AsioImpl& asio,
+    util::Random& rng,
     const Endpoint& ep,
     int64_t maxConnections)
   : mLogger(asio.mutableLogger()),
     mAsio(asio),
+    mRng(rng),
     mEndpoint(ep),
     mMaxConnections(maxConnections),
     mClosed(asio.mutableClosed()),
@@ -589,7 +591,7 @@ void Connector::handleSupplyConnections()
 
 void Connector::connect()
 {
-    Tracker tracker = Tracker::create();
+    Tracker tracker = Tracker::create(mRng);
     OTS_LOG_DEBUG(mLogger)
         ("Connection", tracker)
         .what("CONN: start connecting");

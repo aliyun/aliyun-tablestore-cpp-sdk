@@ -533,7 +533,7 @@ Optional<OTSError> Credential::validate() const
 }
 
 
-Tracker Tracker::create()
+Tracker Tracker::create(Random& rng)
 {
     static const char kCharset[] = "0123456789abcdef";
 

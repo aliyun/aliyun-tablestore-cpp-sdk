@@ -226,7 +226,11 @@ class Connector
 public:
     typedef Asio::BorrowConnectionHandler BorrowConnectionHandler;
 
-    explicit Connector(AsioImpl&, const Endpoint&, int64_t maxConnections);
+    explicit Connector(
+        AsioImpl&,
+        util::Random&,
+        const Endpoint&,
+        int64_t maxConnections);
     ~Connector();
 
     void start();
@@ -281,6 +285,7 @@ private:
 private:
     util::Logger& mLogger;
     AsioImpl& mAsio;
+    util::Random& mRng;
     const Endpoint mEndpoint;
     const int64_t mMaxConnections;
     boost::atomic<bool>& mClosed;

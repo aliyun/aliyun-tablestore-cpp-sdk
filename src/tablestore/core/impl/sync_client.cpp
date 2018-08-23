@@ -76,7 +76,7 @@ Optional<OTSError> go(
     typedef impl::AsyncClientBase::Context<kAction> Context;
     typedef typename impl::ApiTraits<kAction>::ApiResponse Response;
 
-    Tracker tracker(Tracker::create());
+    Tracker tracker(Tracker::create(ac.randomGenerator()));
     Semaphore sem(0);
     Optional<OTSError> err;
     function<void(Optional<OTSError>&, Response&)> cb =

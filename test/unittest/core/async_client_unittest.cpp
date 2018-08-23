@@ -435,6 +435,7 @@ public:
     ClientOptions mOpts;
     Logger* mLogger;
     Actor* mActor;
+    auto_ptr<Random> mRng;
 
     MasterSlave mMasterSlave;
     Master& mMaster;
@@ -452,11 +453,12 @@ public:
 TestBench::TestBench(RetryStrategy* rs)
   : mLogger(NULL),
     mActor(NULL),
+    mRng(random::newDefault()),
     mMasterSlave(),
     mMaster(mMasterSlave.master()),
     mSlave(mMasterSlave.slave()),
-    mTracker(Tracker::create()),
-    mRequestId(Tracker::create().traceId())
+    mTracker(Tracker::create(*mRng)),
+    mRequestId(Tracker::create(*mRng).traceId())
 {
     if (rs != NULL) {
         mOpts.resetRetryStrategy(rs);
