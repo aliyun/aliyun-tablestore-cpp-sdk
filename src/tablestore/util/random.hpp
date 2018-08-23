@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace aliyun {
 namespace tablestore {
 namespace util {
-namespace random {
 
 class Random
 {
@@ -51,6 +50,8 @@ public:
     virtual uint64_t upperBound() const =0;
     virtual uint64_t seed() const =0;
 };
+
+namespace random {
 
 Random* newDefault();
 Random* newDefault(uint64_t seed);

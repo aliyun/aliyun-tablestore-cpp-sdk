@@ -78,7 +78,7 @@ TESTA_DEF_JUNIT_LIKE1(Crc8);
 namespace {
 void Crc8_U32(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault(0));
+    auto_ptr<Random> rng(random::newDefault(0));
     for(int i = 0; i < 10000; ++i) {
         uint32_t in = random::nextInt(*rng, numeric_limits<uint32_t>::max());
         uint8_t oracle = PlainBufferCrc8::CrcInt32(0, in);
@@ -94,7 +94,7 @@ void Crc8_U32(const string&)
 TESTA_DEF_JUNIT_LIKE1(Crc8_U32);
 
 namespace {
-uint64_t randomU64(random::Random& rng)
+uint64_t randomU64(Random& rng)
 {
     uint64_t res = 0;
     for(int i = 0; i < 4; ++i) {
@@ -106,7 +106,7 @@ uint64_t randomU64(random::Random& rng)
 
 void Crc8_U64(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault(0));
+    auto_ptr<Random> rng(random::newDefault(0));
     for(int i = 0; i < 10000; ++i) {
         uint64_t in = randomU64(*rng);
         uint8_t oracle = PlainBufferCrc8::CrcInt64(0, in);
@@ -124,7 +124,7 @@ TESTA_DEF_JUNIT_LIKE1(Crc8_U64);
 namespace {
 const string kAlphabet("abcdefgh.");
 
-void randomStr(random::Random& rng, string& out, const string& alphabet, char terminator)
+void randomStr(Random& rng, string& out, const string& alphabet, char terminator)
 {
     for(;;) {
         char c = alphabet[random::nextInt(rng, alphabet.size())];
@@ -137,7 +137,7 @@ void randomStr(random::Random& rng, string& out, const string& alphabet, char te
 
 void Crc8_Str(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t i = 0; i < 10000; ++i) {
         string in;
@@ -156,7 +156,7 @@ TESTA_DEF_JUNIT_LIKE1(Crc8_Str);
 
 namespace {
 
-int64_t randomChoice(random::Random& rng, const deque<int64_t>& weights)
+int64_t randomChoice(Random& rng, const deque<int64_t>& weights)
 {
     int64_t total = accumulate(weights.begin(), weights.end(), 0);
     OTS_ASSERT(total > 0)(total);
@@ -173,7 +173,7 @@ int64_t randomChoice(random::Random& rng, const deque<int64_t>& weights)
     return 0;
 }
 
-void randomName(random::Random& rng, string& out)
+void randomName(Random& rng, string& out)
 {
     for(;;) {
         char c = kAlphabet[random::nextInt(rng, kAlphabet.size())];
@@ -185,7 +185,7 @@ void randomName(random::Random& rng, string& out)
     randomStr(rng, out, kAlphabet, '.');
 }
 
-void randomPrimaryKeyValue(random::Random& rng, PrimaryKeyValue& out)
+void randomPrimaryKeyValue(Random& rng, PrimaryKeyValue& out)
 {
     deque<PrimaryKeyType> types;
     types.push_back(kPKT_Integer);
@@ -205,13 +205,13 @@ void randomPrimaryKeyValue(random::Random& rng, PrimaryKeyValue& out)
     }
 }
 
-void randomPrimaryKeyColumn(random::Random& rng, PrimaryKeyColumn& out)
+void randomPrimaryKeyColumn(Random& rng, PrimaryKeyColumn& out)
 {
     randomName(rng, out.mutableName());
     randomPrimaryKeyValue(rng, out.mutableValue());
 }
 
-void randomPrimaryKey(random::Random& rng, PrimaryKey& out)
+void randomPrimaryKey(Random& rng, PrimaryKey& out)
 {
     deque<int64_t> weights;
     weights.push_back(8);
@@ -224,7 +224,7 @@ void randomPrimaryKey(random::Random& rng, PrimaryKey& out)
     }
 }
 
-void randomAttrValue(random::Random& rng, AttributeValue& out)
+void randomAttrValue(Random& rng, AttributeValue& out)
 {
     deque<AttributeValue::Category> types;
     types.push_back(AttributeValue::kString);
@@ -255,7 +255,7 @@ void randomAttrValue(random::Random& rng, AttributeValue& out)
     }
 }
 
-void randomAttr(random::Random& rng, Attribute& out)
+void randomAttr(Random& rng, Attribute& out)
 {
     randomName(rng, out.mutableName());
     randomAttrValue(rng, out.mutableValue());
@@ -264,7 +264,7 @@ void randomAttr(random::Random& rng, Attribute& out)
     }
 }
 
-void randomAttrs(random::Random& rng, IVector<Attribute>& out)
+void randomAttrs(Random& rng, IVector<Attribute>& out)
 {
     string lenStr;
     randomStr(rng, lenStr, "+++++.", '.');
@@ -273,7 +273,7 @@ void randomAttrs(random::Random& rng, IVector<Attribute>& out)
     }
 }
 
-void randomRow(random::Random& rng, Row& out)
+void randomRow(Random& rng, Row& out)
 {
     out.reset();
     randomPrimaryKey(rng, out.mutablePrimaryKey());
@@ -290,7 +290,7 @@ void to(RowPutChange& out, const Row& in)
 
 void PlainBuffer_Deserialize_RandomRow(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         Row oracle;
@@ -439,7 +439,7 @@ TESTA_DEF_JUNIT_LIKE1(PlainBuffer_Deserialize_Header_Error);
 namespace {
 void PlainBuffer_Serialize_RandomAttributeValue(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         AttributeValue val;
@@ -461,7 +461,7 @@ TESTA_DEF_JUNIT_LIKE1(PlainBuffer_Serialize_RandomAttributeValue);
 namespace {
 void PlainBuffer_Serialize_RandomPrimaryKeyValue(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         PrimaryKeyValue val;
@@ -570,7 +570,7 @@ void shrink(const Row& row, const function<bool(const Row&)>& test)
 
 void PlainBuffer_Serialize_RandomRowPutChange(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         Row row;
@@ -609,7 +609,7 @@ bool testRowDeleteChange(const PrimaryKey& pkey)
 
 void PlainBuffer_Serialize_RandomRowDeleteChange(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         PrimaryKey pkey;
@@ -639,7 +639,7 @@ bool testRowUpdateChange(const RowUpdateChange& chg)
     }
 }
 
-void randomPutCell(random::Random& rng, RowUpdateChange::Update& out)
+void randomPutCell(Random& rng, RowUpdateChange::Update& out)
 {
     out.mutableType() = RowUpdateChange::Update::kPut;
     randomName(rng, out.mutableAttrName());
@@ -652,7 +652,7 @@ void randomPutCell(random::Random& rng, RowUpdateChange::Update& out)
     }
 }
 
-void randomDelCell(random::Random& rng, RowUpdateChange::Update& out)
+void randomDelCell(Random& rng, RowUpdateChange::Update& out)
 {
     out.mutableType() = RowUpdateChange::Update::kDelete;
     randomName(rng, out.mutableAttrName());
@@ -662,13 +662,13 @@ void randomDelCell(random::Random& rng, RowUpdateChange::Update& out)
     }
 }
 
-void randomDelCol(random::Random& rng, RowUpdateChange::Update& out)
+void randomDelCol(Random& rng, RowUpdateChange::Update& out)
 {
     out.mutableType() = RowUpdateChange::Update::kDeleteAll;
     randomName(rng, out.mutableAttrName());
 }
 
-void randomRowUpdateChange(random::Random& rng, RowUpdateChange& out)
+void randomRowUpdateChange(Random& rng, RowUpdateChange& out)
 {
     randomPrimaryKey(rng, out.mutablePrimaryKey());
     string pat;
@@ -745,7 +745,7 @@ void shrink(
 
 void PlainBuffer_Serialize_RandomRowUpdateChange(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         RowUpdateChange chg;
@@ -762,7 +762,7 @@ TESTA_DEF_JUNIT_LIKE1(PlainBuffer_Serialize_RandomRowUpdateChange);
 namespace {
 void PlainBuffer_Serialize_RandomPrimaryKey(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cout << "seed: " << rng->seed() << endl;
     for(int64_t repeat = 10000; repeat > 0; --repeat) {
         PrimaryKey pk;

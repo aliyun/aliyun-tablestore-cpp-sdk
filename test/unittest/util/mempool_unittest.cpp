@@ -141,7 +141,7 @@ namespace {
 
 void MemPool_tester(
     boost::atomic<bool>* stopper,
-    random::Random& rng,
+    Random& rng,
     MemPool* mpool)
 {
     for(;;) {
@@ -159,7 +159,7 @@ void MemPool_tester(
 void IncrementalMemPool_Nthreads(const string&)
 {
     IncrementalMemPool mp;
-    auto_ptr<random::Random> rng(random::newDefault(0));
+    auto_ptr<Random> rng(random::newDefault(0));
     boost::atomic<bool> stopper;
     boost::thread_group testers;
     for(int i = 0; i < 32; ++i) {
@@ -180,7 +180,7 @@ namespace {
 
 void StrPool_tester(
     boost::atomic<bool>& stopper,
-    random::Random& rng,
+    Random& rng,
     StrPool& spool)
 {
     for(;;) {
@@ -198,7 +198,7 @@ void StrPool_tester(
 void StrPool_Nthreads(const string&)
 {
     StrPool sp;
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     boost::atomic<bool> stopper;
     boost::thread_group testers;
     for(int i = 0; i < 32; ++i) {

@@ -612,7 +612,7 @@ void ClientOptions::reset()
     mRequestTimeout = Duration::fromSec(3);
 
     mRetryStrategy.reset(new DeadlineRetryStrategy(
-            shared_ptr<random::Random>(random::newDefault()),
+            shared_ptr<Random>(random::newDefault()),
             Duration::fromSec(10)));
 
     mActors.clear();
