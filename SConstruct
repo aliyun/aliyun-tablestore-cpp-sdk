@@ -187,7 +187,8 @@ def detect_compiler():
 
 compiler, version = detect_compiler()
 if compiler == 'g++':
-    flags['CXXFLAGS'].append('--std=gnu++03')
+    if version >= [4, 3, 0]:
+        flags['CXXFLAGS'].append('--std=gnu++03')
     if version >= [4, 9, 0]:
         flags['CCFLAGS'].extend(['-fsanitize=address', '-fvar-tracking-assignments'])
         flags['LINKFLAGS'].extend(['-fsanitize=address'])
