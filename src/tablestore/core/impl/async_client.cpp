@@ -108,6 +108,21 @@ AsyncClient::AsyncClient(SyncClient& client)
   : mAsyncClient(client.mAsyncClient)
 {}
 
+util::Logger& AsyncClient::mutableLogger()
+{
+    return mAsyncClient->mutableLogger();
+}
+
+const deque<shared_ptr<util::Actor> >& AsyncClient::actors() const
+{
+    return mAsyncClient->actors();
+}
+
+const RetryStrategy& AsyncClient::retryStrategy() const
+{
+    return mAsyncClient->retryStrategy();
+}
+
 void AsyncClient::createTable(
     CreateTableRequest& req,
     const function<void(

@@ -48,6 +48,9 @@ public:
     explicit SyncClient(AsyncClientBase*);
     explicit SyncClient(AsyncClient&);
 
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
     util::Optional<OTSError> listTable(ListTableResponse&, const ListTableRequest&);
     util::Optional<OTSError> createTable(
         CreateTableResponse&, const CreateTableRequest&);
