@@ -106,6 +106,47 @@ void hex(string& out, const MemPiece& in)
     }
 }
 
+namespace impl {
+static const char kBase57Alphabet[] =
+    "0123456789abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNPQRSTVWXYZ";
+
+uint8_t base57decode(char in)
+{
+    const char* p = find(kBase57Alphabet, kBase57Alphabet + 57, in);
+    OTS_ASSERT(p < kBase57Alphabet + 57)
+        (in)
+        (p - kBase57Alphabet);
+    return p - kBase57Alphabet;
+}
+
+} // namespace impl
+
+void base57encode(string& out, uint64_t in)
+{
+    if (in == 0) {
+        out.push_back('0');
+        return;
+    }
+    for(; in > 0; in /= 57) {
+        out.push_back(impl::kBase57Alphabet[in % 57]);
+    }
+    for(int64_t left = 0, right = out.size() - 1; left < right; ++left, --right) {
+        swap(out[left], out[right]);
+    }
+}
+
+uint64_t base57decode(const MemPiece& in)
+{
+    uint64_t out = 0;
+    const uint8_t* s = in.data();
+    const uint8_t* e = s + in.length();
+    for(; s < e; ++s) {
+        out *= 57;
+        out += impl::base57decode(static_cast<char>(*s));
+    }
+    return out;
+}
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

@@ -45,6 +45,18 @@ Optional<std::string> toUint64(uint64_t&, const MemPiece&, int64_t radix);
 void format(std::string&, uint64_t num, int64_t radix);
 void hex(std::string&, const MemPiece&);
 
+/**
+ * Convert a 64-bit integer into base 57 using
+ * 0123456789abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNPQRSTVWXYZ
+ * 
+ * Lower-case "L" (l), capital "I" (I), and the capital letter "O" (O) are 
+ * excluded to prevent ambiguous values. Both capital and lower-case "U" 
+ * (u and U) are excluded to prevent the most egregious accidental profanity.
+ *
+ */
+void base57encode(std::string&, uint64_t);
+uint64_t base57decode(const MemPiece&);
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

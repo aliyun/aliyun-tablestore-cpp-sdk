@@ -101,5 +101,38 @@ void to_uint64_verifier(const uint64_t& res, const tuple<uint64_t, int>& in)
 TESTA_DEF_VERIFY_WITH_TB(ToUnt64_UpperCase, to_uint64_tb, to_uint64_verifier, to_uint64_uppercase);
 TESTA_DEF_VERIFY_WITH_TB(ToUnt64_LowerCase, to_uint64_tb, to_uint64_verifier, to_uint64_lowercase);
 
+void Base57_0(const string&)
+{
+    string out;
+    base57encode(out, 0);
+    TESTA_ASSERT(out == "0")
+        (out).issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Base57_0);
+
+void Base57_bFCnz(const string&)
+{
+    string out;
+    base57encode(out, 123456789ULL);
+    TESTA_ASSERT(out == "bFCnz")
+        (out).issue();
+}
+TESTA_DEF_JUNIT_LIKE1(Base57_bFCnz);
+
+void Base57_range(const string&)
+{
+    string out;
+    for(uint64_t orc = 0; orc < 100000; ++orc) {
+        out.clear();
+        base57encode(out, orc);
+        uint64_t trial = base57decode(MemPiece::from(out));
+        TESTA_ASSERT(trial == orc)
+            (trial)
+            (orc)
+            .issue();
+    }
+}
+TESTA_DEF_JUNIT_LIKE1(Base57_range);
+
 } // namespace tablestore
 } // namespace aliyun
