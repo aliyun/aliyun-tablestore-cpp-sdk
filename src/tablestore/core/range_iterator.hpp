@@ -70,10 +70,12 @@ public:
     bool valid() const throw();
     Row& get() throw();
     util::Optional<OTSError> moveNext();
+    util::Optional<PrimaryKey> nextStart();
+    CapacityUnit consumedCapacity();
 
 private:
     void bgloop(RangeQueryCriterion&);
-    void push(util::Result<Row, OTSError>&);
+    bool push(util::Result<Row, OTSError>&);
 
 private:
     enum Stage
@@ -90,6 +92,9 @@ private:
     Stage mStage;
     Row mCurrentRow;
     util::Thread mBgLoopThread;
+    util::Mutex mMutex;
+    util::Optional<PrimaryKey> mNextStart;
+    CapacityUnit mConsumedCapacity;
 };
 
 } // namespace core

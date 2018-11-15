@@ -175,6 +175,18 @@ Optional<OTSError> RangeIterator::moveNext()
     return Optional<OTSError>();
 }
 
+Optional<PrimaryKey> RangeIterator::nextStart()
+{
+    ScopedLock _(mMutex);
+    return mNextStart;
+}
+
+CapacityUnit RangeIterator::consumedCapacity()
+{
+    ScopedLock _(mMutex);
+    return mConsumedCapacity;
+}
+
 void RangeIterator::bgloop(RangeQueryCriterion& cri)
 {
     OTS_LOG_INFO(*mLogger)
@@ -192,10 +204,35 @@ void RangeIterator::bgloop(RangeQueryCriterion& cri)
         }
 
         if (err.present()) {
+            OTS_LOG_INFO(*mLogger)
+                ("Error", *err)
+                .what("Iteration stops because of an error.");
             Result<Row, OTSError> result;
             moveAssign(result.mutableErrValue(), util::move(*err));
-            push(result);
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
+            }
             break;
+        }
+
+        {
+            const CapacityUnit& cu = resp.consumedCapacity();
+            ScopedLock _(mMutex);
+            if (cu.read().present()) {
+                int64_t newRead = *cu.read();
+                if (mConsumedCapacity.read().present()) {
+                    newRead += *mConsumedCapacity.read();
+                }
+                mConsumedCapacity.mutableRead().reset(newRead);
+            }
+            if (cu.write().present()) {
+                int64_t newWrite = *cu.write();
+                if (mConsumedCapacity.write().present()) {
+                    newWrite += *mConsumedCapacity.write();
+                }
+                mConsumedCapacity.mutableWrite().reset(newWrite);
+            }
         }
 
         IVector<Row>& rows = resp.mutableRows();
@@ -204,7 +241,10 @@ void RangeIterator::bgloop(RangeQueryCriterion& cri)
         for(int64_t i = 0, sz = rows.size(); i < sz; ++i) {
             Result<Row, OTSError> result;
             moveAssign(result.mutableOkValue(), util::move(rows[i]));
-            push(result);
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
+            }
         }
 
         bool limited = false;
@@ -216,11 +256,20 @@ void RangeIterator::bgloop(RangeQueryCriterion& cri)
             limited = (*req.queryCriterion().limit() == 0);
         }
         if (!resp.nextStart().present() || limited) {
-            // a row with no primary-key column means the end
             OTS_LOG_INFO(*mLogger)
                 .what("No more rows in the server-side.");
+
+            if (resp.nextStart().present()) {
+                ScopedLock _(mMutex);
+                moveAssign(mNextStart, util::move(resp.mutableNextStart()));
+            }
+            
+            // a row with no primary-key column means the end
             Result<Row, OTSError> result;
-            push(result);
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
+            }
             break;
         } else {
             OTS_LOG_DEBUG(*mLogger)
@@ -233,14 +282,20 @@ void RangeIterator::bgloop(RangeQueryCriterion& cri)
     }
 }
 
-void RangeIterator::push(Result<Row, OTSError>& item)
+bool RangeIterator::push(Result<Row, OTSError>& item)
 {
     for(;;) {
         bool ok = mRowQueue->push(item);
         if (ok) {
-            break;
+            return true;
+        }
+        if (mStop.load(boost::memory_order_relaxed)) {
+            return false;
         }
         sleepFor(Duration::fromUsec(100));
+        if (mStop.load(boost::memory_order_relaxed)) {
+            return false;
+        }
     }
 }
 

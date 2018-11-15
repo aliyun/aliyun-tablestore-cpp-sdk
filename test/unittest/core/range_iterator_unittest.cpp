@@ -123,6 +123,7 @@ Optional<OTSError> getRange_one(
         r.mutablePrimaryKey().append() =
             PrimaryKeyColumn("pk", PrimaryKeyValue::toInteger(0));
     }
+    resp.mutableConsumedCapacity().mutableRead().reset(12);
     return Optional<OTSError>();
 }
 
@@ -152,6 +153,13 @@ void RangeIterator_one(const string&)
     TESTA_ASSERT(pp::prettyPrint(rows) == "[{\"PrimaryKey\":{\"pk\":0},\"Attributes\":[]}]")
         (rows)
         .issue();
+    CapacityUnit cu = rit.consumedCapacity();
+    TESTA_ASSERT(cu.read().present())
+        .issue();
+    TESTA_ASSERT(*cu.read() == 12)
+        .issue();
+    TESTA_ASSERT(!cu.write().present())
+        .issue();
 }
 TESTA_DEF_JUNIT_LIKE1(RangeIterator_one);
 
@@ -168,6 +176,7 @@ Optional<OTSError> getRange_continuation_1(
         r.mutablePrimaryKey().append() =
             PrimaryKeyColumn("pk", PrimaryKeyValue::toInteger(1));
     }
+    resp.mutableConsumedCapacity().mutableRead().reset(2);
     return Optional<OTSError>();
 }
 
@@ -189,6 +198,7 @@ Optional<OTSError> getRange_continuation_0(
         nextPk.append() = PrimaryKeyColumn("pk", PrimaryKeyValue::toInteger(1));
         resp.mutableNextStart().reset(util::move(nextPk));
     }
+    resp.mutableConsumedCapacity().mutableRead().reset(1);
     api = bind(getRange_continuation_1,
         boost::ref(logger),
         _1, _2);
@@ -224,6 +234,13 @@ void RangeIterator_continuation(const string&)
         "{\"PrimaryKey\":{\"pk\":1},\"Attributes\":[]}"
         "]")
         (rows)
+        .issue();
+    CapacityUnit cu = rit.consumedCapacity();
+    TESTA_ASSERT(cu.read().present())
+        .issue();
+    TESTA_ASSERT(*cu.read() == 3)
+        .issue();
+    TESTA_ASSERT(!cu.write().present())
         .issue();
 }
 TESTA_DEF_JUNIT_LIKE1(RangeIterator_continuation);
@@ -310,6 +327,12 @@ void RangeIterator_limit(const string&)
         "{\"PrimaryKey\":{\"pk\":1},\"Attributes\":[]}"
         "]")
         (rows)
+        .issue();
+    Optional<PrimaryKey> nextPk = rit.nextStart();
+    TESTA_ASSERT(nextPk.present())
+        .issue();
+    TESTA_ASSERT(pp::prettyPrint(*nextPk) == "{\"pk\":2}")
+        (*nextPk)
         .issue();
 }
 TESTA_DEF_JUNIT_LIKE1(RangeIterator_limit);
