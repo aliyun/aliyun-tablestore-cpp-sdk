@@ -27,7 +27,7 @@ Windows得益于M记近乎偏执的向后兼容性，可以认为只有一个版
 拿debian8为例，打开`docker/debian8/Dockerfile`，可以看到这样两行：
 
 ```
-RUN apt-get install -y scons g++ libboost-all-dev protobuf-compiler libprotobuf-dev uuid-dev libssl-dev
+RUN apt-get install -y scons g++ libboost-all-dev protobuf-compiler libprotobuf-dev libssl-dev
 RUN apt-get install -y ca-certificates # for HTTPS support
 ```
 
@@ -35,7 +35,6 @@ RUN apt-get install -y ca-certificates # for HTTPS support
 * scons: 编译系统。别问为什么不支持make, cmake, automake, bazar, ... 这么多选择，总得挑一个不是？
 * gcc & boost: 不解释
 * protobuf: 序列化库
-* uuid: 顾名思义
 * openssl: 签名，以及支持HTTPS所用
 * ca-certificates: 仅为支持HTTPS所用。如果您只用表格存储的HTTP地址，可以不安装这个库。不过我们建议还是走HTTPS较为稳妥。
 
