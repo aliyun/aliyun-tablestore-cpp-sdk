@@ -493,8 +493,7 @@ query.mutableMaxVersions().reset(1);
         "pkey",
         PrimaryKeyValue::toInfMax());
 }
-auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
-RangeIterator iter(*aclient, query);
+RangeIterator iter(client, query);
 for(;;) {
     Optional<OTSError> err = iter.moveNext();
     if (err.present()) {
