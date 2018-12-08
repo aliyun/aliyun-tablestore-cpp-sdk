@@ -19,9 +19,10 @@ namespace util {
 string getHostName()
 {
     string res;
-    // SUSv2 or Windows guarantees that "Host names are limited to 255 bytes".
-    res.reserve(256); 
-    int r = gethostname(const_cast<char*>(res.data()), res.capacity());
+    // Windows guarantees that "Host names are limited to 255 bytes".
+    // Linux limits it by 64.
+    res.resize(255); 
+    int r = ::gethostname(&res[0], res.size());
 #if defined(_MSC_VER)
     OTS_ASSERT(r == 0)
         (r)

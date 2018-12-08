@@ -109,14 +109,20 @@ void hex(string& out, const MemPiece& in)
 namespace impl {
 static const char kBase57Alphabet[] =
     "0123456789abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNPQRSTVWXYZ";
+static const int64_t kBase57decode[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 34, 35, 36, 37,
+    38, 39, 40, 41, -1, 42, 43, 44, 45, 46, -1, 47, 48, 49, 50, 51, -1, 52, 53,
+    54, 55, 56, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    20, -1, 21, 22, 23, 24, 25, 26, 27, 28, -1, 29, 30, 31, 32, 33};
 
 uint8_t base57decode(char in)
 {
-    const char* p = find(kBase57Alphabet, kBase57Alphabet + 57, in);
-    OTS_ASSERT(p < kBase57Alphabet + 57)
-        (in)
-        (p - kBase57Alphabet);
-    return p - kBase57Alphabet;
+    OTS_ASSERT('0' <= in && in <= 'z')
+        (static_cast<int>(in));
+    int64_t i = kBase57decode[in - '0'];
+    OTS_ASSERT(i >= 0)
+        (static_cast<int>(in));
+    return i;
 }
 
 } // namespace impl
