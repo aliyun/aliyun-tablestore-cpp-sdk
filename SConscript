@@ -50,7 +50,7 @@ env.Alias('PACK', env.tarball(tarball_name, xs))
 
 env.addExtLib(['protobuf-lite', 'protobuf',
                'ssl', 'crypto',
-               'uuid', 'rt',
+               'rt',
                'boost_system', 'boost_thread', 'boost_chrono'])
 env.subDir('test')
 env.subDir('src')

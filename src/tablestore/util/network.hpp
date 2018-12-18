@@ -1,3 +1,6 @@
+#pragma once
+#ifndef TABLESTORE_UTIL_NETWORK_HPP
+#define TABLESTORE_UTIL_NETWORK_HPP
 /*
 BSD 3-Clause License
 
@@ -29,48 +32,22 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#pragma once
-#ifndef TABLESTORE_UTIL_RANDOM_HPP
-#define TABLESTORE_UTIL_RANDOM_HPP
-
-#include <algorithm>
-#include <stdint.h>
+#include <string>
 
 namespace aliyun {
 namespace tablestore {
 namespace util {
 
-class Random
-{
-public:
-    virtual ~Random()
-    {}
+/**
+ * Get host name of this machine.
+ *
+ * Caveats:
+ * For windows, winsock must be correctly initialized by WSAStartup().
+ */
+std::string getHostName();
 
-    virtual uint64_t next() =0;
-    virtual uint64_t upperBound() const =0;
-    virtual uint64_t seed() const =0;
-};
-
-namespace random {
-
-Random* newDefault();
-Random* newDefault(uint64_t seed);
-
-int64_t nextInt(Random&, int64_t exclusiveUpper);
-int64_t nextInt(Random&, int64_t inclusiveLower, int64_t exclusiveUpper);
-
-template<class T>
-void shuffle(Random& rng, T& xs)
-{
-    int64_t from = xs.size();
-    for(--from; from > 0; --from) {
-        int64_t to = nextInt(rng, from);
-        std::swap(xs[from], xs[to]);
-    }
-}
-
-} // namespace random
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun
+
 #endif

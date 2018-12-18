@@ -146,7 +146,7 @@ bool RetryStrategy::retriable(Action act, const OTSError& err)
 const Duration DeadlineRetryStrategy::kMaxPauseBase = Duration::fromMsec(400);
 
 DeadlineRetryStrategy::DeadlineRetryStrategy(
-    const shared_ptr<random::Random>& rng,
+    const shared_ptr<Random>& rng,
     Duration timeout)
   : mRandom(rng),
     mTimeout(timeout),
@@ -183,7 +183,7 @@ Duration DeadlineRetryStrategy::nextPause()
 
 
 CountingRetryStrategy::CountingRetryStrategy(
-    const shared_ptr<util::random::Random>& rng,
+    const shared_ptr<Random>& rng,
     int64_t n,
     Duration interval)
   : mRandom(rng),

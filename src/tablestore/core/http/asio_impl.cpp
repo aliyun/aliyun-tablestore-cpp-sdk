@@ -44,6 +44,7 @@ namespace http {
 
 AsioImpl::AsioImpl(
     Logger& logger,
+    Random& rng,
     int64_t maxConnections,
     Duration connectTimeout,
     const Endpoint& ep,
@@ -51,7 +52,7 @@ AsioImpl::AsioImpl(
   : mLogger(logger),
     mActors(actors),
     mClosed(false),
-    mConnector(*this, ep, maxConnections),
+    mConnector(*this, rng, ep, maxConnections),
     mTimerCenter(mIoService, mLogger, mActors, mSeqGen)
 {
     Thread t(bind(&AsioImpl::loop, this));

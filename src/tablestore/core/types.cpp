@@ -33,6 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/retry.hpp"
 #include "tablestore/util/threading.hpp"
 #include "tablestore/util/logger.hpp"
+#include "tablestore/util/network.hpp"
+#include "tablestore/util/arithmetic.hpp"
+#include "tablestore/util/security.hpp"
 #include "tablestore/util/random.hpp"
 #include "tablestore/util/try.hpp"
 #include "tablestore/util/assert.hpp"
@@ -40,9 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cmath>
 #include <cstdio>
 #include <stdint.h>
-extern "C" {
-#include <uuid/uuid.h>
-}
 
 using namespace std;
 using namespace std::tr1;
@@ -532,33 +532,32 @@ Optional<OTSError> Credential::validate() const
     return Optional<OTSError>();
 }
 
+namespace {
 
-Tracker Tracker::create()
+uint64_t getTrackerBase()
 {
-    static const char kCharset[] = "0123456789abcdef";
-
-    uuid_t uuid;
-    uuid_generate(uuid);
-
-    string str;
-    str.reserve(37); // 16*2(char) + 4('-') + 1('\0')
-    for(int64_t i = 0; i < 16; ++i) {
-        uint8_t low = static_cast<uint8_t>(uuid[i]) & 0xF;
-        uint8_t high = static_cast<uint8_t>(uuid[i]) >> 8;
-        str.push_back(kCharset[high]);
-        str.push_back(kCharset[low]);
-        switch(i) {
-        case 3: case 5: case 7: case 9: {
-            str.push_back('-');
-            break;
-        }
-        default: {
-            // intend to do nothing
-        }
-        }
+    Adler32 adler;
+    const string& hostname = getHostName();
+    FOREACH_ITER(i, hostname) {
+        adler.update(static_cast<uint8_t>(*i));
     }
+    uint32_t hd = adler.get();
+    uint16_t fold = (hd >> 16) ^ hd;
+    uint64_t res = fold;
+    res <<= 48;
+    return res;
+}
 
-    return Tracker(str);
+} // namespace
+
+Tracker Tracker::create(Random& rng)
+{
+    static uint64_t sBase = getTrackerBase();
+    uint64_t res = random::nextInt(rng, 0x1000000000000ul);
+    res |= sBase;
+    string s;
+    base57encode(s, res);
+    return Tracker(s);
 }
 
 Tracker& Tracker::operator=(const MoveHolder<Tracker>& a)
@@ -612,7 +611,7 @@ void ClientOptions::reset()
     mRequestTimeout = Duration::fromSec(3);
 
     mRetryStrategy.reset(new DeadlineRetryStrategy(
-            shared_ptr<random::Random>(random::newDefault()),
+            shared_ptr<Random>(random::newDefault()),
             Duration::fromSec(10)));
 
     mActors.clear();

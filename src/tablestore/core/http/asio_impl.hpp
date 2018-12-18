@@ -55,10 +55,11 @@ class AsioImpl: public Asio
 {
 public:
     explicit AsioImpl(
-        util::Logger& logger,
+        util::Logger&,
+        util::Random&,
         int64_t maxConnections,
         util::Duration connectTimeout,
-        const Endpoint& ep,
+        const Endpoint&,
         const std::deque<std::tr1::shared_ptr<util::Actor> >&);
     ~AsioImpl();
 

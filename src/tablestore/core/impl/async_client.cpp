@@ -85,7 +85,7 @@ void go(
 {
     typedef Context<kAction> Ctx;
 
-    Tracker tracker(Tracker::create());
+    Tracker tracker(Tracker::create(base.randomGenerator()));
     auto_ptr<Ctx> ctx(new Ctx(base, tracker, req, cb));
     Optional<OTSError> err = ctx->build(
         ctx->mApiRequest,

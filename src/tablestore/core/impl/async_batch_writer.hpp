@@ -311,7 +311,7 @@ private:
     util::Semaphore mAggregateSem;
     boost::atomic<bool> mExit;
     boost::atomic<int64_t> mOngoingRequests;
-    std::auto_ptr<util::random::Random> mRng;
+    std::auto_ptr<util::Random> mRng;
     util::Mutex mMutex;
     std::deque<Item> mWaitingList;
     boost::atomic<bool> mShouldBackoff;
