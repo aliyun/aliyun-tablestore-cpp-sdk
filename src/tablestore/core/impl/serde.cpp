@@ -171,13 +171,8 @@ void toCapacityUnit(CapacityUnit& api, const PB::CapacityUnit& pb)
     }
 }
 
-void toTableOptions(PB::TableOptions& pb, const TableOptions& api)
+void toTableOptionsWithoutTtl(PB::TableOptions& pb, const TableOptions& api)
 {
-    if (api.timeToLive().present()) {
-        pb.set_time_to_live(api.timeToLive()->toSec());
-    } else {
-        pb.set_time_to_live(-1);
-    }
     if (api.maxVersions().present()) {
         pb.set_max_versions(*api.maxVersions());
     }
@@ -190,6 +185,24 @@ void toTableOptions(PB::TableOptions& pb, const TableOptions& api)
     if (api.maxTimeDeviation().present()) {
         pb.set_deviation_cell_version_in_sec(api.maxTimeDeviation()->toSec());
     }
+}
+
+void toTableOptionsForCreateTable(PB::TableOptions& pb, const TableOptions& api)
+{
+    if (api.timeToLive().present()) {
+        pb.set_time_to_live(api.timeToLive()->toSec());
+    } else {
+        pb.set_time_to_live(-1);
+    }
+    toTableOptionsWithoutTtl(pb, api);
+}
+
+void toTableOptionsForUpdateTable(PB::TableOptions& pb, const TableOptions& api)
+{
+    if (api.timeToLive().present()) {
+        pb.set_time_to_live(api.timeToLive()->toSec());
+    }
+    toTableOptionsWithoutTtl(pb, api);
 }
 
 void toTableOptions(TableOptions& api, const PB::TableOptions& pb)
@@ -458,7 +471,7 @@ Optional<OTSError> Serde<kApi_CreateTable>::serialize(
     if (api.options().reservedThroughput().present()) {
         toCapacityUnit(*pb.mutable_reserved_throughput(), *api.options().reservedThroughput());
     }
-    toTableOptions(*pb.mutable_table_options(), api.options());
+    toTableOptionsForCreateTable(*pb.mutable_table_options(), api.options());
     if (api.shardSplitPoints().size() > 0) {
         const IVector<PrimaryKey>& shardSplits = api.shardSplitPoints();
         string lastStr = plainbuffer::write(
@@ -607,7 +620,7 @@ Optional<OTSError> Serde<kApi_UpdateTable>::serialize(
             *api.options().reservedThroughput());
     }
 
-    toTableOptions(*pb.mutable_table_options(), api.options());
+    toTableOptionsForUpdateTable(*pb.mutable_table_options(), api.options());
 
     pb.SerializeToZeroCopyStream(&mOStream);
     moveAssign(body, mOStream.pieces());

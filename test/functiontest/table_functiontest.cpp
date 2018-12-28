@@ -194,6 +194,80 @@ void UpdateTable_verify(
 } // namespace
 TESTA_DEF_VERIFY_WITH_TB(UpdateTable, Table_tb, UpdateTable_verify, UpdateTable);
 
+namespace {
+void UpdateTable_issue4(const string& name)
+{
+    Endpoint ep;
+    Credential cr;
+    read(ep, cr);
+    ep.mutableEndpoint() = "http://" + ep.endpoint();
+    ClientOptions opts;
+    opts.mutableRequestTimeout() = Duration::fromSec(30);
+    opts.mutableMaxConnections() = 2;
+    opts.resetLogger(createLogger("/", Logger::kDebug));
+
+    auto_ptr<SyncClient> client;
+    {
+        SyncClient* pclient = NULL;
+        Optional<OTSError> res = SyncClient::create(pclient, ep, cr, opts);
+        TESTA_ASSERT(!res.present())
+            (*res)(ep)(cr)(opts).issue();
+        client.reset(pclient);
+    }
+    const Duration ttl = Duration::fromHour(24);
+    try {
+        {
+            CreateTableRequest req;
+            req.mutableMeta().mutableTableName() = name;
+            req.mutableMeta().mutableSchema().append() =
+                PrimaryKeyColumnSchema("pkey", kPKT_Integer);
+            req.mutableOptions().mutableTimeToLive().reset(ttl);
+            CreateTableResponse resp;
+            Optional<OTSError> res = client->createTable(resp, req);
+            TESTA_ASSERT(!res.present())
+                (*res)(req).issue();
+        }
+        {
+            UpdateTableRequest req;
+            req.mutableTable() = name;
+            req.mutableOptions().mutableMaxVersions().reset(2);
+            UpdateTableResponse resp;
+            Optional<OTSError> err = client->updateTable(resp, req);
+            TESTA_ASSERT(!err.present())
+                (req).issue();
+        }
+        {
+            DescribeTableRequest req;
+            req.mutableTable() = name;
+            DescribeTableResponse resp;
+            Optional<OTSError> err = client->describeTable(resp, req);
+            TESTA_ASSERT(!err.present())
+                (*err)(req).issue();
+            TESTA_ASSERT(resp.options().timeToLive().present())
+                (req)(resp).issue();
+            TESTA_ASSERT(*resp.options().timeToLive() == ttl)
+                (req)(resp)(ttl).issue();
+        }
+        {
+            DeleteTableRequest req;
+            req.mutableTable() = name;
+            DeleteTableResponse resp;
+            Optional<OTSError> res = client->deleteTable(resp, req);
+            TESTA_ASSERT(!res.present())
+                (*res)(req).issue();
+        }
+    } catch(const std::logic_error&) {
+        DeleteTableRequest req;
+        req.mutableTable() = name;
+        DeleteTableResponse resp;
+        Optional<OTSError> res = client->deleteTable(resp, req);
+        (void) res;
+        throw;
+    }
+}
+} // namespace
+TESTA_DEF_JUNIT_LIKE1(UpdateTable_issue4);
+
 } // namespace core
 } // namespace tablestore
 } // namespace aliyun
