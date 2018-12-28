@@ -78,6 +78,21 @@ Optional<OTSError> AsyncClientBase::create(
     return Optional<OTSError>();
 }
 
+util::Logger& AsyncClientBase::mutableLogger()
+{
+    return *mLogger;
+}
+
+const deque<shared_ptr<util::Actor> >& AsyncClientBase::actors() const
+{
+    return mActors;
+}
+
+const RetryStrategy& AsyncClientBase::retryStrategy() const
+{
+    return *mRetryStrategy;
+}
+
 namespace {
 
 http::Client* defaultHttpClient(
@@ -104,13 +119,15 @@ AsyncClientBase::AsyncClientBase(
     const string& inst,
     Credential& cr,
     ClientOptions& opts)
-  : mClose(false),
+  : mRng(random::newDefault()),
+    mClose(false),
     mLogger(opts.releaseLogger()),
     mHttpLogger(mLogger->spawn("http")),
     mCredential(util::move(cr)),
     mAsio(
         http::Asio::create(
             *mHttpLogger,
+            *mRng,
             opts.maxConnections(),
             opts.connectTimeout(),
             ep,
@@ -137,7 +154,8 @@ AsyncClientBase::AsyncClientBase(
     const function<http::Client*(const http::Headers&)>& httpClientFactory,
     Credential& cr,
     ClientOptions& opts)
-  : mClose(false),
+  : mRng(random::newDefault()),
+    mClose(false),
     mLogger(opts.releaseLogger()),
     mCredential(util::move(cr)),
     mAsio(asio),
@@ -149,6 +167,11 @@ AsyncClientBase::AsyncClientBase(
     mActors(opts.actors())
 {
     init("testinstance", httpClientFactory);
+}
+
+Random& AsyncClientBase::randomGenerator()
+{
+    return *mRng;
 }
 
 void AsyncClientBase::init(

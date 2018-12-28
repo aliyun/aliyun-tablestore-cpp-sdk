@@ -43,12 +43,13 @@ namespace http {
 
 Asio* Asio::create(
     Logger& logger,
+    Random& rng,
     int64_t maxConnections,
     Duration connectTimeout,
     const Endpoint& ep,
     const deque<shared_ptr<Actor> >& actors)
 {
-    return new AsioImpl(logger, maxConnections, connectTimeout, ep, actors);
+    return new AsioImpl(logger, rng, maxConnections, connectTimeout, ep, actors);
 }
 
 } // namespace http

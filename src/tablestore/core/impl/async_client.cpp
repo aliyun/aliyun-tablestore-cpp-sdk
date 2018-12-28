@@ -85,7 +85,7 @@ void go(
 {
     typedef Context<kAction> Ctx;
 
-    Tracker tracker(Tracker::create());
+    Tracker tracker(Tracker::create(base.randomGenerator()));
     auto_ptr<Ctx> ctx(new Ctx(base, tracker, req, cb));
     Optional<OTSError> err = ctx->build(
         ctx->mApiRequest,
@@ -107,6 +107,21 @@ AsyncClient::AsyncClient(impl::AsyncClientBase* ac)
 AsyncClient::AsyncClient(SyncClient& client)
   : mAsyncClient(client.mAsyncClient)
 {}
+
+util::Logger& AsyncClient::mutableLogger()
+{
+    return mAsyncClient->mutableLogger();
+}
+
+const deque<shared_ptr<util::Actor> >& AsyncClient::actors() const
+{
+    return mAsyncClient->actors();
+}
+
+const RetryStrategy& AsyncClient::retryStrategy() const
+{
+    return mAsyncClient->retryStrategy();
+}
 
 void AsyncClient::createTable(
     CreateTableRequest& req,

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/client.hpp"
 #include "tablestore/util/threading.hpp"
 #include <tr1/functional>
+#include <tr1/memory>
 #include <string>
 #include <stdint.h>
 
@@ -45,10 +46,18 @@ namespace core {
 class MockAsyncClient: public AsyncClient
 {
 private:
-    util::Actor mActor;
+    util::Logger& mLogger;
+    std::deque<std::tr1::shared_ptr<util::Actor> > mActor;
+    std::tr1::shared_ptr<RetryStrategy> mRetryStrategy;
+
 public:
-    explicit MockAsyncClient()
-    {}
+    explicit MockAsyncClient(util::Logger&);
+    ~MockAsyncClient();
+
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+    std::tr1::shared_ptr<RetryStrategy>& mutableRetryStrategy();
 
 #define DEF_ACTION(api, upcase) \
     private:\
@@ -61,8 +70,54 @@ public:
     void api(upcase##Request& req, const upcase##Callback& cb)\
     {\
         OTS_ASSERT(m##upcase##Action);\
-        mActor.pushBack(bind(m##upcase##Action, req, cb));\
+        mActor[0]->pushBack(bind(m##upcase##Action, req, cb));\
     }
+
+    DEF_ACTION(createTable, CreateTable);
+    DEF_ACTION(deleteTable, DeleteTable);
+    DEF_ACTION(listTable, ListTable);
+    DEF_ACTION(describeTable, DescribeTable);
+    DEF_ACTION(updateTable, UpdateTable);
+    DEF_ACTION(putRow, PutRow);
+    DEF_ACTION(updateRow, UpdateRow);
+    DEF_ACTION(deleteRow, DeleteRow);
+    DEF_ACTION(batchWriteRow, BatchWriteRow);
+    DEF_ACTION(getRow, GetRow);
+    DEF_ACTION(batchGetRow, BatchGetRow);
+    DEF_ACTION(getRange, GetRange);
+    DEF_ACTION(computeSplitsBySize, ComputeSplitsBySize);
+
+#undef DEF_ACTION
+};
+
+class MockSyncClient: public SyncClient
+{
+private:
+    util::Logger& mLogger;
+    std::deque<std::tr1::shared_ptr<util::Actor> > mActor;
+    std::tr1::shared_ptr<RetryStrategy> mRetryStrategy;
+
+public:
+    explicit MockSyncClient(util::Logger&);
+    ~MockSyncClient();
+
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+    std::tr1::shared_ptr<RetryStrategy>& mutableRetryStrategy();
+
+#define DEF_ACTION(api, upcase) \
+    private:\
+    typedef std::tr1::function<util::Optional<OTSError>( \
+        upcase##Response&, const upcase##Request&)> upcase##Action; \
+    upcase##Action m##upcase##Action;\
+    public:\
+    upcase##Action& mutable##upcase() {return m##upcase##Action;}\
+    util::Optional<OTSError> api(upcase##Response& resp, const upcase##Request& req)   \
+    {\
+        OTS_ASSERT(m##upcase##Action);\
+        return m##upcase##Action(resp, req);\
+    }\
 
     DEF_ACTION(createTable, CreateTable);
     DEF_ACTION(deleteTable, DeleteTable);

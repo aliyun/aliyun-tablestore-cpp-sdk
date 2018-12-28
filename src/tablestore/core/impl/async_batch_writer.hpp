@@ -219,7 +219,6 @@ public:
 public:
     explicit AsyncBatchWriter(
         AsyncClient& client,
-        util::Logger& logger,
         const BatchWriterConfig& cfg);
     virtual ~AsyncBatchWriter();
 
@@ -298,7 +297,7 @@ public:
     static int64_t sDefaultActors;
 
 private:
-    util::Logger& mLogger;
+    std::auto_ptr<util::Logger> mLogger;
     core::AsyncClient& mClient;
 
     int64_t mMaxConcurrency;
@@ -312,7 +311,7 @@ private:
     util::Semaphore mAggregateSem;
     boost::atomic<bool> mExit;
     boost::atomic<int64_t> mOngoingRequests;
-    std::auto_ptr<util::random::Random> mRng;
+    std::auto_ptr<util::Random> mRng;
     util::Mutex mMutex;
     std::deque<Item> mWaitingList;
     boost::atomic<bool> mShouldBackoff;

@@ -140,6 +140,12 @@ public:
         std::auto_ptr<RetryStrategy> mRetryStrategy;
     };
 
+public:
+    util::Logger& mutableLogger();
+    const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const;
+    const RetryStrategy& retryStrategy() const;
+    util::Random& randomGenerator();
+
 private:
     void init(
         const std::string& instance,
@@ -151,6 +157,7 @@ private:
         const std::deque<util::MemPiece>&);
 
 private:
+    std::auto_ptr<util::Random> mRng;
     boost::atomic<bool> mClose;
     std::auto_ptr<util::Logger> mLogger;
     std::auto_ptr<util::Logger> mHttpLogger;

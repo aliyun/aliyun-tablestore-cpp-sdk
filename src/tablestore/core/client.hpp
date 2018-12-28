@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/types.hpp"
 #include "tablestore/core/error.hpp"
 #include "tablestore/util/optional.hpp"
+#include "tablestore/util/logger.hpp"
 #include <string>
 
 namespace aliyun {
@@ -66,6 +67,12 @@ public:
      * Both share the same backbone implementation.
      */
     static SyncClient* create(AsyncClient&);
+
+    // configurations
+
+    virtual util::Logger& mutableLogger() =0;
+    virtual const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const =0;
+    virtual const RetryStrategy& retryStrategy() const =0;
 
     // table operations
 
@@ -201,6 +208,12 @@ public:
      * Both share the same backbone implementation.
      */
     static AsyncClient* create(SyncClient&);
+
+    // configurations
+
+    virtual util::Logger& mutableLogger() =0;
+    virtual const std::deque<std::tr1::shared_ptr<util::Actor> >& actors() const =0;
+    virtual const RetryStrategy& retryStrategy() const =0;
 
     // table operations
 

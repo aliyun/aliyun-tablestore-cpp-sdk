@@ -35,9 +35,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/core/client.hpp"
 #include "tablestore/core/types.hpp"
 #include "tablestore/core/error.hpp"
+#include "tablestore/util/logger.hpp"
 #include "tablestore/util/optional.hpp"
 #include "tablestore/util/iterator.hpp"
 #include "tablestore/util/threading.hpp"
+#include "tablestore/util/result.hpp"
 #include <boost/atomic.hpp>
 #include <deque>
 #include <stdint.h>
@@ -46,43 +48,53 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
+namespace impl {
+class RowQueue;
+} // namespace
+
 /**
  * An iterator on rows between a range,
  * which wraps complicated GetRange request-response turnovers.
  *
  * Caveats:
- * - Although it depends on AsyncClient for TableStore,
- *   the iterator itself is synchronous and blocking.
  * - See util::Iterator for its usage.
  */
 class RangeIterator: public util::Iterator<Row&, OTSError>
 {
 public:
     explicit RangeIterator(
-        AsyncClient&, RangeQueryCriterion&,
+        SyncClient&, RangeQueryCriterion&,
         int64_t watermark = 10000);
     ~RangeIterator();
 
     bool valid() const throw();
     Row& get() throw();
     util::Optional<OTSError> moveNext();
+    util::Optional<PrimaryKey> nextStart();
+    CapacityUnit consumedCapacity();
 
 private:
-    void issue();
-    void callback(GetRangeRequest&, util::Optional<OTSError>&, GetRangeResponse&);
+    void bgloop(RangeQueryCriterion&);
+    bool push(util::Result<Row, OTSError>&);
 
 private:
-    const int64_t mWatermark;
-    AsyncClient& mClient;
-    RangeQueryCriterion mRangeQuery;
-    bool mNeedMoreRequests;
-    bool mFirstMove;
+    enum Stage
+    {
+        kInit,
+        kRowsReady,
+        kNoMoreRows,
+    };
 
-    util::Semaphore mNotify;
-    mutable util::Mutex mMutex;
-    boost::atomic<int64_t> mOngoing;
-    std::deque<Row> mBufferedRows;
-    util::Optional<OTSError> mError;
+    std::auto_ptr<util::Logger> mLogger;
+    SyncClient& mClient;
+    boost::atomic<bool> mStop;
+    std::auto_ptr<impl::RowQueue> mRowQueue;
+    Stage mStage;
+    Row mCurrentRow;
+    util::Thread mBgLoopThread;
+    util::Mutex mMutex;
+    util::Optional<PrimaryKey> mNextStart;
+    CapacityUnit mConsumedCapacity;
 };
 
 } // namespace core

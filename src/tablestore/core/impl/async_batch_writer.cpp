@@ -147,9 +147,8 @@ typedef AsyncBatchWriter::DeleteRowCallback DeleteRowCallback;
 
 AsyncBatchWriter::AsyncBatchWriter(
     AsyncClient& client,
-    util::Logger& logger,
     const BatchWriterConfig& cfg)
-  : mLogger(logger),
+  : mLogger(client.mutableLogger().spawn("BatchWriter")),
     mClient(client),
     mMaxConcurrency(cfg.maxConcurrency()),
     mMaxBatchSize(cfg.maxBatchSize()),
@@ -177,7 +176,7 @@ AsyncBatchWriter::AsyncBatchWriter(
 
 AsyncBatchWriter::~AsyncBatchWriter()
 {
-    OTS_LOG_INFO(mLogger)
+    OTS_LOG_INFO(*mLogger)
         ("What", "BatchWriter is quiting.");
     mExit.store(true, boost::memory_order_release);
     mAggregateSem.post();
@@ -190,12 +189,12 @@ AsyncBatchWriter::~AsyncBatchWriter()
         if (ongoing == 0) {
             break;
         }
-        OTS_LOG_DEBUG(mLogger)
+        OTS_LOG_DEBUG(*mLogger)
             ("OngoingRequests", ongoing);
         sleepFor(Duration::fromMsec(20));
     }
 
-    OTS_LOG_INFO(mLogger)
+    OTS_LOG_INFO(*mLogger)
         ("What", "BatchWriter has been quited.");
 }
 
@@ -217,7 +216,7 @@ void AsyncBatchWriter::aggregator()
             nap);
         send(concurrency);
     }
-    OTS_LOG_DEBUG(mLogger)
+    OTS_LOG_DEBUG(*mLogger)
         ("What", "AsyncBatchWriter::aggregator() is quitting.");
 }
 
@@ -269,12 +268,12 @@ void AsyncBatchWriter::send(int64_t concurrency)
             break;
         }
         if (num == mMaxBatchSize || remains == 0) {
-            OTS_LOG_DEBUG(mLogger)
+            OTS_LOG_DEBUG(*mLogger)
                 ("What", "Sending a batch of writes")
                 ("BatchSize", num)
                 ("Remains", remains);
         } else {
-            OTS_LOG_INFO(mLogger)
+            OTS_LOG_INFO(*mLogger)
                 ("What", "Sending a batch of writes")
                 ("BatchSize", num)
                 ("Remains", remains);
@@ -473,7 +472,7 @@ void AsyncBatchWriter::callbackOnBatch(
         RetryStrategy::RetryCategory retriable = RetryStrategy::retriable(*err);
         switch(retriable) {
         case RetryStrategy::UNRETRIABLE: {
-            OTS_LOG_INFO(mLogger)
+            OTS_LOG_INFO(*mLogger)
                 ("What", "An unretriable error occurs in sending a BatchWriteRowRequest")
                 ("Request", req)
                 ("Error", *err);
@@ -483,7 +482,7 @@ void AsyncBatchWriter::callbackOnBatch(
             break;
         }
         case RetryStrategy::RETRIABLE: case RetryStrategy::DEPENDS: {
-            OTS_LOG_INFO(mLogger)
+            OTS_LOG_INFO(*mLogger)
                 ("What", "A retriable error occurs in sending a BatchWriteRowRequest")
                 ("Request", req)
                 ("Error", *err);
@@ -499,7 +498,7 @@ void AsyncBatchWriter::callbackOnBatch(
         feedbackFromBatchReq<DeleteRowRequest>(items, *carrier, req, resp);
 
         if (!items.empty()) {
-            OTS_LOG_DEBUG(mLogger)
+            OTS_LOG_DEBUG(*mLogger)
                 ("What", "Retries in a batch")
                 ("Size", items.size());
             mShouldBackoff.store(true, boost::memory_order_release);
@@ -612,7 +611,7 @@ void AsyncBatchWriter::feedbackErrRequest(
     RetryStrategy::RetryCategory retriable = RetryStrategy::retriable(err);
     switch(retriable) {
     case RetryStrategy::UNRETRIABLE: {
-        OTS_LOG_INFO(mLogger)
+        OTS_LOG_INFO(*mLogger)
             ("RowChange", chg)
             ("Error", err)
             .what("An unretriable single-row error occurs in BatchWriteRowResponse");
@@ -628,7 +627,7 @@ void AsyncBatchWriter::feedbackErrRequest(
         break;
     }
     case RetryStrategy::RETRIABLE: case RetryStrategy::DEPENDS: {
-        OTS_LOG_INFO(mLogger)
+        OTS_LOG_INFO(*mLogger)
             ("RowChange", chg)
             ("Error", err)
             .what("A retriable single-row error occurs in BatchWriteRowResponse");

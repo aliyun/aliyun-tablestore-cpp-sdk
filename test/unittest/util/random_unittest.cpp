@@ -50,7 +50,7 @@ namespace tablestore {
 
 namespace {
 
-void genSamples(random::Random& rng, deque<uint64_t>& samples, const uint64_t bits)
+void genSamples(Random& rng, deque<uint64_t>& samples, const uint64_t bits)
 {
     for(int64_t i = 0; i < 20000; ++i) {
         samples.push_back(random::nextInt(rng, 1ULL << bits));
@@ -152,7 +152,7 @@ void check2d(
 void Random_Small(const string&)
 {
     const uint64_t kBits = 8;
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     deque<uint64_t> samples;
     genSamples(*rng, samples, kBits);
     deque<int64_t> counts1d;
@@ -172,7 +172,7 @@ namespace {
 void Random_Large(const string&)
 {
     const uint64_t kBits = 48;
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     cerr << rng->upperBound() << endl;
     deque<uint64_t> samples;
     genSamples(*rng, samples, kBits);
@@ -192,7 +192,7 @@ TESTA_DEF_JUNIT_LIKE1(Random_Large);
 namespace {
 void Random_NegativeLower(const string&)
 {
-    auto_ptr<random::Random> rng(random::newDefault());
+    auto_ptr<Random> rng(random::newDefault());
     deque<int64_t> samples;
     for(int64_t i = 0; i < 10000; ++i) {
         samples.push_back(random::nextInt(*rng, -1, 1));

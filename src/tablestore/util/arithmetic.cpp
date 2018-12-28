@@ -106,6 +106,58 @@ void hex(string& out, const MemPiece& in)
     }
 }
 
+namespace impl {
+static const char kBase57Alphabet[] =
+    "0123456789abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNPQRSTVWXYZ";
+static const int64_t kBase57Decode[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 34, 35, 36, 37,
+    38, 39, 40, 41, -1, 42, 43, 44, 45, 46, -1, 47, 48, 49, 50, 51, -1, 52, 53,
+    54, 55, 56, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    20, -1, 21, 22, 23, 24, 25, 26, 27, 28, -1, 29, 30, 31, 32, 33};
+
+uint8_t base57decode(char in)
+{
+    OTS_ASSERT('0' <= in)
+        (static_cast<int>(in));
+    OTS_ASSERT(static_cast<size_t>(in - '0') < sizeof(kBase57Decode) / sizeof(kBase57Decode[0]))
+        (static_cast<int>(in));
+    int64_t i = kBase57Decode[in - '0'];
+    OTS_ASSERT(i >= 0)
+        (static_cast<int>(in));
+    return i;
+}
+
+} // namespace impl
+
+void base57encode(string& out, uint64_t in)
+{
+    if (in == 0) {
+        out.push_back('0');
+        return;
+    }
+    for(; in > 0; in /= 57) {
+        out.push_back(impl::kBase57Alphabet[in % 57]);
+    }
+    for(int64_t left = 0, right = out.size() - 1; left < right; ++left, --right) {
+        swap(out[left], out[right]);
+    }
+}
+
+uint64_t base57decode(const MemPiece& in)
+{
+    uint64_t out = 0;
+    const uint8_t* s = in.data();
+    const uint8_t* e = s + in.length();
+    for(; s < e; ++s) {
+        OTS_ASSERT(out * 57 / 57 == out)
+            (out)
+            .what("overflow");
+        out *= 57;
+        out += impl::base57decode(static_cast<char>(*s));
+    }
+    return out;
+}
+
 } // namespace util
 } // namespace tablestore
 } // namespace aliyun

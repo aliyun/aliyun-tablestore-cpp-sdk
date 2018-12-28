@@ -224,8 +224,7 @@ void ScanTable(
     cri.mutableTable() = get<1>(in);
     cri.mutableMaxVersions().reset(1000);
     SyncClient& client = *get<0>(in);
-    auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
-    auto_ptr<RangeIterator> iter(new RangeIterator(*aclient, cri));
+    auto_ptr<RangeIterator> iter(new RangeIterator(client, cri));
     DequeBasedVector<Row> trial;
     for(;;) {
         Optional<OTSError> err = iter->moveNext();

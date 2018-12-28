@@ -33,6 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "impl/ots_helper.hpp"
 #include "tablestore/core/client.hpp"
 #include "tablestore/util/move.hpp"
+#include "tablestore/util/logging.hpp"
+#include "tablestore/util/timestamp.hpp"
+#include <boost/ref.hpp>
+#include <boost/lockfree/queue.hpp>
 
 using namespace std;
 using namespace std::tr1;
@@ -43,122 +47,256 @@ namespace aliyun {
 namespace tablestore {
 namespace core {
 
+namespace impl {
+
+class RowQueue
+{
+    typedef Result<Row, OTSError> Item;
+
+public:
+    explicit RowQueue(int64_t size)
+      : mQueue(size)
+    {}
+
+    ~RowQueue()
+    {
+        for(;;) {
+            Item* item = NULL;
+            bool ok = mQueue.pop(item);
+            if (!ok) {
+                break;
+            }
+            delete item;
+        }
+    }
+
+    bool push(Item& item)
+    {
+        Item* x = new Item;
+        moveAssign(*x, util::move(item));
+        bool ok = mQueue.push(x);
+        if (ok) {
+            return true;
+        }
+        // rollback
+        moveAssign(item, util::move(*x));
+        delete x;
+        return false;
+    }
+
+    bool pop(Item& item)
+    {
+        Item* x = NULL;
+        bool ok = mQueue.pop(x);
+        if (!ok) {
+            return false;
+        }
+        moveAssign(item, util::move(*x));
+        delete x;
+        return true;
+    }
+
+private:
+    boost::lockfree::queue<
+        Item*,
+        boost::lockfree::fixed_sized<true> > mQueue;
+};
+
+} // namespace impl
+
 RangeIterator::RangeIterator(
-    AsyncClient& client,
+    SyncClient& client,
     RangeQueryCriterion& cri,
     int64_t watermark)
-  : mWatermark(watermark),
+  : mLogger(client.mutableLogger().spawn("range_iterator")),
     mClient(client),
-    mNeedMoreRequests(true),
-    mFirstMove(true),
-    mNotify(0),
-    mOngoing(0)
+    mStop(false),
+    mRowQueue(new impl::RowQueue(watermark)),
+    mStage(kInit)
 {
-    OTS_ASSERT(watermark >= 0)(watermark);
-    moveAssign(mRangeQuery, util::move(cri));
-    issue();
+    Thread t(bind(&RangeIterator::bgloop, this, boost::ref(cri)));
+    moveAssign(mBgLoopThread, util::move(t));
 }
 
 RangeIterator::~RangeIterator()
 {
-    for(;;) {
-        int64_t x = mOngoing.load(boost::memory_order_acquire);
-        if (x == 0) {
-            break;
-        }
-        sleepFor(Duration::fromMsec(1));
-    }
+    OTS_LOG_DEBUG(*mLogger)
+        .what("Destorying RangeIterator.");
+    mStop.store(true, boost::memory_order_relaxed);
+    mBgLoopThread.join();
 }
 
 bool RangeIterator::valid() const throw()
 {
-    ScopedLock lock(mMutex);
-    return !mBufferedRows.empty();
+    OTS_ASSERT(mStage != kInit);
+    return mStage == kRowsReady;
 }
 
 Row& RangeIterator::get() throw()
 {
-    ScopedLock lock(mMutex);
-    return mBufferedRows.front();
+    OTS_ASSERT(mStage != kInit);
+    return mCurrentRow;
 }
 
 Optional<OTSError> RangeIterator::moveNext()
 {
+    OTS_ASSERT(mStage == kInit || mStage == kRowsReady)
+        (static_cast<size_t>(mStage));
     for(;;) {
-        int64_t size = 0;
-        {
-            ScopedLock lock(mMutex);
-            if (!mBufferedRows.empty()) {
-                if (mFirstMove) {
-                    mFirstMove = false;
-                } else {
-                    mBufferedRows.pop_front();
-                }
-            }
-            size = mBufferedRows.size();
-            if (!mBufferedRows.empty()) {
-                return Optional<OTSError>();
-            }
-            if (mError.present()) {
-                return mError;
-            }
-            if (!mNeedMoreRequests) {
-                return Optional<OTSError>();
-            }
+        Result<Row, OTSError> result;
+        bool ready = mRowQueue->pop(result);
+        if (!ready) {
+            OTS_LOG_DEBUG(*mLogger)
+                .what("Not ready for moveNext().");
+            sleepFor(Duration::fromUsec(10));
+            continue;
         }
-        if (size <= mWatermark) {
-            issue();
+
+        if (!result.ok()) {
+            OTS_LOG_INFO(*mLogger)
+                ("Error", result.errValue())
+                .what("iteration meets an error.");
+            return Optional<OTSError>(util::move(result.mutableErrValue()));
         }
-        mNotify.wait();
+
+        moveAssign(mCurrentRow, util::move(result.mutableOkValue()));
+        if (mCurrentRow.primaryKey().size() == 0) {
+            // a row with no primary-key columns means the end
+            OTS_LOG_INFO(*mLogger)
+                .what("The end of iteration.");
+            mStage = kNoMoreRows;
+        } else {
+            OTS_LOG_DEBUG(*mLogger)
+                ("Row", result.okValue());
+            mStage = kRowsReady;
+        }
+        break;
     }
+    return Optional<OTSError>();
 }
 
-void RangeIterator::issue()
+Optional<PrimaryKey> RangeIterator::nextStart()
 {
-    int64_t ongoing = mOngoing.fetch_add(1, boost::memory_order_acq_rel);
-    if (ongoing > 0) {
-        mOngoing.fetch_sub(1, boost::memory_order_relaxed);
-        return;
-    }
+    ScopedLock _(mMutex);
+    return mNextStart;
+}
 
-    ScopedLock lock(mMutex);
-    if (!mNeedMoreRequests) {
-        return;
-    }
+CapacityUnit RangeIterator::consumedCapacity()
+{
+    ScopedLock _(mMutex);
+    return mConsumedCapacity;
+}
 
+void RangeIterator::bgloop(RangeQueryCriterion& cri)
+{
+    OTS_LOG_INFO(*mLogger)
+        .what("Start iteration.");
     GetRangeRequest req;
-    moveAssign(req.mutableQueryCriterion(), util::move(mRangeQuery));
-    mClient.getRange(req, bind(&RangeIterator::callback, this, _1, _2, _3));
-}
+    moveAssign(req.mutableQueryCriterion(), util::move(cri));
+    for(;;) {
+        GetRangeResponse resp;
+        if (mStop.load(boost::memory_order_relaxed)) {
+            break;
+        }
+        Optional<OTSError> err = mClient.getRange(resp, req);
+        if (mStop.load(boost::memory_order_relaxed)) {
+            break;
+        }
 
-void RangeIterator::callback(
-    GetRangeRequest& req,
-    Optional<OTSError>& err,
-    GetRangeResponse& resp)
-{
-    if (err.present()) {
-        ScopedLock lock(mMutex);
-        moveAssign(mError, util::move(err));
-    } else {
-        IVector<Row>& rows = resp.mutableRows();
-        {
-            ScopedLock lock(mMutex);
-            for(int64_t i = 0, sz = rows.size(); i < sz; ++i) {
-                mBufferedRows.push_back(Row());
-                moveAssign(mBufferedRows.back(), util::move(rows[i]));
+        if (err.present()) {
+            OTS_LOG_INFO(*mLogger)
+                ("Error", *err)
+                .what("Iteration stops because of an error.");
+            Result<Row, OTSError> result;
+            moveAssign(result.mutableErrValue(), util::move(*err));
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
             }
-            moveAssign(mRangeQuery, util::move(req.mutableQueryCriterion()));
-            if (resp.nextStart().present()) {
-                moveAssign(
-                    mRangeQuery.mutableInclusiveStart(),
-                    util::move(*resp.mutableNextStart()));
-            } else {
-                mNeedMoreRequests = false;
+            break;
+        }
+
+        {
+            const CapacityUnit& cu = resp.consumedCapacity();
+            ScopedLock _(mMutex);
+            if (cu.read().present()) {
+                int64_t newRead = *cu.read();
+                if (mConsumedCapacity.read().present()) {
+                    newRead += *mConsumedCapacity.read();
+                }
+                mConsumedCapacity.mutableRead().reset(newRead);
+            }
+            if (cu.write().present()) {
+                int64_t newWrite = *cu.write();
+                if (mConsumedCapacity.write().present()) {
+                    newWrite += *mConsumedCapacity.write();
+                }
+                mConsumedCapacity.mutableWrite().reset(newWrite);
             }
         }
-        mNotify.post();
+
+        IVector<Row>& rows = resp.mutableRows();
+        OTS_LOG_DEBUG(*mLogger)
+            ("RowSize", rows.size());
+        for(int64_t i = 0, sz = rows.size(); i < sz; ++i) {
+            Result<Row, OTSError> result;
+            moveAssign(result.mutableOkValue(), util::move(rows[i]));
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
+            }
+        }
+
+        bool limited = false;
+        if (req.queryCriterion().limit().present()) {
+            OTS_ASSERT(rows.size() <= *req.queryCriterion().limit())
+                (rows.size())
+                (*req.queryCriterion().limit());
+            *req.mutableQueryCriterion().mutableLimit() -= rows.size();
+            limited = (*req.queryCriterion().limit() == 0);
+        }
+        if (!resp.nextStart().present() || limited) {
+            OTS_LOG_INFO(*mLogger)
+                .what("No more rows in the server-side.");
+
+            if (resp.nextStart().present()) {
+                ScopedLock _(mMutex);
+                moveAssign(mNextStart, util::move(resp.mutableNextStart()));
+            }
+            
+            // a row with no primary-key column means the end
+            Result<Row, OTSError> result;
+            if (!push(result)) {
+                OTS_LOG_INFO(*mLogger)
+                    .what("Premature stops");
+            }
+            break;
+        } else {
+            OTS_LOG_DEBUG(*mLogger)
+                ("NextStart", *resp.mutableNextStart())
+                .what("Try a next request.");
+            moveAssign(
+                req.mutableQueryCriterion().mutableInclusiveStart(),
+                util::move(*resp.mutableNextStart()));
+        }
     }
-    mOngoing.fetch_sub(1, boost::memory_order_relaxed);
+}
+
+bool RangeIterator::push(Result<Row, OTSError>& item)
+{
+    for(;;) {
+        bool ok = mRowQueue->push(item);
+        if (ok) {
+            return true;
+        }
+        if (mStop.load(boost::memory_order_relaxed)) {
+            return false;
+        }
+        sleepFor(Duration::fromUsec(100));
+        if (mStop.load(boost::memory_order_relaxed)) {
+            return false;
+        }
+    }
 }
 
 } // namespace core

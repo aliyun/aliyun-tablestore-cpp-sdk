@@ -27,7 +27,7 @@ Windows得益于M记近乎偏执的向后兼容性，可以认为只有一个版
 拿debian8为例，打开`docker/debian8/Dockerfile`，可以看到这样两行：
 
 ```
-RUN apt-get install -y scons g++ libboost-all-dev protobuf-compiler libprotobuf-dev uuid-dev libssl-dev
+RUN apt-get install -y scons g++ libboost-all-dev protobuf-compiler libprotobuf-dev libssl-dev
 RUN apt-get install -y ca-certificates # for HTTPS support
 ```
 
@@ -35,7 +35,6 @@ RUN apt-get install -y ca-certificates # for HTTPS support
 * scons: 编译系统。别问为什么不支持make, cmake, automake, bazar, ... 这么多选择，总得挑一个不是？
 * gcc & boost: 不解释
 * protobuf: 序列化库
-* uuid: 顾名思义
 * openssl: 签名，以及支持HTTPS所用
 * ca-certificates: 仅为支持HTTPS所用。如果您只用表格存储的HTTP地址，可以不安装这个库。不过我们建议还是走HTTPS较为稳妥。
 
@@ -493,8 +492,7 @@ query.mutableMaxVersions().reset(1);
         "pkey",
         PrimaryKeyValue::toInfMax());
 }
-auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
-RangeIterator iter(*aclient, query);
+RangeIterator iter(client, query);
 for(;;) {
     Optional<OTSError> err = iter.moveNext();
     if (err.present()) {
@@ -713,7 +711,7 @@ Optional<OTSError> res = client.updateRow(resp, req);
 
 单行更新操作可以更新一行内的属性列。
 计有四种情况，示例中一一作了演示。
-* 不指定版本写入一个列值，表格存储服务端会自动补上一个版本号，保证此种情况下版本号的递增。
+* 不指定版本写入一个列值，表格存储服务端会自动补上一个版本号，保证此种情况下版本号的递增。
 * 指定版本写入一个列值，若该列本无该版本列值，则插入，否则覆盖原值。
 * 删除指定版本的列值。
 * 删除整个列的所有版本列值。
@@ -797,6 +795,99 @@ Optional<OTSError> res = client.batchWriteRow(resp, req);
 * 行存在性条件分为忽略`Condition::kIgnore`（默认值，无论行是否存在都写入）、行存在`Condition::kExpectExist`（行存在则写入）和`Condition::kExpectNotExist`（行不存在则写入）。
   注：删除行配合`Condition::kExpectExist`可以知道是否实际删除了一行，代价是性能略差。
 * 列值条件等同于[过滤器](#过滤器)。
+
+#### BatchWriter
+
+写操作的使用，一向有个两难之处：
+* 一方面，单行写操作接口简便，但是由于每次网络请求都有额外的损耗，故而性能不如批量写；
+* 另一方面，批量写操作一次发送多行操作也返回相应的多行结果，需要用户自行处理好各行的错误，尤其是重试和避免主键重复。
+
+在一些场景里，比如说批量导入数据，用户使用表格存储的难度还是不小。
+有鉴于此，我们提供了BatchWriter工具。
+这个工具是以高吞吐为设计目标的写入工具。
+它一方面提供与单行写操作完全相同的接口，另一方面自动聚合后以批量写操作发往服务端。
+与此同时，它还比较智能地安排重试，避免服务端拥塞，以期达到比较高的吞吐率。
+
+但是相应地，它的重试策略比较简单：除非明确不可重试的错误，一律重试。
+
+它的接口分成同步和异步两种。
+每种各有单行覆写、单行更新和单行删除三种操作。
+接口上与单行写操作完全相同。
+
+```c++
+class SyncBatchWriter
+{
+public:
+    static util::Optional<OTSError> create(
+        SyncBatchWriter*&,
+        AsyncClient&,
+        const BatchWriterConfig&);
+
+    virtual util::Optional<OTSError> putRow(
+        PutRowResponse&, const PutRowRequest&) =0;
+    virtual util::Optional<OTSError> updateRow(
+        UpdateRowResponse&, const UpdateRowRequest&) =0;
+    virtual util::Optional<OTSError> deleteRow(
+        DeleteRowResponse&, const DeleteRowRequest&) =0;
+};
+
+class AsyncBatchWriter
+{
+public:
+    static util::Optional<OTSError> create(
+        AsyncBatchWriter*&,
+        AsyncClient&,
+        const BatchWriterConfig&);
+
+    virtual void putRow(
+        PutRowRequest&,
+        const std::tr1::function<void(
+            PutRowRequest&, util::Optional<OTSError>&, PutRowResponse&)>&) =0;
+    virtual void updateRow(
+        UpdateRowRequest&,
+        const std::tr1::function<void(
+            UpdateRowRequest&, util::Optional<OTSError>&, UpdateRowResponse&)>&) =0;
+    virtual void deleteRow(
+        DeleteRowRequest&,
+        const std::tr1::function<void(
+            DeleteRowRequest&, util::Optional<OTSError>&, DeleteRowResponse&)>&) =0;
+};
+```
+
+接口行为不再赘述。
+这里重点讲解配置，即`BatchWriterConfig`。
+该类除了数据访问接口，核心是如下这些数据结构，它们和BatchWriter的工作状态有关。
+
+```c++
+class BatchWriterConfig
+{
+    int64_t mMaxConcurrency;
+    int64_t mMaxBatchSize;
+    util::Duration mRegularNap;
+    util::Duration mMaxNap;
+    util::Duration mNapShrinkStep;
+};
+```
+
+整个BatchWriter有三个工作状态：
+1. 正常状态
+
+  在正常状态下，BatchWriter每隔`mRegularNap`发起至多`mMaxConcurrency`个`BatchWriteRequest`请求，每个请求最多`mMaxBatchSize`行。
+
+2. 退避状态
+
+  一旦检测到服务端忙碌，则进入退避状态。
+  在退避状态中，每一轮减少一半并发，直至并发数降到1。
+  并发数降到1后，如果服务端仍然忙碌，每轮等待时间的上限翻倍，直至`mMaxNap`。
+  每轮实际等待时间是该轮等待时间上限内的某个随机值。
+
+3. 退避恢复状态
+
+  处在退避状态中时，一旦有请求成功，则进入退避恢复状态。
+  退避恢复状态首先每轮以常数`mNapShrinkStep`恢复等待时间，直至等待时间达到`mRegularNap`。
+  接下来恢复并发数，每轮并发数增加一，直至`mMaxConcurrency`。
+  如此，则重新进入正常状态。
+
 
 ### 自增主键列
 

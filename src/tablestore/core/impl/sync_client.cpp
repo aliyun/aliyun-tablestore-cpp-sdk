@@ -76,7 +76,7 @@ Optional<OTSError> go(
     typedef impl::AsyncClientBase::Context<kAction> Context;
     typedef typename impl::ApiTraits<kAction>::ApiResponse Response;
 
-    Tracker tracker(Tracker::create());
+    Tracker tracker(Tracker::create(ac.randomGenerator()));
     Semaphore sem(0);
     Optional<OTSError> err;
     function<void(Optional<OTSError>&, Response&)> cb =
@@ -101,6 +101,21 @@ SyncClient::SyncClient(impl::AsyncClientBase* ac)
 SyncClient::SyncClient(AsyncClient& client)
   : mAsyncClient(client.mAsyncClient)
 {}
+
+util::Logger& SyncClient::mutableLogger()
+{
+    return mAsyncClient->mutableLogger();
+}
+
+const deque<shared_ptr<util::Actor> >& SyncClient::actors() const
+{
+    return mAsyncClient->actors();
+}
+
+const RetryStrategy& SyncClient::retryStrategy() const
+{
+    return mAsyncClient->retryStrategy();
+}
 
 Optional<OTSError> SyncClient::listTable(
     ListTableResponse& resp, const ListTableRequest& req)

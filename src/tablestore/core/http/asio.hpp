@@ -119,6 +119,7 @@ public:
 
     static Asio* create(
         util::Logger&,
+        util::Random&,
         int64_t maxConnections,
         util::Duration mConnectTimeout,
         const Endpoint&,

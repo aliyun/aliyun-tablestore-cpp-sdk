@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "tablestore/util/result.hpp"
 #include "tablestore/util/timestamp.hpp"
 #include "tablestore/util/logger.hpp"
+#include "tablestore/util/random.hpp"
 #include <boost/noncopyable.hpp>
 #include <tr1/memory>
 #include <string>
@@ -373,7 +374,7 @@ public:
 
     Tracker& operator=(const util::MoveHolder<Tracker>& a);
 
-    static Tracker create();
+    static Tracker create(util::Random&);
 
     util::Optional<OTSError> validate() const;
     void prettyPrint(std::string&) const;
