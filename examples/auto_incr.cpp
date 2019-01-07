@@ -144,8 +144,7 @@ void scan(SyncClient& client)
             "AutoIncrKey",
             PrimaryKeyValue::toInfMax());
     }
-    auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
-    RangeIterator iter(*aclient, query);
+    RangeIterator iter(client, query);
     cout << "start scanning" << endl;
     for(;;) {
         Optional<OTSError> err = iter.moveNext();
