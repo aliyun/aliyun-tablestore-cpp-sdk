@@ -229,8 +229,7 @@ void scan(SyncClient& client)
         top->mutableChildren().append() = attrCond;
         query.mutableFilter() = top;
     }
-    auto_ptr<AsyncClient> aclient(AsyncClient::create(client));
-    RangeIterator iter(*aclient, query);
+    RangeIterator iter(client, query);
     cout << "start scanning" << endl;
     for(;;) {
         Optional<OTSError> err = iter.moveNext();
