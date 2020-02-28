@@ -1,4 +1,0 @@
-# -*- python -*-
-Import('env')
-
-env.subDir('tablestore')

@@ -1,6 +1,0 @@
-# -*- python -*-
-Import('env')
-
-env.subDir('util')
-env.subDir('core')
-

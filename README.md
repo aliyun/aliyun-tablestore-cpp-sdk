@@ -1,3 +1,6 @@
 # TableStore SDK for C++ SDK
 
-[中文版使用手册](doc/user_guide.cn.md)
+# The sdk has expired, please do not use
+
+# SDK已经过期，请勿使用，新版本敬请期待！
+
